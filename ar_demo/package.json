@@ -1,0 +1,16 @@
+{
+  "name": "red-sanyue-wechat-ar-tfjs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "dhtml-weixin": "2.6.2",
+    "three-weixin": "2.6.2"
+  }
+}

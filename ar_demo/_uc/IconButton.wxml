@@ -1,0 +1,4 @@
+<navigator class="IconButton" url="{{url}}">
+  <image src="{{image}}"/>
+  <text>{{title}}</text>
+</navigator>

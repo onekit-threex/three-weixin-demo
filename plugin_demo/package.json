@@ -1,0 +1,6 @@
+{
+	"dependencies": {
+		"dhtml-weixin": "3.1.1",
+		"pako": "^1.0.5"
+	}
+}

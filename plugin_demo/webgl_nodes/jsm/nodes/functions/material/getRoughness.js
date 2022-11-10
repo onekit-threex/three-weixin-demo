@@ -1,0 +1,50 @@
+
+import {
+    Blob,
+    btoa,
+    createImageBitmap,
+    CSSStyleDeclaration,
+    performance,
+    document,
+    DOMParser,
+    EventTarget,
+    fetch,
+    Headers,
+    HTMLCanvasElement,
+	Image,
+    HTMLImageElement,
+    ImageBitmap,
+    location,
+    navigator,
+    Request,
+    requestAnimationFrame,
+    cancelAnimationFrame,
+    Response,
+    URL,
+    window,
+    self,
+    WebAssembly,
+    Worker,
+    XMLHttpRequest,
+	ImageData,
+	TextDecoder,
+    core
+    } from 'dhtml-weixin';
+import getGeometryRoughness from './getGeometryRoughness.js';
+import { ShaderNode, add, max, min } from '../../shadernode/ShaderNodeBaseElements.js';
+
+const getRoughness = new ShaderNode( ( inputs ) => {
+
+	const { roughness } = inputs;
+
+	const geometryRoughness = getGeometryRoughness.call();
+
+	let roughnessFactor = max( roughness, 0.0525 ); // 0.0525 corresponds to the base mip of a 256 cubemap.
+	roughnessFactor = add( roughnessFactor, geometryRoughness );
+	roughnessFactor = min( roughnessFactor, 1.0 );
+
+	return roughnessFactor;
+
+} );
+
+export default getRoughness;

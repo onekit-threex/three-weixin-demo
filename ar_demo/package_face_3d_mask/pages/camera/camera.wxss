@@ -1,0 +1,10 @@
+camera,
+canvas {
+  position: absolute;
+  width: 100%;
+  height: 750rpx;
+}
+
+page {
+  height: 100%;
+}

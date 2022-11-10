@@ -1,0 +1,380 @@
+{
+    "description": "项目私有配置文件。此文件中的内容将覆盖 project.config.json 中的相同字段。项目的改动优先同步到此文件中。详见文档：https://developers.weixin.qq.com/miniprogram/dev/devtools/projectconfig.html",
+    "projectname": "demo",
+    "setting": {
+        "compileHotReLoad": true,
+        "urlCheck": false,
+        "bigPackageSizeSupport": true,
+        "autoAudits": false
+    },
+    "libVersion": "2.25.0",
+    "condition": {
+        "miniprogram": {
+            "list": [
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_animation_skinning_morph",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_animation_multiple",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_camera",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_camera_array",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_camera_cinematic",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_clipping",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_clipping_advanced",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_clipping_intersection",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_clipping_stencil",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_decals",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "tests/misc_uv_tests",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_depth_texture",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_effects_anaglyph",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_effects_ascii",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_effects_parallaxbarrier",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_effects_peppersghost",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_animation_keyframes",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_effects_stereo",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_framebuffer_texture",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_animation_keyframes",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_animation_skinning_additive_blending",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_animation_skinning_blending",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_animation_keyframes",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_instancing_dynamic",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_loader_gltf",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_loader_mmd_audio",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "demo",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_geometry_colors_lookuptable",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_geometry_colors_lookuptable",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "physics/physics_ammo_break",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "physics/physics_ammo_break",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "demo",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_decals",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                }
+            ]
+        }
+    }
+}

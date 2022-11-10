@@ -1,0 +1,24 @@
+.ImageButton  {
+  padding: 20rpx;
+  width: 100rpx;
+  height: 100rpx;
+  border: 1px solid black;
+  border-radius: 50%;
+}
+.ImageButton2  {
+  padding: 20rpx;
+  width: 100rpx;
+  height: 100rpx;
+  border: 1px solid #0000;
+  text-shadow: 2px 2px gray;
+  border-radius: 50%;
+}
+.Glass{
+  padding:5rpx;
+  border-radius: 20rpx;
+ width: 120rpx;height:120rpx;margin:10rpx;
+}
+.Glass_Selected{
+  border:1px solid black;
+  background: #ddd8;
+}

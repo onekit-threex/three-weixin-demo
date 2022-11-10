@@ -1,0 +1,7 @@
+<view style="display: flex;flex-wrap: wrap;" wx:for="{{sections}}" wx:for-item="section" wx:for-key="sectionName" wx:key="index">
+<view style="width: 100%;">{{section.sectionName}}</view>
+        <navigator wx:for="{{section.demos}}" wx:for-item="demo" wx:for-key="demo"  wx:key="demo" url="/{{section.sectionName}}/{{ demo }}" target="viewer">
+            <image mode="aspectFill" src="https://onekit.cn/examples/screenshots/{{ demo }}.jpg" />
+            <view style="display: none;">{{demo}}</view>
+        </navigator>
+</view>

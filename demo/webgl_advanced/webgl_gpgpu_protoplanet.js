@@ -1,0 +1,15 @@
+// webgl_advanced/webgl_gpgpu_protoplanet.js
+import {document,window,requestAnimationFrame,cancelAnimationFrame,Event,core} from 'dhtml-weixin';
+import * as THREE from '../three/Three.js';
+import { GUI } from './jsm/libs/lil-gui.module.min.js';
+
+var requestId
+Page({
+	onUnload() {
+	
+	},
+  async onLoad(){
+const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
+var that = this
+}
+})

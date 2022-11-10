@@ -1,0 +1,4 @@
+<block wx:for="{{tests}}">
+    <view>{{item.name}}</view>
+    <image style="width:750rpx;" src="{{item.result}}" />
+</block>

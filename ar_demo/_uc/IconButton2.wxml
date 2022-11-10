@@ -1,0 +1,4 @@
+<view class="IconButton2" bindtap="uc_click">
+  <image src="{{image}}"/>
+  <text>{{title}}</text>
+</navigator>

@@ -1,0 +1,9 @@
+<canvas id="canvas_webgl" type="webgl"  
+    disable-scroll="true"
+    bindtouchstart="webgl_touch"
+    bindtouchmove="webgl_touch"
+    bindtouchend="webgl_touch"
+    bindtouchcancel="webgl_touch">
+    </canvas>
+    
+    <canvas type="2d" id="c"></canvas>

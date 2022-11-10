@@ -1,0 +1,19 @@
+ .IconButton2  {
+  width: 150rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.IconButton2 image {
+  padding: 20rpx;
+  width: 80rpx;
+  height: 80rpx;
+  border: 1px solid #0000;
+  text-shadow: 2px 2px gray;
+  border-radius: 50%;
+}
+.IconButton2 text {
+  margin:10rpx;
+  font-size:26rpx;
+}

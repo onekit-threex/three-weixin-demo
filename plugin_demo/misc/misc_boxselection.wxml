@@ -1,0 +1,3 @@
+<canvas id="canvas_webgl" type="webgl" disable-scroll bindtouchstart="webgl_touch" bindtouchmove="webgl_touch" bindtouchend="webgl_touch" bindtouchcancel="webgl_touch">
+<view class="selectBox" style="{{selectBox_style}}"/>
+</canvas>
