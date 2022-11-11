@@ -28,8 +28,8 @@
 
 #### 如何购买
 请认准“成都未来之门科技有限公司”
-【[唯一购买通道](https://onekit.cn/threex)】
+【[唯一购买通道](https://three-x.cn)】
 
 ### 联系
-网站：https://onekit.cn
+网站：https://three-x.cn
 邮箱：onekit@onekit.cn
