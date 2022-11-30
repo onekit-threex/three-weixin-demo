@@ -22,7 +22,7 @@
 
 【[免费版](免费版.md)】NPM方式。支持部分手机机型。
 
-【[ThreeX个人免费](https://mp.weixin.qq.com/wxopen/plugindevdoc?appid=wx5d6376b4fc730db9)】小程序插件方式。支持更多手机机型。
+【[ThreeX](https://mp.weixin.qq.com/wxopen/plugindevdoc?appid=wx5d6376b4fc730db9)】小程序插件方式。支持更多手机机型。(个人版免费)
 
 【[ThreePro](https://mp.weixin.qq.com/wxopen/plugindevdoc?appid=wx74ea3ef7e1e72753)】小程序插件方式。零代码/低代码接入。
 
