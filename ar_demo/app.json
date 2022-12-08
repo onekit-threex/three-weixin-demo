@@ -1,15 +1,19 @@
 {
   "pages": [
-    "pages/index/index",
-    "pages/ie/ie",
-    "package_face_3d_mask/pages/camera/camera",
-    "package_face_3d_mask/pages/take/take"
+    "pages/index/index"
   ],
   "window": {
     "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#fff",
     "navigationBarTitleText": "智能AR眼镜试戴",
     "navigationBarTextStyle": "black"
+  },
+  "plugins": {
+    "ThreeX": {
+      "version": "1.0.0",
+      "provider": "wx87ff7ed2c6c3979d",
+      "export": "threex.js"
+    }
   },
   "style": "v2",
   "permission": {
@@ -19,6 +23,6 @@
   },
   "sitemapLocation": "sitemap.json",
   "usingComponents": {
-    "IconButton": "/_uc/IconButton"
+    "face": "plugin://ThreeX/face"
   }
 }

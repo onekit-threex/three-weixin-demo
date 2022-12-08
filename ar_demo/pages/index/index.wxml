@@ -1,6 +1,5 @@
-<view style="height:100%;display:flex; flex-direction: column;">
-<image src="/_img/screen.jpg" style="height:750rpx;width:750rpx;"/>
-<view style="flex-grow: 1;display: flex;align-items: center; justify-content: center;">
-<IconButton image="/_img/take.png" title="眼镜试戴" url="/package_face_3d_mask/pages/camera/camera"/>
-</view>
-</view>
+
+<face hdr="{{hdr}}"
+ urls="{{urls}}"
+ titles="{{titles}}"
+ images="{{images}}" zoom="5.6"/>

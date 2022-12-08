@@ -3,7 +3,8 @@ App({
 	    onekit_path :"https://onekit.cn/examples/",
 	//onekit_path: "http://localhost/examples/",
 	//  onekit_path: "http://192.168.1.108/examples/",
-	onLaunch() {
+	onLaunch(options) {
+   //     console.error(options)
 		const updateManager = wx.getUpdateManager()
 
 		updateManager.onCheckForUpdate(function (res) {
