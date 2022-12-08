@@ -2,4 +2,4 @@
 <face hdr="{{hdr}}"
  urls="{{urls}}"
  titles="{{titles}}"
- images="{{images}}" zoom="5.6"/>
+ images="{{images}}"/>
