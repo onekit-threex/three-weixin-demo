@@ -1,0 +1,57 @@
+	:host {
+		overflow: hidden;
+		height: 100%;
+		width: 100%;
+		position: fixed;
+	}
+
+	.eGamePad {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		top: 0;
+	}
+
+	.eGamePad>view {
+		background: #0003;
+		pointer-events: auto;
+		position: absolute;
+	}
+
+	.eGamePad view {
+		border-radius: 50%;
+	}
+
+
+	.eGamePadDirection1 {
+		position: relative;
+		left: 20px;
+		bottom: 20px;
+	}
+
+
+	.GamePadDirection {
+		width: 200px;
+		height: 200px;
+		border-radius: 50%;
+	}
+
+	.GamePadDirectionHandler {
+		position: relative;
+		pointer-events: none;
+		background: #fff;
+		left: 0px;
+		bottom: 0px;
+		width: 50px;
+		height: 50px;
+	}
+
+	.eGamePad .Button {
+		border-radius: 50%;
+		position: fixed;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		color: #fff;
+	}

@@ -1,0 +1,8 @@
+{
+  "disableScroll": true,
+  "navigationStyle": "custom",
+  "pageOrientation": "landscape",
+  "usingComponents": {
+      "game-pad":"/game-pad/game-pad"
+  }
+}
