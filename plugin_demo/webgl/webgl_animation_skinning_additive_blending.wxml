@@ -5,3 +5,4 @@
     bindtouchend="webgl_touch"
     bindtouchcancel="webgl_touch">
     </canvas>
+    <stats/>

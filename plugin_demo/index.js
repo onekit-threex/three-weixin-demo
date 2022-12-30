@@ -33,6 +33,9 @@ Page({
 		this.setData({
 			sections
 		})
+		wx.navigateTo({
+			url: 'webgl/webgl_animation_skinning_additive_blending',
+		})
 	},
 	run() {
         var subs = Object.keys(files)

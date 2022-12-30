@@ -13,17 +13,6 @@
             "list": [
                 {
                     "name": "",
-                    "pathName": "webgl/webgl_animation_skinning_morph",
-                    "query": "",
-                    "launchMode": "default",
-                    "scene": null,
-                    "partialCompile": {
-                        "enabled": true,
-                        "pages": []
-                    }
-                },
-                {
-                    "name": "",
                     "pathName": "webgl/webgl_animation_multiple",
                     "query": "",
                     "launchMode": "default",
@@ -355,6 +344,17 @@
                 {
                     "name": "",
                     "pathName": "demo",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
+                },
+                {
+                    "name": "",
+                    "pathName": "manual",
                     "query": "",
                     "launchMode": "default",
                     "scene": null,

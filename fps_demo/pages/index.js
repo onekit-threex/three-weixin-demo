@@ -45,7 +45,7 @@ Page({
 	},
 	webgl_touch(e) {
 	},
-	async onLoad() {
+	 onLoad() {
 		document.createElementAsync("canvas", "webgl").then((canvas)=>{
 			this.run(canvas)
 		})
