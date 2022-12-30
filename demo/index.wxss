@@ -1,5 +1,0 @@
-navigator{
-    width:20%;
-    display: inline-box;
-}
-image{width:100%;height:100rpx;}
