@@ -1,6 +1,6 @@
 import files from './files.json'
-var index = 0
-var timer
+//var index = 0
+//var timer
 Page({
     onshareAppMessage(){
         return {
@@ -33,10 +33,11 @@ Page({
 		this.setData({
 			sections
 		})
-		wx.navigateTo({
+	/*	wx.navigateTo({
 			url: 'webgl/webgl_animation_skinning_additive_blending',
-		})
+		})*/
 	},
+	/*
 	run() {
         var subs = Object.keys(files)
 		var x = index;
@@ -55,16 +56,16 @@ Page({
 		}
 		clearInterval(timer)
 
-	},
+	},*/
 	onReady() {
 
-		timer = setInterval(() => {
-            index++
+	//	timer = setInterval(() => {
+    //        index++
 	//	this.run()
-	}, 4000)
+	//}, 4000)
 	//	this.run()
 	},
 	onHide() {
-		clearInterval(timer)
+		//clearInterval(timer)
 	}
 })

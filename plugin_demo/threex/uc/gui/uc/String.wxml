@@ -1,0 +1,4 @@
+<view style="display:flex;align-items:center;">
+	<text style="flex-grow:1" style="width:200rpx;">{{name}}</text>
+	<input bindinput="input_input" style="flex-grow:1;background:#fff8;" value="{{value}}" />
+</view>

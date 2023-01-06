@@ -1,46 +1,61 @@
 {
     "permission": {},
     "pages": [
-        "index",
         "manual",
+        "index",
         "doc"
     ],
     "plugins": {
         "ThreeX": {
-          "version": "1.0.5",
-          "provider": "wx5d6376b4fc730db9",
-          "export": "threex.js"
+            "version": "1.0.5",
+            "provider": "wx5d6376b4fc730db9",
+            "export": "threex.js"
         }
-      },
+    },
     "window": {
         "navigationBarTitleText": "Three X",
         "backgroundColor": "#F5F5F9"
     },
     "usingComponents": {
-        "stats":"/uc/stats/stats"
+        "stats": "/threex/uc/stats/stats",
+        "gui": "/threex/uc/gui/gui"
     },
     "sitemapLocation": "sitemap.json",
     "workers": "workers",
     "tabBar": {
-        "list": [{
-          "pagePath": "index",
-          "text": "体验"
-        },{
-            "pagePath": "manual",
-            "text": "手册"
-        },{
-            "pagePath": "doc",
-            "text": "文档"
-        }]
-      },
-    "subpackages": [{
-        "root": "manual",
-        "pages": [
-            "basic"]
-        },{
+        "list": [
+            {
+                "pagePath": "index",
+                "text": "体验"
+            },
+            {
+                "pagePath": "manual",
+                "text": "手册"
+            },
+            {
+                "pagePath": "doc",
+                "text": "文档"
+            }
+        ]
+    },
+    "subpackages": [
+        {
+            "root": "manual",
+            "pages": [
+                "primitives",
+                "scenegraph",
+                "materials",
+                "textures",
+                "lights",
+                "cameras",
+                "shadows",
+                "fog",
+                "rendertargets",
+                "custom-buffergeometry"
+            ]
+        },
+        {
             "root": "webgl",
-        
-        
             "pages": [
                 "webgl_animation_keyframes",
                 "webgl_animation_skinning_blending",
@@ -282,9 +297,7 @@
             ]
         },
         {
-            "root":
-
-                "webgl_postprocessing",
+            "root": "webgl_postprocessing",
             "pages": [
                 "webgl_postprocessing",
                 "webgl_postprocessing_3dlut",
@@ -315,7 +328,6 @@
         },
         {
             "root": "webgl_",
-
             "pages": [
                 "webgl_lights_rectarealight"
             ]
@@ -387,7 +399,6 @@
                 "physics_ammo_volume"
             ]
         },
-
         {
             "root": "oimo",
             "pages": [

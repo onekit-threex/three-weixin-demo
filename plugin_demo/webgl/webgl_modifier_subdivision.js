@@ -1,7 +1,7 @@
 // webgl/webgl_modifier_simplifier.js
 import {document,window,requestAnimationFrame,cancelAnimationFrame,Event,core,performance} from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
-import { LoopSubdivision } from '../onekit/three-subdivide/index';
+import { LoopSubdivision } from '../threex/three-subdivide/index';
 import { OrbitControls } from './jsm/controls/OrbitControls.js';
 import { GUI } from './jsm/libs/lil-gui.module.min.js';
 

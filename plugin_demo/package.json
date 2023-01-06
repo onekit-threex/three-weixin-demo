@@ -1,6 +1,7 @@
 {
 	"dependencies": {
-		"dhtml-weixin": "5.0.1",
+		"mini-color-picker": "^0.1.2",
+		"dhtml-weixin": "6.2.0",
 		"pako": "^1.0.5"
 	}
 }

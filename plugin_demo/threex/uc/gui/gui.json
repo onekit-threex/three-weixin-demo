@@ -1,0 +1,12 @@
+{
+    "component": true,
+    "usingComponents": {
+        "gui":"./gui",
+        "gui-boolean":"./uc/Boolean",
+        "gui-color":"./uc/Color",
+        "gui-function":"./uc/Function",
+        "gui-number":"./uc/Number",
+        "gui-option":"./uc/Option",
+        "gui-string":"./uc/String"
+    }
+}

@@ -1,2 +1,9 @@
-<!--manual.wxml-->
-<text>manual.wxml</text>
+<view wx:for="{{categories}}" wx:for-item="category" wx:key="index" style="border:1px solid gray;margin:5rpx;">
+	<view style="background:#ddd;padding:20rpx;">{{category.title}}</view>
+
+	<navigator style="border:1px solid gray;margin:5rpx;padding:20rpx;" url="manual/{{item.name}}" wx:for="{{category.items}}" wx:key="index">
+		<view>{{item.title}}</view>
+		<view>{{item.name}}</view>
+	</navigator>
+
+</view>

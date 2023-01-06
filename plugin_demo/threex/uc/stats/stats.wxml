@@ -1,0 +1,5 @@
+<view style="position: fixed; top: 0px; left: 0px;width: 80px; height: 48px; cursor: pointer; opacity: 0.9; z-index: 10000;" bindtap="stats_change">
+<canvas type="2d" class="Canvas" width="160" height="96" style="width: 80px; height: 48px; display: {{index==0?'block':'none'}};"></canvas>
+<canvas type="2d" class="Canvas" width="160" height="96" style="width: 80px; height: 48px; display: {{index==1?'block':'none'}};"></canvas>
+<canvas type="2d" class="Canvas" width="160" height="96" style="width: 80px; height: 48px; display: {{index==2?'block':'none'}};"></canvas>
+</view>

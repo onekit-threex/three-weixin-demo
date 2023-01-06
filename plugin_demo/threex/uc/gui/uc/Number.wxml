@@ -1,0 +1,5 @@
+<view style="display:flex;align-items:center;">
+	<text style="flex-grow:1" style="width:200rpx;">{{name}}</text>
+	<slider max="{{max}}" min="{{min}}" step="{{step}}" value="{{value}}" step="{{step}}" bindchanging="slider_changing" style="flex-grow:1;background:#fff8;" />
+	<input type="digit" bindinput="input_input" style="width:80rpx;background:#fff8;" value="{{value}}" />
+</view>

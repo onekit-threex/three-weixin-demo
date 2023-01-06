@@ -1,4 +1,4 @@
-// manual/basic.js
+// manual/responsive.js
 Page({
 
     /**

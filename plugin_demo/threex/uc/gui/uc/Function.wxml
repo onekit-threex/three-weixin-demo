@@ -1,0 +1,3 @@
+<view>
+	<button bindtap="button_tap" style="width:100%;font-size:20rpx;padding:10rpx;">{{name}}</button>
+</view>

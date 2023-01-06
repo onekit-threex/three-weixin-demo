@@ -1,0 +1,6 @@
+<view style="display:flex;align-items:center;">
+	<text style="flex-grow:1" style="width:200rpx;">{{name}}</text>
+	<picker mode="selector" range="{{range}}" value="{{index}}"  bindchange="picker_change" style="flex-grow:1;">
+       {{value}}
+  </picker>
+</view>
