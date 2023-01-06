@@ -33,8 +33,11 @@ this.worker && this.worker.terminate()
         //document.dispatchEvent(web_e)
         this.canvas.dispatchEvent(web_e)
     },
-async onLoad() {
-        const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
+onLoad() {
+    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
+},
+async run(canvas3d){
+this.canvas = canvas3d
 var that = this
         
 			let camera, scene, renderer, mesh;

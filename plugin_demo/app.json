@@ -1,8 +1,8 @@
 {
     "permission": {},
     "pages": [
-        "manual",
         "index",
+        "manual",
         "doc"
     ],
     "plugins": {

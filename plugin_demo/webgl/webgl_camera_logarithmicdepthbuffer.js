@@ -26,8 +26,11 @@ this.worker && this.worker.terminate()
         //document.dispatchEvent(web_e)
         this.canvas.dispatchEvent(web_e)
     },
-async onLoad() {
-        const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
+onLoad() {
+    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
+},
+async run(canvas3d){
+this.canvas = canvas3d
 var that = this
    
         	// 1 micrometer to 100 billion light years in one scene, with 1 unit = 1 meter?  preposterous!  and yet...

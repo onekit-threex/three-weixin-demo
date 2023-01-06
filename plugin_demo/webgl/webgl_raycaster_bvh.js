@@ -19,7 +19,10 @@ Page({
         //document.dispatchEvent(web_e)
         this.canvas.dispatchEvent(web_e)
     },
-async onLoad() {
+		onLoad() {
+		this.run().then()
+	},
+	async run(){
      //   const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
 var that = this
         	// Add the extension functions

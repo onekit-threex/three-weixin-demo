@@ -39,7 +39,7 @@ Page({
 	onUnload() {
 	
 	},
-	async onLoad() {
+	 onLoad() {
 	
 	}
 })

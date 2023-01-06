@@ -34,8 +34,11 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	async onLoad() {
-		const canvas3d = this.canvas = await document.createElementAsync("canvas", "webgl")
+onLoad() {
+    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
+},
+async run(canvas3d){
+this.canvas = canvas3d
 		var that = this
 
 
