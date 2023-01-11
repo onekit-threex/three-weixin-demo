@@ -362,6 +362,17 @@
                         "enabled": true,
                         "pages": []
                     }
+                },
+                {
+                    "name": "",
+                    "pathName": "manual/primitives/BoxGeometry",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
                 }
             ]
         }
