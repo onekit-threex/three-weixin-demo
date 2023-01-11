@@ -3,7 +3,7 @@ import {
 	window,
 	requestAnimationFrame,
 	cancelAnimationFrame,
-	Event
+	Event0
 } from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
 
@@ -11,7 +11,7 @@ import Stats from './jsm/libs/stats.module.js';
 
 import {
 	OrbitControls
-} from './jsm/controls/OrbitControls.js';
+} from './jsm/controls/OrbitControls0.js';
 import {
 	RoomEnvironment
 } from './jsm/environments/RoomEnvironment.js';
@@ -41,7 +41,7 @@ this.worker && this.worker.terminate()
         this.dracoLoader.dispose()
 	},
 	    webgl_touch(e) {
-        const web_e = Event.fix(e)
+        const web_e = Event0.fix(e)
         //window.dispatchEvent(web_e)
         //document.dispatchEvent(web_e)
         this.canvas.dispatchEvent(web_e)
@@ -50,6 +50,7 @@ onLoad() {
     document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
 },
 async run(canvas3d){
+	/*
 this.canvas = canvas3d
 		var that = this
 		let mixer, renderer;
@@ -73,23 +74,6 @@ this.canvas = canvas3d
     var AmbientLight = new THREE.AmbientLight(0xffffff,1)
     AmbientLight.position.set(0, 0, 100)
     scene.add(AmbientLight)
-    ///////////////////
-/*
-      var spotLight = new THREE.SpotLight(0xffffff, 1) //聚光灯
-    spotLight.position.set(0, 0, 10)
-    spotLight.lookAt(scene.position)
-    scene.add(spotLight)
-    //   
-    
-    var directionalLight = new THREE.DirectionalLight(0xffffff, 1) //方向光
-    directionalLight.position.set(0, 0, 10)
-    directionalLight.lookAt(scene.position)
-    scene.add(directionalLight)*/
-/*
-    var point = new THREE.PointLight(0xffffff, 1) //光源设置
-    point.position.set(0, 0, 100) //点光源位置
-    point.opacity = 1
-    scene.add(point) //将光源添加到场景中*/
     //////////////////////
 		scene.background = new THREE.Color(0xbfe3dd);
 		scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -103,22 +87,6 @@ this.canvas = canvas3d
 		controls.enablePan = false;
 		controls.enableDamping = true;
 
-		const dracoLoader = this.dracoLoader = new DRACOLoader();
-		dracoLoader.setDecoderPath('js/libs/draco/gltf/');
-
-		const loader = new GLTFLoader();
-		loader.setDRACOLoader(dracoLoader);
-
-		loader.load('models/gltf/LittlestTokyo.glb', function (gltf) {
-
-
-			const model = gltf.scene;
-			model.position.set(1, 1, 0);
-			model.scale.set(0.01, 0.01, 0.01);
-			scene.add(model);
-
-			mixer = new THREE.AnimationMixer(model);
-			mixer.clipAction(gltf.animations[0]).play();
 
 			animate();
 
@@ -141,6 +109,6 @@ this.canvas = canvas3d
 			renderer.render(scene, camera);
 
 		}
-
+*/
 	}
 })

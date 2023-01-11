@@ -1,3 +1,6 @@
+page{
+    overflow-y: scroll;
+}
 navigator{
     width:20%;
     display: inline-box;

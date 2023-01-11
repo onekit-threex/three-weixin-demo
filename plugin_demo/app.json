@@ -22,22 +22,6 @@
     },
     "sitemapLocation": "sitemap.json",
     "workers": "workers",
-    "tabBar": {
-        "list": [
-            {
-                "pagePath": "index",
-                "text": "体验"
-            },
-            {
-                "pagePath": "manual",
-                "text": "手册"
-            },
-            {
-                "pagePath": "doc",
-                "text": "文档"
-            }
-        ]
-    },
     "subpackages": [
         {
             "root": "manual",
