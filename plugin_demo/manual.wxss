@@ -1,1 +1,3 @@
-/* manual.wxss */
+page{
+	overflow-y: scroll;
+}

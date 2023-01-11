@@ -22,6 +22,22 @@
     },
     "sitemapLocation": "sitemap.json",
     "workers": "workers",
+    "tabBar": {
+        "list": [
+            {
+                "pagePath": "index",
+                "text": "体验"
+            },
+            {
+                "pagePath": "manual",
+                "text": "手册"
+            },
+            {
+                "pagePath": "doc",
+                "text": "文档"
+            }
+        ]
+    },
     "subpackages": [
         {
             "root": "manual",
@@ -35,7 +51,29 @@
                 "shadows",
                 "fog",
                 "rendertargets",
-                "custom-buffergeometry"
+                "custom-buffergeometry",
+                "primitives/BoxGeometry",
+                "primitives/CircleGeometry",
+                "primitives/ConeGeometry",
+                "primitives/CylinderGeometry",
+                "primitives/DodecahedronGeometry",
+                "primitives/ExtrudeGeometry",
+                "primitives/IcosahedronGeometry",
+                "primitives/LatheGeometry",
+                "primitives/OctahedronGeometry",
+                "primitives/ParametricGeometry",
+                "primitives/PlaneGeometry",
+                "primitives/PolyhedronGeometry",
+                "primitives/RingGeometry",
+                "primitives/ShapeGeometry",
+                "primitives/SphereGeometry",
+                "primitives/TetrahedronGeometry",
+                "primitives/TextGeometry",
+                "primitives/TorusGeometry",
+                "primitives/TorusKnotGeometry",
+                "primitives/TubeGeometry",
+                "primitives/EdgesGeometry",
+                "primitives/WireframeGeometry"
             ]
         },
         {

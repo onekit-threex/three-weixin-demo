@@ -1,6 +1,5 @@
-<canvas id="canvas_webgl" type="webgl"
-disable-scroll="true"
-  bindtouchcancel="webgl_touch"
-  bindtouchend="webgl_touch"
-  bindtouchmove="webgl_touch"
-  bindtouchstart="webgl_touch"/>
+
+	<navigator style="border:1px solid gray;margin:5rpx;padding:20rpx;" url="./primitives/{{item.name}}" wx:for="{{items}}" wx:key="index">
+		<view>{{item.title}}</view>
+		<view>{{item.name}}</view>
+	</navigator>
