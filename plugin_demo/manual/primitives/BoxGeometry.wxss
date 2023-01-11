@@ -1,0 +1,2 @@
+page { background:#000; }
+canvas { height:50%; }

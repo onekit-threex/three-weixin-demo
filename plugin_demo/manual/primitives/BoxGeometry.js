@@ -80,5 +80,30 @@ Page({
             renderer.render(scene, camera)
         }
         animate()
+
+        function createPanel() {
+
+            const panel = that.selectComponent("#gui")
+            const folder1 = panel.addFolder('尺寸');
+
+            folder1.add({
+                name: "test1",
+                test1: true
+            }, 'test1').onChange(console.error)
+            folder1.add({
+                name: "test2",
+                test2: "ok"
+            }, 'test2').onChange(console.error)
+            folder1.addColor({
+                name: "test3",
+                test3: "#f00"
+            }, 'test3').onChange(console.error)
+            folder1.add({
+                name: "test4",
+                test4: "b"
+            }, 'test4', ["a", "b", "c"]).onChange(console.error)
+
+        }
+        createPanel()
     }
 })
