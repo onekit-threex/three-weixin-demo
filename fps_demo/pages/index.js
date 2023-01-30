@@ -422,9 +422,9 @@ Page({
 
 		}
 
-		const loader = new GLTFLoader().setPath('./models/gltf/');
+		const loader = new GLTFLoader();
 
-		loader.load('collision-world.glb', (gltf) => {
+		loader.load('https://onekit.cn/examples/models/gltf/collision-world.glb', (gltf) => {
 
 			scene.add(gltf.scene);
 
