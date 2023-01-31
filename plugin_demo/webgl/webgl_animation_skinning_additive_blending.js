@@ -1,425 +1,451 @@
 import {
-    document,
-    window,
-    Event,
-    requestAnimationFrame,
-    cancelAnimationFrame
+	document,
+	window,
+	Event0,
+	requestAnimationFrame,
+	cancelAnimationFrame
 } from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
 
-import Stats from './jsm/libs/stats.module.js';
 import {
-    GUI
+	GUI
 } from './jsm/libs/lil-gui.module.min.js';
 import {
-    OrbitControls
-} from './jsm/controls/OrbitControls.js';
+	OrbitControls
+} from './jsm/controls/OrbitControls0.js';
 import {
-    GLTFLoader
+	GLTFLoader
 } from './jsm/loaders/GLTFLoader.js';
 
 var requestId
 Page({
-   onUnload(){
-    cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
-    this.renderer.dispose()
-    this.renderer.forceContextLoss()
-    this.renderer.context = null
-    this.renderer.domElement = null
-    this.renderer = null
-   },
-       webgl_touch(e) {
-        const web_e = Event.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-        var that = this
-        let scene, camera, stats,renderer;
-        let model, skeleton, mixer, clock;
-
-        const crossFadeControls = [];
-
-        let currentBaseAction = 'idle';
-        const allActions = [];
-        const baseActions = {
-            idle: { weight: 1 },
-            walk: { weight: 0 },
-            run: { weight: 0 }
-        };
-        const additiveActions = {
-            sneak_pose: { weight: 0 },
-            sad_pose: { weight: 0 },
-            agree: { weight: 0 },
-            headShake: { weight: 0 }
-        };
-        let panelSettings, numAnimations;
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+		this.renderer.dispose()
+		this.renderer.forceContextLoss()
+		this.renderer.context = null
+		this.renderer.domElement = null
+		this.renderer = null
+	},
+	webgl_touch(e) {
+		//		console.error(e.type,e.changedTouches.map(t=>t.identifier))
+		//const web_es = Event.fix(e)
+		//window.dispatchEvent(web_e)
+		//document.dispatchEvent(web_e)
+		//	for(const web_e of web_es){
+		const web_e = Event0.fix(e)
+		this.canvas.dispatchEvent(web_e)
+		//}Stat
+	},
+	onLoad() {
+		document.createElementAsync("canvas", "webgl").then((canvas) => {
+			this.canvas = canvas
+			this.run(canvas)
+		})
+	},
+	run(canvas3d) {
+		var that = this
+		let scene, camera, renderer;
+		let model, skeleton, mixer, clock;
+
+		const crossFadeControls = [];
+
+		let currentBaseAction = 'idle';
+		const allActions = [];
+		const baseActions = {
+			idle: {
+				weight: 1
+			},
+			walk: {
+				weight: 0
+			},
+			run: {
+				weight: 0
+			}
+		};
+		const additiveActions = {
+			sneak_pose: {
+				weight: 0
+			},
+			sad_pose: {
+				weight: 0
+			},
+			agree: {
+				weight: 0
+			},
+			headShake: {
+				weight: 0
+			}
+		};
+		let panelSettings, numAnimations;
+
+		init();
+
+		function init() {
+
+			const container = document.getElementById('container');
+			clock = new THREE.Clock();
+
+			scene = new THREE.Scene();
+			scene.background = new THREE.Color(0xa0a0a0);
+			scene.fog = new THREE.Fog(0xa0a0a0, 10, 50);
+
+			const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444);
+			hemiLight.position.set(0, 20, 0);
+			scene.add(hemiLight);
+
+			const dirLight = new THREE.DirectionalLight(0xffffff);
+			dirLight.position.set(3, 10, 10);
+			dirLight.castShadow = true;
+			dirLight.shadow.camera.top = 2;
+			dirLight.shadow.camera.bottom = -2;
+			dirLight.shadow.camera.left = -2;
+			dirLight.shadow.camera.right = 2;
+			dirLight.shadow.camera.near = 0.1;
+			dirLight.shadow.camera.far = 40;
+			scene.add(dirLight);
+
+			// ground
+
+			const mesh = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshPhongMaterial({
+				color: 0x999999,
+				depthWrite: false
+			}));
+			mesh.rotation.x = -Math.PI / 2;
+			mesh.receiveShadow = true;
+			scene.add(mesh);
+
+			const loader = new GLTFLoader();
+			loader.load('models/gltf/Xbot.glb', function (gltf) {
+				model = gltf.scene;
+				scene.add(model);
 
-        init();
+				model.traverse(function (object) {
 
-        function init() {
+					if (object.isMesh) object.castShadow = true;
 
-            const container = document.getElementById( 'container' );
-            clock = new THREE.Clock();
-
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color( 0xa0a0a0 );
-            scene.fog = new THREE.Fog( 0xa0a0a0, 10, 50 );
-
-            const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
-            hemiLight.position.set( 0, 20, 0 );
-            scene.add( hemiLight );
-
-            const dirLight = new THREE.DirectionalLight( 0xffffff );
-            dirLight.position.set( 3, 10, 10 );
-            dirLight.castShadow = true;
-            dirLight.shadow.camera.top = 2;
-            dirLight.shadow.camera.bottom = - 2;
-            dirLight.shadow.camera.left = - 2;
-            dirLight.shadow.camera.right = 2;
-            dirLight.shadow.camera.near = 0.1;
-            dirLight.shadow.camera.far = 40;
-            scene.add( dirLight );
+				});
 
-            // ground
+				skeleton = new THREE.SkeletonHelper(model);
+				skeleton.visible = false;
+				scene.add(skeleton);
 
-            const mesh = new THREE.Mesh( new THREE.PlaneGeometry( 100, 100 ), new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false } ) );
-            mesh.rotation.x = - Math.PI / 2;
-            mesh.receiveShadow = true;
-            scene.add( mesh );
+				const animations = gltf.animations;
+				mixer = new THREE.AnimationMixer(model);
 
-            const loader = new GLTFLoader();
-            loader.load( 'models/gltf/Xbot.glb', function ( gltf ) {
+				numAnimations = animations.length;
 
-                model = gltf.scene;
-                scene.add( model );
+				for (let i = 0; i !== numAnimations; ++i) {
 
-                model.traverse( function ( object ) {
+					let clip = animations[i];
+					const name = clip.name;
 
-                    if ( object.isMesh ) object.castShadow = true;
+					if (baseActions[name]) {
 
-                } );
+						const action = mixer.clipAction(clip);
+						activateAction(action);
+						baseActions[name].action = action;
+						allActions.push(action);
 
-                skeleton = new THREE.SkeletonHelper( model );
-                skeleton.visible = false;
-                scene.add( skeleton );
+					} else if (additiveActions[name]) {
 
-                const animations = gltf.animations;
-                mixer = new THREE.AnimationMixer( model );
+						// Make the clip additive and remove the reference frame
 
-                numAnimations = animations.length;
+						THREE.AnimationUtils.makeClipAdditive(clip);
 
-                for ( let i = 0; i !== numAnimations; ++ i ) {
+						if (clip.name.endsWith('_pose')) {
 
-                    let clip = animations[ i ];
-                    const name = clip.name;
+							clip = THREE.AnimationUtils.subclip(clip, clip.name, 2, 3, 30);
 
-                    if ( baseActions[ name ] ) {
+						}
 
-                        const action = mixer.clipAction( clip );
-                        activateAction( action );
-                        baseActions[ name ].action = action;
-                        allActions.push( action );
+						const action = mixer.clipAction(clip);
+						activateAction(action);
+						additiveActions[name].action = action;
+						allActions.push(action);
 
-                    } else if ( additiveActions[ name ] ) {
+					}
 
-                        // Make the clip additive and remove the reference frame
+				}
 
-                        THREE.AnimationUtils.makeClipAdditive( clip );
+				createPanel();
 
-                        if ( clip.name.endsWith( '_pose' ) ) {
+				animate();
 
-                            clip = THREE.AnimationUtils.subclip( clip, clip.name, 2, 3, 30 );
+			});
 
-                        }
+			renderer = that.renderer = new THREE.WebGLRenderer({
+				canvas: canvas3d,
+				antialias: true
+			});
+			that.renderer = renderer
+			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			renderer.outputEncoding = THREE.sRGBEncoding;
+			renderer.shadowMap.enabled = true;
+			container.appendChild(renderer.domElement);
 
-                        const action = mixer.clipAction( clip );
-                        activateAction( action );
-                        additiveActions[ name ].action = action;
-                        allActions.push( action );
+			// camera
+			camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 100);
+			camera.position.set(-1, 2, 3);
+			const controls = new OrbitControls(camera, renderer.domElement);
+			controls.enablePan = true;
+			controls.enableZoom = true;
+			controls.target.set(0, 1, 0);
+			controls.update();
 
-                    }
+			window.addEventListener('resize', onWindowResize);
 
-                }
+		}
 
-                createPanel();
+		function createPanel() {
 
-                animate();
+			const panel = that.selectComponent("#gui")
 
-            } );
+			const folder1 = panel.addFolder( 'Base Actions' );
+			const folder2 = panel.addFolder( 'Additive Action Weights' );
+			const folder3 = panel.addFolder( 'General Speed' );
 
-          renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-          that.renderer = renderer
-            renderer.setPixelRatio( window.devicePixelRatio );
-            renderer.setSize( window.innerWidth, window.innerHeight );
-            renderer.outputEncoding = THREE.sRGBEncoding;
-            renderer.shadowMap.enabled = true;
-            container.appendChild( renderer.domElement );
+			panelSettings = {
+				'modify time scale': 1.0
+			};
 
-            // camera
-            camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 100 );
-            camera.position.set( - 1, 2, 3 );
-            const controls = new OrbitControls( camera, renderer.domElement );
-            controls.enablePan = false;
-            controls.enableZoom = true;
-            controls.target.set( 0, 1, 0 );
-            controls.update();
+			const baseNames = [ 'None', ...Object.keys( baseActions ) ];
 
-            stats = new Stats();
-            container.appendChild( stats.dom );
+			for ( let i = 0, l = baseNames.length; i !== l; ++ i ) {
 
-            window.addEventListener( 'resize', onWindowResize );
+				const name = baseNames[ i ];
+				const settings = baseActions[ name ];
+				panelSettings[ name ] = function () {
 
-        }
+					const currentSettings = baseActions[ currentBaseAction ];
+					const currentAction = currentSettings ? currentSettings.action : null;
+					const action = settings ? settings.action : null;
 
-        function createPanel() {
+					if ( currentAction !== action ) {
+		
+						prepareCrossFade( currentAction, action, 0.35 );
+		
+					}
 
-            const panel = new GUI( { width: 310 } );
+				};
 
-            const folder1 = panel.addFolder( 'Base Actions' );
-            const folder2 = panel.addFolder( 'Additive Action Weights' );
-            const folder3 = panel.addFolder( 'General Speed' );
+				crossFadeControls.push( folder1.add( panelSettings, name ) );
 
-            panelSettings = {
-                'modify time scale': 1.0
-            };
+			}
 
-            const baseNames = [ 'None', ...Object.keys( baseActions ) ];
+			for ( const name of Object.keys( additiveActions ) ) {
 
-            for ( let i = 0, l = baseNames.length; i !== l; ++ i ) {
+				const settings = additiveActions[ name ];
 
-                const name = baseNames[ i ];
-                const settings = baseActions[ name ];
-                panelSettings[ name ] = function () {
+				panelSettings[ name ] = settings.weight;
+				folder2.add( panelSettings, name, 0.0, 1.0, 0.01 ).listen().onChange( function ( weight ) {
 
-                    const currentSettings = baseActions[ currentBaseAction ];
-                    const currentAction = currentSettings ? currentSettings.action : null;
-                    const action = settings ? settings.action : null;
+					setWeight( settings.action, weight );
+					settings.weight = weight;
 
-                    if ( currentAction !== action ) {
-        
-                        prepareCrossFade( currentAction, action, 0.35 );
-        
-                    }
+				} );
 
-                };
+			}
 
-                crossFadeControls.push( folder1.add( panelSettings, name ) );
+			folder3.add( panelSettings, 'modify time scale', 0.0, 1.5, 0.01 ).onChange( modifyTimeScale );
 
-            }
+			folder1.open();
+			folder2.open();
+			folder3.open();
 
-            for ( const name of Object.keys( additiveActions ) ) {
+			crossFadeControls.forEach( function ( control ) {
 
-                const settings = additiveActions[ name ];
+				control.setInactive = function () {
 
-                panelSettings[ name ] = settings.weight;
-                folder2.add( panelSettings, name, 0.0, 1.0, 0.01 ).listen().onChange( function ( weight ) {
+					control.domElement.classList.add( 'control-inactive' );
 
-                    setWeight( settings.action, weight );
-                    settings.weight = weight;
+				};
 
-                } );
+				control.setActive = function () {
 
-            }
+					control.domElement.classList.remove( 'control-inactive' );
 
-            folder3.add( panelSettings, 'modify time scale', 0.0, 1.5, 0.01 ).onChange( modifyTimeScale );
+				};
 
-            folder1.open();
-            folder2.open();
-            folder3.open();
+				const settings = baseActions[ control.property ];
 
-            crossFadeControls.forEach( function ( control ) {
+				if ( ! settings || ! settings.weight ) {
 
-                control.setInactive = function () {
+					control.setInactive();
 
-                    control.domElement.classList.add( 'control-inactive' );
+				}
 
-                };
+			} );
 
-                control.setActive = function () {
+				///////////////////////////////////
+				
+				const folder4 = panel.addFolder( 'test' );
+				folder4.add( {name:"test1",test1:true}, 'test1').onChange(console.error)
+				folder4.add( {name:"test2",test2:"ok"}, 'test2').onChange(console.error)
+				folder4.addColor( {name:"test3",test3:"#f00"}, 'test3').onChange(console.error)
+				folder4.add( {name:"test4",test4:"b"}, 'test4',["a","b","c"]).onChange(console.error)
+		}
 
-                    control.domElement.classList.remove( 'control-inactive' );
+		function activateAction( action ) {
 
-                };
+			const clip = action.getClip();
+			const settings = baseActions[ clip.name ] || additiveActions[ clip.name ];
+			setWeight( action, settings.weight );
+			action.play();
 
-                const settings = baseActions[ control.property ];
+		}
 
-                if ( ! settings || ! settings.weight ) {
+		function modifyTimeScale( speed ) {
 
-                    control.setInactive();
+			mixer.timeScale = speed;
 
-                }
+		}
 
-            } );
+		function prepareCrossFade( startAction, endAction, duration ) {
 
-        }
+			// If the current action is 'idle', execute the crossfade immediately;
+			// else wait until the current action has finished its current loop
 
-        function activateAction( action ) {
+			if ( currentBaseAction === 'idle' || ! startAction || ! endAction ) {
 
-            const clip = action.getClip();
-            const settings = baseActions[ clip.name ] || additiveActions[ clip.name ];
-            setWeight( action, settings.weight );
-            action.play();
+				executeCrossFade( startAction, endAction, duration );
 
-        }
+			} else {
 
-        function modifyTimeScale( speed ) {
+				synchronizeCrossFade( startAction, endAction, duration );
 
-            mixer.timeScale = speed;
+			}
 
-        }
+			// Update control colors
 
-        function prepareCrossFade( startAction, endAction, duration ) {
+			if ( endAction ) {
 
-            // If the current action is 'idle', execute the crossfade immediately;
-            // else wait until the current action has finished its current loop
+				const clip = endAction.getClip();
+				currentBaseAction = clip.name;
 
-            if ( currentBaseAction === 'idle' || ! startAction || ! endAction ) {
+			} else {
 
-                executeCrossFade( startAction, endAction, duration );
+				currentBaseAction = 'None';
 
-            } else {
+			}
 
-                synchronizeCrossFade( startAction, endAction, duration );
+			crossFadeControls.forEach( function ( control ) {
 
-            }
+				const name = control.property;
 
-            // Update control colors
+				if ( name === currentBaseAction ) {
 
-            if ( endAction ) {
+					control.setActive();
 
-                const clip = endAction.getClip();
-                currentBaseAction = clip.name;
+				} else {
 
-            } else {
+					control.setInactive();
 
-                currentBaseAction = 'None';
+				}
 
-            }
+			} );
 
-            crossFadeControls.forEach( function ( control ) {
+		}
 
-                const name = control.property;
+		function synchronizeCrossFade( startAction, endAction, duration ) {
 
-                if ( name === currentBaseAction ) {
+			mixer.addEventListener( 'loop', onLoopFinished );
 
-                    control.setActive();
+			function onLoopFinished( event ) {
 
-                } else {
+				if ( event.action === startAction ) {
 
-                    control.setInactive();
+					mixer.removeEventListener( 'loop', onLoopFinished );
 
-                }
+					executeCrossFade( startAction, endAction, duration );
 
-            } );
+				}
 
-        }
+			}
 
-        function synchronizeCrossFade( startAction, endAction, duration ) {
+		}
 
-            mixer.addEventListener( 'loop', onLoopFinished );
+		function executeCrossFade( startAction, endAction, duration ) {
 
-            function onLoopFinished( event ) {
+			// Not only the start action, but also the end action must get a weight of 1 before fading
+			// (concerning the start action this is already guaranteed in this place)
 
-                if ( event.action === startAction ) {
+			if ( endAction ) {
 
-                    mixer.removeEventListener( 'loop', onLoopFinished );
+				setWeight( endAction, 1 );
+				endAction.time = 0;
 
-                    executeCrossFade( startAction, endAction, duration );
+				if ( startAction ) {
 
-                }
+					// Crossfade with warping
 
-            }
+					startAction.crossFadeTo( endAction, duration, true );
 
-        }
+				} else {
 
-        function executeCrossFade( startAction, endAction, duration ) {
+					// Fade in
 
-            // Not only the start action, but also the end action must get a weight of 1 before fading
-            // (concerning the start action this is already guaranteed in this place)
+					endAction.fadeIn( duration );
 
-            if ( endAction ) {
+				}
 
-                setWeight( endAction, 1 );
-                endAction.time = 0;
+			} else {
 
-                if ( startAction ) {
+				// Fade out
 
-                    // Crossfade with warping
+				startAction.fadeOut( duration );
 
-                    startAction.crossFadeTo( endAction, duration, true );
+			}
 
-                } else {
+		}
 
-                    // Fade in
+		// This function is needed, since animationAction.crossFadeTo() disables its start action and sets
+		// the start action's timeScale to ((start animation's duration) / (end animation's duration))
 
-                    endAction.fadeIn( duration );
+		function setWeight( action, weight ) {
 
-                }
+			action.enabled = true;
+			action.setEffectiveTimeScale( 1 );
+			action.setEffectiveWeight( weight );
 
-            } else {
+		}
 
-                // Fade out
+		function onWindowResize() {
 
-                startAction.fadeOut( duration );
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
 
-            }
+			renderer.setSize( window.innerWidth, window.innerHeight );
 
-        }
+		}
 
-        // This function is needed, since animationAction.crossFadeTo() disables its start action and sets
-        // the start action's timeScale to ((start animation's duration) / (end animation's duration))
+		function animate() {
+			// Render loop
 
-        function setWeight( action, weight ) {
+			requestId = requestAnimationFrame(animate);
 
-            action.enabled = true;
-            action.setEffectiveTimeScale( 1 );
-            action.setEffectiveWeight( weight );
+			for (let i = 0; i !== numAnimations; ++i) {
 
-        }
+				const action = allActions[i];
+				const clip = action.getClip();
+				const settings = baseActions[clip.name] || additiveActions[clip.name];
+				settings.weight = action.getEffectiveWeight();
 
-        function onWindowResize() {
+			}
 
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+			// Get the time elapsed since the last frame, used for mixer update
 
-            renderer.setSize( window.innerWidth, window.innerHeight );
+			const mixerUpdateDelta = clock.getDelta();
 
-        }
+			// Update the animation mixer, the panel, and render this frame
 
-        function animate() {
-            // Render loop
+			mixer.update(mixerUpdateDelta);
 
-            requestId = requestAnimationFrame(animate);
+			renderer.render(scene, camera);
 
-            for ( let i = 0; i !== numAnimations; ++ i ) {
+		}
 
-                const action = allActions[ i ];
-                const clip = action.getClip();
-                const settings = baseActions[ clip.name ] || additiveActions[ clip.name ];
-                settings.weight = action.getEffectiveWeight();
-
-            }
-
-            // Get the time elapsed since the last frame, used for mixer update
-
-            const mixerUpdateDelta = clock.getDelta();
-
-            // Update the animation mixer, the stats panel, and render this frame
-
-            mixer.update( mixerUpdateDelta );
-
-            stats.update();
-
-            renderer.render( scene, camera );
-
-        }
-        
-    }
+	}
 })

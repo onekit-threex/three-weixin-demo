@@ -3,6 +3,6 @@
     bindtouchstart="webgl_touch"
     bindtouchmove="webgl_touch"
     bindtouchend="webgl_touch"
-    bindtouchcancel="webgl_touch">
+    bindtouchcancel="webgl_touch" style="height:50%">
     </canvas>
     <gui id="gui" width="310" style="position:absolute; bottom:0;left:0;height:50%;overflow-y:scroll;"/>

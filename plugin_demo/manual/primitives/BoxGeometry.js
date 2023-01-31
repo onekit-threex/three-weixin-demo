@@ -31,6 +31,7 @@ Page({
         document.createElementAsync("canvas", "webgl").then(canvas => this.run(canvas).then())
     },
     async run(canvas) {
+        var that = this
         this.canvas = canvas
         var renderer = this.renderer = new THREE.WebGLRenderer({
             antialias: true,
@@ -66,7 +67,7 @@ Page({
         light1.position.set(-5, 10, 5);
         scene.add(light1);
         //////////////////////////////////
-        var geometry = new THREE.BoxGeometry(1, 2, 3);
+        var geometry = new THREE.BoxGeometry(1, 1, 1);
         var material = new THREE.MeshLambertMaterial({
             color: "#00ff00"
         });

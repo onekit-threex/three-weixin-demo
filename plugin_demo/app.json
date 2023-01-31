@@ -17,8 +17,8 @@
         "backgroundColor": "#F5F5F9"
     },
     "usingComponents": {
-        "stats": "/threex/uc/stats/stats",
-        "gui": "/threex/uc/gui/gui"
+        "stats":"/threex/uc/stats/stats",
+        "gui":"/threex/uc/gui/gui"
     },
     "sitemapLocation": "sitemap.json",
     "workers": "workers",
