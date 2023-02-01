@@ -86,24 +86,22 @@ Page({
 
             const panel = that.selectComponent("#gui")
             const folder1 = panel.addFolder('尺寸');
+            const folder2 = panel.addFolder('色彩');
 
-            folder1.add({
-                name: "test1",
-                test1: true
-            }, 'test1').onChange(console.error)
-            folder1.add({
-                name: "test2",
-                test2: "ok"
-            }, 'test2').onChange(console.error)
-            folder1.addColor({
-                name: "test3",
-                test3: "#f00"
-            }, 'test3').onChange(console.error)
-            folder1.add({
-                name: "test4",
-                test4: "b"
-            }, 'test4', ["a", "b", "c"]).onChange(console.error)
-
+            folder1.add( {name:"width",width:1}, 'width', 0.0, 10, 0.01 ).onChange( (value)=>{
+                mesh.scale.x = value;
+            });
+            folder1.add( {name:"height",height:1}, 'height', 0.0, 10, 0.01 ).onChange( (value)=>{
+                mesh.scale.y = value;
+            });
+            folder1.add( {name:"depth",depth:1}, 'depth', 0.0, 10, 0.01 ).onChange( (value)=>{
+                mesh.scale.z = value;
+            });
+            folder2.addColor( {name:"color",color:"#0f0"}, 'color').onChange(value=>{
+                //console.error("xxxxx",color)
+               mesh.material.color = value
+            })
+		
         }
         createPanel()
     }
