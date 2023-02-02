@@ -1,6 +1,6 @@
 {
     "component": true,
     "usingComponents": {
-        "color-picker":"mini-color-picker/color-picker"
+        "color-picker":"weixin-color-picker/index"
     }
 }

@@ -41,7 +41,7 @@ Component({
 		},
 		picker_changeColor(e) {
 			function fix(number){
-				var str = number.toString(16)+""
+				var str = (number*1).toString(16)+""
 				if(str.length==1){
 					str = "0"+str
 				}
@@ -53,6 +53,7 @@ Component({
 			const color = fix(array[0])
 				+fix(array[1])
 				+fix(array[2])
+				console.error(str,color)
 			this.colorChange(color)
 		},
 		input_input(e) {

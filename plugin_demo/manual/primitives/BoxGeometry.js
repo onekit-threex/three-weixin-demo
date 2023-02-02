@@ -97,9 +97,10 @@ Page({
             folder1.add( {name:"depth",depth:1}, 'depth', 0.0, 10, 0.01 ).onChange( (value)=>{
                 mesh.scale.z = value;
             });
-            folder2.addColor( {name:"color",color:"#0f0"}, 'color').onChange(value=>{
-                //console.error("xxxxx",color)
-               mesh.material.color = value
+            folder2.addColor( {name:"color",color:"#0f0"}, 'color').onChange(color=>{
+               mesh.material = new THREE.MeshLambertMaterial({
+                color
+            });
             })
 		
         }
