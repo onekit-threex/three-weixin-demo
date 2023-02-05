@@ -6,7 +6,7 @@
 			<gui-boolean data-index="{{index}}" data-path="{{item.path}}" wx:elif="{{item.type=='boolean'}}" bindchange="gui_change" name="{{item.name}}" value="{{item.value}}"/>
 			<gui-color data-index="{{index}}" data-path="{{item.path}}" wx:elif="{{item.type=='color'}}" bindchange="gui_change" name="{{item.name}}" value="{{item.value}}"/>
 			<gui-function data-index="{{index}}" data-path="{{item.path}}" wx:elif="{{item.type=='function'}}" bindchange="gui_change" name="{{item.name}}" value="{{item.value}}"/>
-			<gui-number data-index="{{index}}" data-path="{{item.path}}" wx:elif="{{item.type=='number'}}" bindchange="gui_change" name="{{item.name}}" value="{{item.value}}" min="{{item.min}}" max="{{item.max}}" />
+			<gui-number data-index="{{index}}" data-path="{{item.path}}" wx:elif="{{item.type=='number'}}" bindchange="gui_change" name="{{item.name}}" value="{{item.value}}" min="{{item.min}}" max="{{item.max}}" step="{{item.step}}" />
 			<gui-option data-index="{{index}}" data-path="{{item.path}}" wx:elif="{{item.type=='option'}}" bindchange="gui_change" name="{{item.name}}" value="{{item.value}}" range="{{item.range}}" />
 			<gui-string data-index="{{index}}" data-path="{{item.path}}" wx:elif="{{item.type=='string'}}" bindchange="gui_change" name="{{item.name}}" value="{{item.value}}"/>
 		</block>

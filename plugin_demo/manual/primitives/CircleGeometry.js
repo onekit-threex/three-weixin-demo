@@ -143,7 +143,7 @@ Page({
             folder4.add({
                 name: "segments",
                 segments: that.setting.segments
-            }, 'segments', 1, 10, 1).onChange((value) => {
+            }, 'segments', 1, 24, 1).onChange((value) => {
                 that.setting.segments = value;
                 that.createMesh();
             });

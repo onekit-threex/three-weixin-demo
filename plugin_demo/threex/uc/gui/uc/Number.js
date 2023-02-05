@@ -13,7 +13,7 @@ Component({
 		},
 		step: {
 			type: Number,
-			value: 0.01
+			value: 1
 		}
 	},
 	methods: {
