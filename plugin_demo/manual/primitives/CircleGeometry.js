@@ -14,6 +14,7 @@ var requestId
 Page({
     setting: {
         color: "#00ff00",
+        segments:24,
         radius: 1,
         thetaStart: 0,
         thetaLength: Math.PI * 2
@@ -39,11 +40,12 @@ Page({
             this.scene.remove(this.mesh)
         }
         var material = new THREE.MeshLambertMaterial({
-            color: this.setting.color
+            color: this.setting.color,
+            side:THREE.DoubleSide
         });
         var mesh = new THREE.Mesh(new THREE.CircleGeometry(
             this.setting.radius,
-            24,
+            this.setting.segments,
             this.setting.thetaStart,
             this.setting.thetaLength,
         ), material);
@@ -104,7 +106,8 @@ Page({
             const panel = that.selectComponent("#gui")
             const folder1 = panel.addFolder('颜色');
             const folder2 = panel.addFolder('尺寸');
-            const folder3 = panel.addFolder('高级');
+            const folder3 = panel.addFolder('细节');
+            const folder4 = panel.addFolder('高级');
             //
             folder1.addColor({
                 name: "color",
