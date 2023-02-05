@@ -15,7 +15,7 @@ Page({
     setting: {
         color: "#00ff00",
         radius : 1,
-        detail : 1,
+        detail : 0,
     },
     onUnload() {
         cancelAnimationFrame(requestId, this.canvas)
