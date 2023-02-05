@@ -15,7 +15,7 @@ Page({
     setting: {
         color: "#00ff00",
         radius : 1,
-        detail : 0,
+        detail : 1,
     },
     onUnload() {
         cancelAnimationFrame(requestId, this.canvas)
@@ -123,7 +123,7 @@ Page({
             folder3.add({
                 name: "detail",
                 detail: that.setting.detail
-            }, 'detail', 0,10,0).onChange((value) => {
+            }, 'detail', 0,10,1).onChange((value) => {
                 that.setting.detail = value;
                 that.createMesh();
             });
