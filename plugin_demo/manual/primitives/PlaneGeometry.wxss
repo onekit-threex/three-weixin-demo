@@ -1,1 +1,3 @@
-/* manual/primitives/PlaneGeometry.wxss */
+page {
+	background:#000;
+}
