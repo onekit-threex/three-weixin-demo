@@ -13,6 +13,7 @@
         }
     },
     "window": {
+        "disableScroll":true,
         "navigationBarTitleText": "Three X",
         "backgroundColor": "#F5F5F9"
     },
