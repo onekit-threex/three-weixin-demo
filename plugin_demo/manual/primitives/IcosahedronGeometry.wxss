@@ -1,1 +1,3 @@
-/* manual/primitives/IcosahedronGeometry.wxss */
+page {
+	background:#000;
+}
