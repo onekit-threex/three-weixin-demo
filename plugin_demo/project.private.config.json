@@ -395,6 +395,17 @@
                         "enabled": true,
                         "pages": []
                     }
+                },
+                {
+                    "name": "",
+                    "pathName": "manual/primitives/CylinderGeometry",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
                 }
             ]
         }
