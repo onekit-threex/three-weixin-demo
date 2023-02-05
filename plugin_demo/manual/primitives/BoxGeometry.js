@@ -12,6 +12,12 @@ import {
 } from '../jsm/controls/OrbitControls.js';
 var requestId
 Page({
+    setting: {
+        width: 1,
+        height: 1,
+        depth: 1,
+        color:"#00ff00"
+    },
     onUnload() {
         cancelAnimationFrame(requestId, this.canvas)
         this.worker && this.worker.terminate()
@@ -30,6 +36,21 @@ Page({
     onLoad() {
         document.createElementAsync("canvas", "webgl").then(canvas => this.run(canvas).then())
     },
+    createMesh() {
+        if (this.mesh) {
+            this.scene.remove(this.mesh)
+        }
+        var material = new THREE.MeshLambertMaterial({
+            color:this.setting.color
+        });
+        var mesh = new THREE.Mesh(new THREE.BoxGeometry(
+            this.setting.width, 
+            this.setting.height, 
+            this.setting.depth), material);
+
+        this.scene.add(mesh);
+        this.mesh = mesh
+    },
     async run(canvas) {
         var that = this
         this.canvas = canvas
@@ -41,7 +62,7 @@ Page({
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
 
-        var scene = new THREE.Scene()
+        var scene = this.scene = new THREE.Scene()
         scene.background = "#888888"
         var camera = new THREE.PerspectiveCamera(
             45,
@@ -67,12 +88,8 @@ Page({
         light1.position.set(-5, 10, 5);
         scene.add(light1);
         //////////////////////////////////
-        var geometry = new THREE.BoxGeometry(1, 1, 1);
-        var material = new THREE.MeshLambertMaterial({
-            color: "#00ff00"
-        });
-        var mesh = new THREE.Mesh(geometry, material);
-        scene.add(mesh);
+        that.createMesh()
+
         ////////////////////////////////
         function animate() {
             requestAnimationFrame(() => {
@@ -86,23 +103,39 @@ Page({
 
             const panel = that.selectComponent("#gui")
             const folder1 = panel.addFolder('尺寸');
-            const folder2 = panel.addFolder('色彩');
-
-            folder1.add( {name:"width",width:1}, 'width', 0.0, 10, 0.01 ).onChange( (value)=>{
-                mesh.scale.x = value;
+            const folder2 = panel.addFolder('颜色');
+            const folder3 = panel.addFolder('高级');
+            //
+            folder1.add({
+                name: "width",
+                width: 1
+            }, 'width', 0.0, 10, 0.01).onChange((value) => {
+                that.setting.width = value;
+                that.createMesh();
             });
-            folder1.add( {name:"height",height:1}, 'height', 0.0, 10, 0.01 ).onChange( (value)=>{
-                mesh.scale.y = value;
+            folder1.add({
+                name: "height",
+                height: 1
+            }, 'height', 0.0, 10, 0.01).onChange((value) => {
+                that.setting.height = value;
+                that.createMesh();
             });
-            folder1.add( {name:"depth",depth:1}, 'depth', 0.0, 10, 0.01 ).onChange( (value)=>{
-                mesh.scale.z = value;
+            folder1.add({
+                name: "depth",
+                depth: 1
+            }, 'depth', 0.0, 10, 0.01).onChange((value) => {
+                that.setting.depth = value;
+                that.createMesh();
             });
-            folder2.addColor( {name:"color",color:"#0f0"}, 'color').onChange(color=>{
-               mesh.material = new THREE.MeshLambertMaterial({
-                color
-            });
+            //
+            folder2.addColor({
+                name: "color",
+                color: "#0f0"
+            }, 'color').onChange(color => {
+                that.setting.color = color;
+                that.createMesh();
             })
-		
+            //
         }
         createPanel()
     }
