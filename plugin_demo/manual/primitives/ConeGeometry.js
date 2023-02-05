@@ -14,10 +14,13 @@ var requestId
 Page({
     setting: {
         color: "#00ff00",
-        segments:24,
         radius: 1,
+        height: 1,
+        openEnded: true,
         thetaStart: 0,
-        thetaLength: Math.PI * 2
+        thetaLength: Math.PI * 2,
+        radialSegments: 16,
+        heightSegments: 16,
     },
     onUnload() {
         cancelAnimationFrame(requestId, this.canvas)
@@ -41,12 +44,15 @@ Page({
         }
         var material = new THREE.MeshLambertMaterial({
             color: this.setting.color,
-            side:THREE.DoubleSide
+            side: THREE.DoubleSide
         });
-        var mesh = new THREE.Mesh(new THREE.CircleGeometry(
-            this.setting.radius,
-            this.setting.segments,
-            this.setting.thetaStart,
+        var mesh = new THREE.Mesh(new THREE.ConeGeometry(
+            this.setting.radius, 
+            this.setting.height,
+            this.setting.radialSegments, 
+            this.setting.heightSegments,
+            this.setting.openEnded,
+            this.setting.thetaStart, 
             this.setting.thetaLength,
         ), material);
 
@@ -106,12 +112,12 @@ Page({
             const panel = that.selectComponent("#gui")
             const folder1 = panel.addFolder('颜色');
             const folder2 = panel.addFolder('尺寸');
-            const folder3 = panel.addFolder('细节');
-            const folder4 = panel.addFolder('高级');
+            const folder3 = panel.addFolder('高级');
+            const folder4 = panel.addFolder('优化');
             //
             folder1.addColor({
                 name: "color",
-                color: "#0f0"
+                color: that.setting.color
             }, 'color').onChange(color => {
                 that.setting.color = color;
                 that.createMesh();
@@ -119,24 +125,54 @@ Page({
             //
             folder2.add({
                 name: "radius",
-                radius: 1
+                radius: that.setting.radius
             }, 'radius', 0.0, 10, 0.01).onChange((value) => {
                 that.setting.radius = value;
                 that.createMesh();
             });
+            folder2.add({
+                name: "height",
+                height: that.setting.height
+            }, 'height', 0.0, 10, 0.01).onChange((value) => {
+                that.setting.height = value;
+                that.createMesh();
+            });
             //
             folder3.add({
+                name: "openEnded",
+                openEnded: that.setting.openEnded
+            }, 'openEnded').onChange((value) => {
+                console.error(typeof value,value)
+                that.setting.openEnded = value;
+                that.createMesh();
+            });
+            folder3.add({
                 name: "thetaStart",
-                thetaStart: 1
-            }, 'thetaStart', 0.0, Math.PI*2, 0.01).onChange((value) => {
+                thetaStart: that.setting.thetaStart
+            }, 'thetaStart', 0.0, Math.PI * 2, 0.01).onChange((value) => {
                 that.setting.thetaStart = value;
                 that.createMesh();
             });
             folder3.add({
                 name: "thetaLength",
-                thetaLength: 1
-            }, 'thetaLength', 0.0, Math.PI*2, 0.01).onChange((value) => {
+                thetaLength: that.setting.thetaLength
+            }, 'thetaLength', 0.0, Math.PI * 2, 0.01).onChange((value) => {
                 that.setting.thetaLength = value;
+                that.createMesh();
+            });
+            //
+            folder4.add({
+                name: "radialSegments",
+                radialSegments: that.setting.radialSegments
+            }, 'radialSegments', 1, 10, 1).onChange((value) => {
+                that.setting.radialSegments = value;
+                that.createMesh();
+            });
+            folder4.add({
+                name: "heightSegments",
+                heightSegments: that.setting.heightSegments
+            }, 'heightSegments', 1, 10, 1).onChange((value) => {
+                that.setting.heightSegments = value;
                 that.createMesh();
             });
         }

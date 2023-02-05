@@ -14,10 +14,10 @@ var requestId
 Page({
     setting: {
         color: "#00ff00",
-        segments: 24,
         radius: 1,
         thetaStart: 0,
-        thetaLength: Math.PI * 2
+        thetaLength: Math.PI * 2,
+        segments: 24,
     },
     onUnload() {
         cancelAnimationFrame(requestId, this.canvas)
