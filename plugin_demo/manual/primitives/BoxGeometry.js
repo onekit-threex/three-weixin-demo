@@ -105,7 +105,7 @@ Page({
             //
             folder1.addColor({
                 name: "color",
-                color: "#0f0"
+                color: that.setting.color
             }, 'color').onChange(color => {
                 that.setting.color = color;
                 that.createMesh();
@@ -113,21 +113,21 @@ Page({
             //
             folder2.add({
                 name: "width",
-                width: 1
+                width: that.setting.width
             }, 'width', 0.0, 10, 0.01).onChange((value) => {
                 that.setting.width = value;
                 that.createMesh();
             });
             folder2.add({
                 name: "height",
-                height: 1
+                height: that.setting.height
             }, 'height', 0.0, 10, 0.01).onChange((value) => {
                 that.setting.height = value;
                 that.createMesh();
             });
             folder2.add({
                 name: "depth",
-                depth: 1
+                depth: that.setting.depth
             }, 'depth', 0.0, 10, 0.01).onChange((value) => {
                 that.setting.depth = value;
                 that.createMesh();

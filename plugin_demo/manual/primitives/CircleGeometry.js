@@ -14,7 +14,7 @@ var requestId
 Page({
     setting: {
         color: "#00ff00",
-        segments:24,
+        segments: 24,
         radius: 1,
         thetaStart: 0,
         thetaLength: Math.PI * 2
@@ -41,7 +41,7 @@ Page({
         }
         var material = new THREE.MeshLambertMaterial({
             color: this.setting.color,
-            side:THREE.DoubleSide
+            side: THREE.DoubleSide
         });
         var mesh = new THREE.Mesh(new THREE.CircleGeometry(
             this.setting.radius,
@@ -111,7 +111,7 @@ Page({
             //
             folder1.addColor({
                 name: "color",
-                color: "#0f0"
+                color: that.setting.color
             }, 'color').onChange(color => {
                 that.setting.color = color;
                 that.createMesh();
@@ -119,7 +119,7 @@ Page({
             //
             folder2.add({
                 name: "radius",
-                radius: 1
+                radius: that.setting.radius
             }, 'radius', 0.0, 10, 0.01).onChange((value) => {
                 that.setting.radius = value;
                 that.createMesh();
@@ -127,16 +127,24 @@ Page({
             //
             folder3.add({
                 name: "thetaStart",
-                thetaStart: 1
-            }, 'thetaStart', 0.0, Math.PI*2, 0.01).onChange((value) => {
+                thetaStart: that.setting.thetaStart
+            }, 'thetaStart', 0.0, Math.PI * 2, 0.01).onChange((value) => {
                 that.setting.thetaStart = value;
                 that.createMesh();
             });
             folder3.add({
                 name: "thetaLength",
-                thetaLength: 1
-            }, 'thetaLength', 0.0, Math.PI*2, 0.01).onChange((value) => {
+                thetaLength: that.setting.thetaLength
+            }, 'thetaLength', 0.0, Math.PI * 2, 0.01).onChange((value) => {
                 that.setting.thetaLength = value;
+                that.createMesh();
+            });
+            //
+            folder4.add({
+                name: "segments",
+                segments: that.setting.segments
+            }, 'segments', 1, 10, 1).onChange((value) => {
+                that.setting.segments = value;
                 that.createMesh();
             });
         }
