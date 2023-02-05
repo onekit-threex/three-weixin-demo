@@ -106,8 +106,8 @@ Page({
             const panel = that.selectComponent("#gui")
             const folder1 = panel.addFolder('颜色');
             const folder2 = panel.addFolder('尺寸');
-            const folder3 = panel.addFolder('细节');
-            const folder4 = panel.addFolder('高级');
+            const folder3 = panel.addFolder('高级');
+            const folder4 = panel.addFolder('优化');
             //
             folder1.addColor({
                 name: "color",
