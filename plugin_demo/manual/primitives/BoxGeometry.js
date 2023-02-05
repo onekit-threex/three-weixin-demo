@@ -13,10 +13,10 @@ import {
 var requestId
 Page({
     setting: {
+        color: "#00ff00",
         width: 1,
         height: 1,
-        depth: 1,
-        color:"#00ff00"
+        depth: 1
     },
     onUnload() {
         cancelAnimationFrame(requestId, this.canvas)
@@ -29,8 +29,6 @@ Page({
     },
     webgl_touch(e) {
         const web_e = Event.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
         this.canvas.dispatchEvent(web_e)
     },
     onLoad() {
@@ -41,11 +39,11 @@ Page({
             this.scene.remove(this.mesh)
         }
         var material = new THREE.MeshLambertMaterial({
-            color:this.setting.color
+            color: this.setting.color
         });
         var mesh = new THREE.Mesh(new THREE.BoxGeometry(
-            this.setting.width, 
-            this.setting.height, 
+            this.setting.width,
+            this.setting.height,
             this.setting.depth), material);
 
         this.scene.add(mesh);
@@ -102,33 +100,10 @@ Page({
         function createPanel() {
 
             const panel = that.selectComponent("#gui")
-            const folder1 = panel.addFolder('尺寸');
-            const folder2 = panel.addFolder('颜色');
-            const folder3 = panel.addFolder('高级');
+            const folder1 = panel.addFolder('颜色');
+            const folder2 = panel.addFolder('尺寸');
             //
-            folder1.add({
-                name: "width",
-                width: 1
-            }, 'width', 0.0, 10, 0.01).onChange((value) => {
-                that.setting.width = value;
-                that.createMesh();
-            });
-            folder1.add({
-                name: "height",
-                height: 1
-            }, 'height', 0.0, 10, 0.01).onChange((value) => {
-                that.setting.height = value;
-                that.createMesh();
-            });
-            folder1.add({
-                name: "depth",
-                depth: 1
-            }, 'depth', 0.0, 10, 0.01).onChange((value) => {
-                that.setting.depth = value;
-                that.createMesh();
-            });
-            //
-            folder2.addColor({
+            folder1.addColor({
                 name: "color",
                 color: "#0f0"
             }, 'color').onChange(color => {
@@ -136,6 +111,27 @@ Page({
                 that.createMesh();
             })
             //
+            folder2.add({
+                name: "width",
+                width: 1
+            }, 'width', 0.0, 10, 0.01).onChange((value) => {
+                that.setting.width = value;
+                that.createMesh();
+            });
+            folder2.add({
+                name: "height",
+                height: 1
+            }, 'height', 0.0, 10, 0.01).onChange((value) => {
+                that.setting.height = value;
+                that.createMesh();
+            });
+            folder2.add({
+                name: "depth",
+                depth: 1
+            }, 'depth', 0.0, 10, 0.01).onChange((value) => {
+                that.setting.depth = value;
+                that.createMesh();
+            });
         }
         createPanel()
     }

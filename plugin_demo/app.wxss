@@ -1,7 +1,6 @@
 page{
     height:100%;
     overflow: hidden;
-    background:#000;
 }
 canvas{
     background: gray;
