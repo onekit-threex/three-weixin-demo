@@ -1,1 +1,3 @@
-/* manual/primitives/WireframeGeometry.wxss */
+page {
+	background:#000;
+}
