@@ -1,1 +1,3 @@
-/* manual/primitives/TorusKnotGeometry.wxss */
+page {
+	background:#000;
+}
