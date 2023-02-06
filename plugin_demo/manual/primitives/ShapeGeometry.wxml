@@ -1,2 +1,4 @@
-<!--manual/primitives/ShapeGeometry.wxml-->
-<text>manual/primitives/ShapeGeometry.wxml</text>
+<canvas id="canvas_webgl" type="webgl" disable-scroll bindtouchstart="webgl_touch" bindtouchmove="webgl_touch" bindtouchend="webgl_touch" bindtouchcancel="webgl_touch"></canvas>
+
+<gui id="gui" width="310" style="position:absolute; top:0;right:0;height:50%;overflow-y:scroll;"/>
+
