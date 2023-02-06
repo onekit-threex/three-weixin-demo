@@ -6,8 +6,12 @@ import {
     cancelAnimationFrame
 } from 'dhtml-weixin';
 import * as THREE from '../../three/Three.js';
-import { FontLoader } from '../jsm/loaders/FontLoader.js';
-import { TextGeometry } from '../jsm/geometries/TextGeometry.js';
+import {
+    FontLoader
+} from '../jsm/loaders/FontLoader.js';
+import {
+    TextGeometry
+} from '../jsm/geometries/TextGeometry.js';
 import {
     OrbitControls
 } from '../jsm/controls/OrbitControls.js';
@@ -15,9 +19,13 @@ var requestId
 Page({
     setting: {
         color: "#00ff00",
-        radius: 1,
-        widthSegments: 12,
-        heightSegments: 8,
+        size: 3, // ui: size
+        height: 0.2, // ui: height
+        curveSegments: 12, // ui: curveSegments
+        bevelEnabled: true, // ui: bevelEnabled
+        bevelThickness: 0.15, // ui: bevelThickness
+        bevelSize: 0.3, // ui: bevelSize
+        bevelSegments: 5, // ui: bevelSegments
     },
     onUnload() {
         cancelAnimationFrame(requestId, this.canvas)
@@ -39,15 +47,15 @@ Page({
         if (this.mesh) {
             this.scene.remove(this.mesh)
         }
-        const geometry = new TextGeometry("ThreeX", {
+        const geometry = new TextGeometry("Hello,ThreeX", {
             font: this.font,
-            size: 3, // ui: size
-            height: 0.2, // ui: height
-            curveSegments: 12, // ui: curveSegments
-            bevelEnabled: true, // ui: bevelEnabled
-            bevelThickness: 0.15, // ui: bevelThickness
-            bevelSize: 0.3, // ui: bevelSize
-            bevelSegments: 5, // ui: bevelSegments
+            size: this.setting.size, // ui: size
+            height: this.setting.height, // ui: height
+            curveSegments: this.setting.curveSegments, // ui: curveSegments
+            bevelEnabled: this.setting.bevelEnabled, // ui: bevelEnabled
+            bevelThickness: this.setting.bevelThickness, // ui: bevelThickness
+            bevelSize: this.setting.bevelSize, // ui: bevelSize
+            bevelSegments: this.setting.bevelSegments, // ui: bevelSegments
         });
         var material = new THREE.MeshLambertMaterial({
             color: this.setting.color,
@@ -131,30 +139,57 @@ Page({
                 that.setting.color = color;
                 that.createMesh();
             })
-            /*
             //
             folder2.add({
-                name: "radius",
-                radius: that.setting.radius
-            }, 'radius', 0.0, 10, 0.01).onChange((value) => {
-                that.setting.radius = value;
+                name: "size",
+                size: that.setting.size
+            }, 'size', 0.0, 10, 0.01).onChange((value) => {
+                that.setting.size = value;
+                that.createMesh();
+            });
+            folder2.add({
+                name: "height",
+                height: that.setting.height
+            }, 'height', 0.0, 10, 0.01).onChange((value) => {
+                that.setting.height = value;
+                that.createMesh();
+            });
+            folder2.add({
+                name: "bevelEnabled",
+                bevelEnabled: that.setting.bevelEnabled
+            }, 'bevelEnabled').onChange((value) => {
+                that.setting.bevelEnabled = value;
+                that.createMesh();
+            });
+            folder2.add({
+                name: "bevelThickness",
+                bevelThickness: that.setting.bevelThickness
+            }, 'bevelThickness', 0.0, 10, 0.01).onChange((value) => {
+                that.setting.bevelThickness = value;
+                that.createMesh();
+            });
+            folder2.add({
+                name: "bevelSize",
+                bevelSize: that.setting.bevelSize
+            }, 'bevelSize', 0.0, 10, 0.01).onChange((value) => {
+                that.setting.bevelSize = value;
                 that.createMesh();
             });
             //
             folder3.add({
-                name: "widthSegments",
-                widthSegments: that.setting.widthSegments
-            }, 'widthSegments', 1, 10, 1).onChange((value) => {
-                that.setting.widthSegments = value;
+                name: "curveSegments",
+                curveSegments: that.setting.curveSegments
+            }, 'curveSegments', 1, 10, 1).onChange((value) => {
+                that.setting.curveSegments = value;
                 that.createMesh();
             });
             folder3.add({
-                name: "heightSegments",
-                heightSegments: that.setting.heightSegments
-            }, 'heightSegments', 1, 10, 1).onChange((value) => {
-                that.setting.heightSegments = value;
+                name: "bevelSegments",
+                bevelSegments: that.setting.bevelSegments
+            }, 'bevelSegments', 1, 10, 1).onChange((value) => {
+                that.setting.bevelSegments = value;
                 that.createMesh();
-            });*/
+            });
         }
         createPanel()
     }
