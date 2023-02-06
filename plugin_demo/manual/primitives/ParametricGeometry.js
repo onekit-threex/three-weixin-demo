@@ -138,14 +138,14 @@ Page({
             folder2.add({
                 name: "slices",
                 slices: that.setting.slices
-            }, 'slices', 0, 10, 2).onChange(value => {
+            }, 'slices', 0, 10, 1).onChange(value => {
                 that.setting.slices = value;
                 that.createMesh();
             })
             folder2.add({
                 name: "stacks",
                 stacks: that.setting.stacks
-            }, 'stacks', 0, 10, 3).onChange(value => {
+            }, 'stacks', 0, 10, 1).onChange(value => {
                 that.setting.stacks = value;
                 that.createMesh();
             })

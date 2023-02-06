@@ -1,66 +1,145 @@
-// manual/primitives/PolyhedronGeometry.js
+import {
+    document,
+    window,
+    Event,
+    requestAnimationFrame,
+    cancelAnimationFrame
+} from 'dhtml-weixin';
+import * as THREE from '../../three/Three.js';
+
+import {
+    OrbitControls
+} from '../jsm/controls/OrbitControls.js';
+var requestId
 Page({
-
-    /**
-     * 页面的初始数据
-     */
-    data: {
-
+    setting: {
+        color: "#00ff00",
+        radius: 7,
+        detail: 2,
     },
-
-    /**
-     * 生命周期函数--监听页面加载
-     */
-    onLoad(options) {
-
-    },
-
-    /**
-     * 生命周期函数--监听页面初次渲染完成
-     */
-    onReady() {
-
-    },
-
-    /**
-     * 生命周期函数--监听页面显示
-     */
-    onShow() {
-
-    },
-
-    /**
-     * 生命周期函数--监听页面隐藏
-     */
-    onHide() {
-
-    },
-
-    /**
-     * 生命周期函数--监听页面卸载
-     */
     onUnload() {
-
+        cancelAnimationFrame(requestId, this.canvas)
+        this.worker && this.worker.terminate()
+        this.renderer.dispose()
+        this.renderer.forceContextLoss()
+        this.renderer.context = null
+        this.renderer.domElement = null
+        this.renderer = null
     },
-
-    /**
-     * 页面相关事件处理函数--监听用户下拉动作
-     */
-    onPullDownRefresh() {
-
+    webgl_touch(e) {
+        const web_e = Event.fix(e)
+        this.canvas.dispatchEvent(web_e)
     },
-
-    /**
-     * 页面上拉触底事件的处理函数
-     */
-    onReachBottom() {
-
+    onLoad() {
+        document.createElementAsync("canvas", "webgl").then(canvas => this.run(canvas).then())
     },
+    createMesh() {
+        if (this.mesh) {
+            this.scene.remove(this.mesh)
+        }
+        const verticesOfCube = [
+            -1, -1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1,
+            -1, -1, 1, 1, -1, 1, 1, 1, 1, -1, 1, 1,
+        ];
+        const indicesOfFaces = [
+            2, 1, 0, 0, 3, 2,
+            0, 4, 7, 7, 3, 0,
+            0, 1, 5, 5, 4, 0,
+            1, 2, 6, 6, 5, 1,
+            2, 3, 7, 7, 6, 2,
+            4, 5, 6, 6, 7, 4,
+        ];
 
-    /**
-     * 用户点击右上角分享
-     */
-    onShareAppMessage() {
+        var material = new THREE.MeshLambertMaterial({
+            color: this.setting.color,
+            side: THREE.DoubleSide
+        });
+        var mesh = new THREE.Mesh(new THREE.PolyhedronGeometry(
+            verticesOfCube,
+            indicesOfFaces,
+            this.setting.radius,
+            this.setting.detail,
+        ), material);
 
+        this.scene.add(mesh);
+        this.mesh = mesh
+    },
+    async run(canvas) {
+        var that = this
+        this.canvas = canvas
+        var renderer = this.renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            canvas
+        });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.outputEncoding = THREE.sRGBEncoding;
+
+        var scene = this.scene = new THREE.Scene()
+        scene.background = "#888888"
+        var camera = new THREE.PerspectiveCamera(
+            45,
+            window.innerWidth / window.innerHeight,
+            1,
+            100
+        );
+        camera.position.set(10, 5, 10);
+        camera.lookAt(scene.position);
+        //
+        const controls = new OrbitControls(
+            camera,
+            renderer.domElement
+        );
+        controls.enablePan = true;
+        controls.enableZoom = true;
+        controls.update();
+        /////////////////////////////////////////
+        const light0 = new THREE.AmbientLight(0xFFFFFF, 0.5);
+        scene.add(light0);
+        //
+        const light1 = new THREE.DirectionalLight(0xFFFFFF, 0.5);
+        light1.position.set(-5, 10, 5);
+        scene.add(light1);
+        //////////////////////////////////
+        that.createMesh()
+
+        ////////////////////////////////
+        function animate() {
+            requestAnimationFrame(() => {
+                animate()
+            })
+            renderer.render(scene, camera)
+        }
+        animate()
+
+        function createPanel() {
+            const panel = that.selectComponent("#gui")
+            const folder1 = panel.addFolder('颜色');
+            const folder2 = panel.addFolder('高级');
+            //
+            folder1.addColor({
+                name: "color",
+                color: that.setting.color
+            }, 'color').onChange(color => {
+                that.setting.color = color;
+                that.createMesh();
+            })
+            //
+            folder2.add({
+                name: "radius",
+                radius: that.setting.radius
+            }, 'radius', 0, 10,1).onChange(value => {
+                that.setting.radius = value;
+                that.createMesh();
+            })
+            folder2.add({
+                name: "detail",
+                detail: that.setting.detail
+            }, 'detail', 0, 10, 1).onChange(value => {
+                that.setting.detail = value;
+                that.createMesh();
+            })
+        }
+        createPanel()
     }
 })
