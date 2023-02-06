@@ -1,1 +1,3 @@
-/* manual/primitives/TetrahedronGeometry.wxss */
+page {
+	background:#000;
+}

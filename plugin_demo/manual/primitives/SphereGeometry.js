@@ -15,8 +15,7 @@ Page({
     setting: {
         color: "#00ff00",
         radius: 1,
-        widthSegments: 12,
-        heightSegments: 8,
+        detail: 12,
     },
     onUnload() {
         cancelAnimationFrame(requestId, this.canvas)
@@ -42,10 +41,9 @@ Page({
             color: this.setting.color,
             side: THREE.DoubleSide
         });
-        var mesh = new THREE.Mesh(new THREE.SphereGeometry(
+        var mesh = new THREE.Mesh(new THREE.TetrahedronGeometry(
             this.setting.radius,
-            this.setting.widthSegments,
-            this.setting.heightSegments,
+            this.setting.detail,
         ), material);
 
         this.scene.add(mesh);
@@ -104,7 +102,7 @@ Page({
             const panel = that.selectComponent("#gui")
             const folder1 = panel.addFolder('颜色');
             const folder2 = panel.addFolder('尺寸');
-            const folder3 = panel.addFolder('优化');
+            const folder3 = panel.addFolder('高级');
             //
             folder1.addColor({
                 name: "color",
@@ -123,17 +121,10 @@ Page({
             });
             //
             folder3.add({
-                name: "widthSegments",
-                widthSegments: that.setting.widthSegments
-            }, 'widthSegments', 1, 10, 1).onChange((value) => {
-                that.setting.widthSegments = value;
-                that.createMesh();
-            });
-            folder3.add({
-                name: "heightSegments",
-                heightSegments: that.setting.heightSegments
-            }, 'heightSegments', 1, 10, 1).onChange((value) => {
-                that.setting.heightSegments = value;
+                name: "detail",
+                detail: that.setting.detail
+            }, 'detail', 0, 10, 1).onChange((value) => {
+                that.setting.detail = value;
                 that.createMesh();
             });
         }
