@@ -406,6 +406,17 @@
                         "enabled": true,
                         "pages": []
                     }
+                },
+                {
+                    "name": "",
+                    "pathName": "webgl/webgl_materials_car",
+                    "query": "",
+                    "launchMode": "default",
+                    "scene": null,
+                    "partialCompile": {
+                        "enabled": true,
+                        "pages": []
+                    }
                 }
             ]
         }

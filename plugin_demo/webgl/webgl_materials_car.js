@@ -80,6 +80,18 @@ var that = this
 				scene.environment = new RGBELoader().load( 'textures/equirectangular/venice_sunset_1k.hdr' );
 				scene.environment.mapping = THREE.EquirectangularReflectionMapping;
 				scene.fog = new THREE.Fog( 0x333333, 10, 15 );
+				//////////////////////
+				var spotLight = new THREE.SpotLight(0xffffff, 1) //聚光灯
+				spotLight.position.set(0, 0, 10)
+				spotLight.lookAt(scene.position)
+				scene.add(spotLight)
+				//   
+				
+				var directionalLight = new THREE.DirectionalLight(0xffffff, 1) //方向光
+				directionalLight.position.set(0, 0, 10)
+				directionalLight.lookAt(scene.position)
+				scene.add(directionalLight)
+				////////////////////////////
 
 				grid = new THREE.GridHelper( 20, 40, 0xffffff, 0xffffff );
 				grid.material.opacity = 0.2;
