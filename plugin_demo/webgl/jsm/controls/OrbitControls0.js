@@ -30,7 +30,7 @@ ImageData,
 TextDecoder,
 	core
 	} from 'dhtml-weixin';
-const {
+import {
 EventDispatcher,
 MOUSE,
 Quaternion,
@@ -38,7 +38,7 @@ Spherical,
 TOUCH,
 Vector2,
 Vector3
-} = requirePlugin('ThreeX');
+} from  '../../../three/Three';
 /**
 * @author qiao / https://github.com/qiao
 * @author mrdoob / http://mrdoob.com
