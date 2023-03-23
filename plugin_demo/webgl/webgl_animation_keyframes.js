@@ -70,7 +70,7 @@ this.canvas = canvas3d
 
     const scene = new THREE.Scene();
   /////////////////////////////////
-    var AmbientLight = new THREE.AmbientLight(0xffffff,1)
+    var AmbientLight = new THREE.AmbientLight(0xaaaaaa,1)
     AmbientLight.position.set(0, 0, 100)
     scene.add(AmbientLight)
     ///////////////////
@@ -137,7 +137,7 @@ this.canvas = canvas3d
 			console.error(e);
 
 		});
-		/*
+		
 
         window.onresize = function () {
 
@@ -148,10 +148,10 @@ this.canvas = canvas3d
 
         };
 
-*/
+
 		function animate() {
 
-		//	requestId = requestAnimationFrame(animate);
+			requestId = requestAnimationFrame(animate);
 
 			const delta = clock.getDelta();
 
