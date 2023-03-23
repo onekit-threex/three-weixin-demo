@@ -1,9 +1,9 @@
 {
     "permission": {},
     "pages": [
+        "index",
         "manual",
-        "doc",
-        "index"
+        "doc"
     ],
     "plugins": {
         "ThreeX": {
@@ -26,16 +26,16 @@
     "tabBar": {
         "list": [
             {
+                "pagePath": "index",
+                "text": "特效"
+            },
+            {
                 "pagePath": "manual",
                 "text": "学习"
             },
             {
                 "pagePath": "doc",
                 "text": "文档"
-            },
-            {
-                "pagePath": "index",
-                "text": "特效"
             }
         ]
     },
