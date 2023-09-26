@@ -1,5 +1,6 @@
 ![ThreeX](logo.jpeg)
 # three-weixin(全网最强)
+# 永久免费，永久商用。
 # 支持Ammo（WASM/JS双模式）
 # 牛逼可用,请点星.
 
@@ -20,7 +21,7 @@
 
 #### 版本比较
 
-【[ThreeX](https://mp.weixin.qq.com/wxopen/plugindevdoc?appid=wx5d6376b4fc730db9)】小程序插件方式。支持更多手机机型。(个人版免费)
+【[ThreeX](https://mp.weixin.qq.com/wxopen/plugindevdoc?appid=wx5d6376b4fc730db9)】小程序插件方式。支持更多手机机型。
 
 【[ThreePro](https://mp.weixin.qq.com/wxopen/plugindevdoc?appid=wx74ea3ef7e1e72753)】小程序插件方式。零代码/低代码接入。
 
