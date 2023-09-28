@@ -1,8 +1,8 @@
 // misc/misc_exporter_draco.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event,core} from 'dhtml-weixin';
+import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
 
-import { OrbitControls } from './jsm/controls/OrbitControls.js';
+import { OrbitControls } from './jsm/controls/OrbitControls0.js';
 import { DRACOExporter } from './jsm/exporters/DRACOExporter.js';
 import { GUI } from './jsm/libs/lil-gui.module.min.js';
 

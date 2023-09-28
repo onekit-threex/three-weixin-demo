@@ -4,7 +4,7 @@ import {
 	window,
 	requestAnimationFrame,
 	cancelAnimationFrame,
-	Event,
+	Event0,
 	core
 } from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
@@ -25,7 +25,7 @@ import Stats from './jsm/libs/stats.module.js';
 
 import {
 	OrbitControls
-} from './jsm/controls/OrbitControls.js';
+} from './jsm/controls/OrbitControls0.js';
 import {
 	HDRCubeTextureLoader
 } from './jsm/loaders/HDRCubeTextureLoader.js';

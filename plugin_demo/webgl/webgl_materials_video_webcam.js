@@ -1,7 +1,7 @@
 // webgl/webgl_materials_video_webcam.js
 import {document,window,requestAnimationFrame,cancelAnimationFrame,navigator} from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
-import { OrbitControls } from './jsm/controls/OrbitControls.js';
+import { OrbitControls } from './jsm/controls/OrbitControls0.js';
 var requestId
 Page({
 	   
@@ -20,7 +20,7 @@ this.worker && this.worker.terminate()
         
 	},
          webgl_touch(e) {
-        const web_e = Event.fix(e)
+        const web_e = Event0.fix(e)
         //window.dispatchEvent(web_e)
         //document.dispatchEvent(web_e)
         this.canvas.dispatchEvent(web_e)

@@ -777,7 +777,7 @@ export class NodeEditor extends EventDispatcher {
 
 			if ( search.currentFiltered !== null ) {
 
-				search.currentFiltered.button.dispatchEvent( new Event( 'complete' ) );
+				search.currentFiltered.button.dispatchEvent( new Event0( 'complete' ) );
 
 			}
 

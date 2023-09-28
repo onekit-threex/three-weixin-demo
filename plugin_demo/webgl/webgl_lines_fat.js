@@ -1,11 +1,11 @@
 // webgl/webgl_lines_fat.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event,core,performance} from 'dhtml-weixin';
+import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
 import Stats from './jsm/libs/stats.module.js';
 import { GPUStatsPanel } from './jsm/utils/GPUStatsPanel.js';
 
 import { GUI } from './jsm/libs/lil-gui.module.min.js';
-import { OrbitControls } from './jsm/controls/OrbitControls.js';
+import { OrbitControls } from './jsm/controls/OrbitControls0.js';
 import { Line2 } from './jsm/lines/Line2.js';
 import { LineMaterial } from './jsm/lines/LineMaterial.js';
 import { LineGeometry } from './jsm/lines/LineGeometry.js';
@@ -28,7 +28,7 @@ this.worker && this.worker.terminate()
         
 	},
          webgl_touch(e) {
-        const web_e = Event.fix(e)
+        const web_e = Event0.fix(e)
         //window.dispatchEvent(web_e)
         //document.dispatchEvent(web_e)
         this.canvas.dispatchEvent(web_e)

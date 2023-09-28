@@ -1,7 +1,7 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable max-len */
 import ArrayX from "./core/ArrayX";
-import Event from "./Event";
+import Event0 from "./Event0";
 
 export default class EventTarget {
   constructor() {
@@ -23,7 +23,7 @@ export default class EventTarget {
   }
 
   createEvent (type) {
-    return new Event(type);
+    return new Event0(type);
   }
   dispatchEvent (e) {
     setTimeout(() => {

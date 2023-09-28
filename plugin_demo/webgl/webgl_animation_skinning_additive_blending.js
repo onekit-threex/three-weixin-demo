@@ -30,7 +30,7 @@ Page({
 	},
 	webgl_touch(e) {
 		//		console.error(e.type,e.changedTouches.map(t=>t.identifier))
-		//const web_es = Event.fix(e)
+		//const web_es = Event0.fix(e)
 		//window.dispatchEvent(web_e)
 		//document.dispatchEvent(web_e)
 		//	for(const web_e of web_es){

@@ -1,13 +1,13 @@
 {
     "permission": {},
     "pages": [
+        "index",
         "manual",
-        "doc",
-        "index"
+        "doc"
     ],
     "plugins": {
         "ThreeX": {
-            "version": "1.0.5",
+            "version": "1.1.1",
             "provider": "wx5d6376b4fc730db9",
             "export": "threex.js"
         }
@@ -23,22 +23,6 @@
     },
     "sitemapLocation": "sitemap.json",
     "workers": "workers",
-    "tabBar": {
-        "list": [
-            {
-                "pagePath": "manual",
-                "text": "学习"
-            },
-            {
-                "pagePath": "doc",
-                "text": "文档"
-            },
-            {
-                "pagePath": "index",
-                "text": "特效"
-            }
-        ]
-    },
     "subpackages": [
         {
             "root": "manual",

@@ -1,7 +1,7 @@
 import {
     document,
     window,
-    Event,
+    Event0,
     requestAnimationFrame,
     cancelAnimationFrame
 } from 'dhtml-weixin';
@@ -14,7 +14,7 @@ import {
 } from '../jsm/geometries/TextGeometry.js';
 import {
     OrbitControls
-} from '../jsm/controls/OrbitControls.js';
+} from '../jsm/controls/OrbitControls0.js';
 var requestId
 Page({
     setting: {
@@ -37,7 +37,7 @@ Page({
         this.renderer = null
     },
     webgl_touch(e) {
-        const web_e = Event.fix(e)
+        const web_e = Event0.fix(e)
         this.canvas.dispatchEvent(web_e)
     },
     onLoad() {

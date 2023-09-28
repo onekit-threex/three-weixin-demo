@@ -1,11 +1,11 @@
 // webgl/webgl_loader_md2.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event,core,performance} from 'dhtml-weixin';
+import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
 import Stats from './jsm/libs/stats.module.js';
 
 import { GUI } from './jsm/libs/lil-gui.module.min.js';
 
-import { OrbitControls } from './jsm/controls/OrbitControls.js';
+import { OrbitControls } from './jsm/controls/OrbitControls0.js';
 import { MD2Character } from './jsm/misc/MD2Character.js';
 
 var requestId
@@ -26,7 +26,7 @@ this.worker && this.worker.terminate()
         
 	},
          webgl_touch(e) {
-        const web_e = Event.fix(e)
+        const web_e = Event0.fix(e)
         //window.dispatchEvent(web_e)
         //document.dispatchEvent(web_e)
         this.canvas.dispatchEvent(web_e)

@@ -1,5 +1,5 @@
 // webgl_advanced/webgl_worker_offscreencanvas.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event,core} from 'dhtml-weixin';
+import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
 
 import initJank from './jsm/offscreen/jank.js';

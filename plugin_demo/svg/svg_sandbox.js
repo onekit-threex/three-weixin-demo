@@ -1,5 +1,5 @@
 // svg/svg_sandbox.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event,core} from 'dhtml-weixin';
+import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
 import Stats from './jsm/libs/stats.module.js';
 

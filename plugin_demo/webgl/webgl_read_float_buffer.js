@@ -1,5 +1,5 @@
 // webgl/webgl_read_float_buffer.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event,core,performance} from 'dhtml-weixin';
+import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
 import  Stats from './jsm/libs/stats.module.js';
 const onekit = {
@@ -52,7 +52,7 @@ this.worker && this.worker.terminate()
         
 	},
          webgl_touch(e) {
-        const web_e = Event.fix(e)
+        const web_e = Event0.fix(e)
         //window.dispatchEvent(web_e)
         //document.dispatchEvent(web_e)
         this.canvas.dispatchEvent(web_e)

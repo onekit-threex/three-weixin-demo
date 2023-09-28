@@ -3,7 +3,7 @@ import {
 	window,
 	requestAnimationFrame,
 	cancelAnimationFrame,
-	Event
+	Event0
 } from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
 
@@ -11,7 +11,7 @@ import Stats from './jsm/libs/stats.module.js';
 
 import {
 	OrbitControls
-} from './jsm/controls/OrbitControls.js';
+} from './jsm/controls/OrbitControls0.js';
 import {
 	RoomEnvironment
 } from './jsm/environments/RoomEnvironment.js';
@@ -41,7 +41,7 @@ this.worker && this.worker.terminate()
         this.dracoLoader.dispose()
 	},
 	    webgl_touch(e) {
-        const web_e = Event.fix(e)
+        const web_e = Event0.fix(e)
         //window.dispatchEvent(web_e)
         //document.dispatchEvent(web_e)
         this.canvas.dispatchEvent(web_e)

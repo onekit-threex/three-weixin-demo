@@ -30,7 +30,7 @@ import {
 	TextDecoder,
     core
     } from 'dhtml-weixin';
-import {Event} from 'dhtml-weixin';
+import {Event0} from 'dhtml-weixin';
 /**
  * https://github.com/sunag/flow
  */
@@ -339,7 +339,7 @@ const draggableDOM = ( dom, callback = null, settings = {} ) => {
 
 	};
 
-	if ( dom instanceof Event ) {
+	if ( dom instanceof Event0 ) {
 
 		const e = dom;
 		dom = e.target;
@@ -896,7 +896,7 @@ class Element extends Serializer {
 
 			// remove the current input
 
-			this.disconnectDOM.dispatchEvent( new Event( 'disconnect' ) );
+			this.disconnectDOM.dispatchEvent( new Event0( 'disconnect' ) );
 
 		}
 
@@ -942,7 +942,7 @@ class Element extends Serializer {
 
 				const onConnect = () => {
 
-					this.dispatchEvent( new Event( 'connectChildren' ) );
+					this.dispatchEvent( new Event0( 'connectChildren' ) );
 
 				};
 
@@ -974,7 +974,7 @@ class Element extends Serializer {
 
 		}
 
-		this.dispatchEvent( new Event( 'connect' ) );
+		this.dispatchEvent( new Event0( 'connect' ) );
 
 		return true;
 
@@ -982,7 +982,7 @@ class Element extends Serializer {
 
 	dispose() {
 
-		this.dispatchEvent( new Event( 'dispose' ) );
+		this.dispatchEvent( new Event0( 'dispose' ) );
 
 	}
 
@@ -1336,7 +1336,7 @@ class Input extends Serializer {
 
 		this.dom.value = value;
 
-		if ( dispatch ) this.dispatchEvent( new Event( 'change' ) );
+		if ( dispatch ) this.dispatchEvent( new Event0( 'change' ) );
 
 		return this;
 
@@ -1395,7 +1395,7 @@ class Node extends Serializer {
 
 				if ( element !== target ) {
 
-					element.dispatchEvent( new Event( 'nodeConnect' ) );
+					element.dispatchEvent( new Event0( 'nodeConnect' ) );
 
 				}
 
@@ -1411,7 +1411,7 @@ class Node extends Serializer {
 
 				if ( element !== target ) {
 
-					element.dispatchEvent( new Event( 'nodeConnectChildren' ) );
+					element.dispatchEvent( new Event0( 'nodeConnectChildren' ) );
 
 				}
 
@@ -1564,7 +1564,7 @@ class Node extends Serializer {
 
 		}
 
-		this.dispatchEvent( new Event( 'dispose' ) );
+		this.dispatchEvent( new Event0( 'dispose' ) );
 
 	}
 
@@ -2370,7 +2370,7 @@ class Canvas extends Serializer {
 
 		this.contentDOM.removeChild( node.dom );
 
-		node.dispatchEvent( new Event( 'remove' ) );
+		node.dispatchEvent( new Event0( 'remove' ) );
 
 		return this;
 
@@ -2797,7 +2797,7 @@ class ButtonInput extends Input {
 
 		dom.onmouseover = () => {
 
-			this.dispatchEvent( new Event( 'mouseover' ) );
+			this.dispatchEvent( new Event0( 'mouseover' ) );
 
 		};
 
@@ -2807,7 +2807,7 @@ class ButtonInput extends Input {
 
 			e.stopPropagation();
 
-			this.dispatchEvent( new Event( 'click' ) );
+			this.dispatchEvent( new Event0( 'click' ) );
 
 		};
 
@@ -2907,7 +2907,7 @@ class ObjectNode extends Node {
 
 	invalidate() {
 
-		this.title.dispatchEvent( new Event( 'connect' ) );
+		this.title.dispatchEvent( new Event0( 'connect' ) );
 
 	}
 
@@ -2929,13 +2929,13 @@ class StringInput extends Input {
 
 		dom.onblur = () => {
 
-			this.dispatchEvent( new Event( 'blur' ) );
+			this.dispatchEvent( new Event0( 'blur' ) );
 
 		};
 
 		dom.onchange = () => {
 
-			this.dispatchEvent( new Event( 'change' ) );
+			this.dispatchEvent( new Event0( 'change' ) );
 
 		};
 
@@ -2949,7 +2949,7 @@ class StringInput extends Input {
 
 			e.stopPropagation();
 
-			this.dispatchEvent( new Event( 'change' ) );
+			this.dispatchEvent( new Event0( 'change' ) );
 
 		};
 
@@ -2996,13 +2996,13 @@ class NumberInput extends Input {
 
 			this.dom.value = this._getString( this.dom.value );
 
-			this.dispatchEvent( new Event( 'blur' ) );
+			this.dispatchEvent( new Event0( 'blur' ) );
 
 		};
 
 		dom.onchange = () => {
 
-			this.dispatchEvent( new Event( 'change' ) );
+			this.dispatchEvent( new Event0( 'change' ) );
 
 		};
 
@@ -3042,7 +3042,7 @@ class NumberInput extends Input {
 
 			dom.value = this._getString( value.toFixed( this.precision ) );
 
-			this.dispatchEvent( new Event( 'change' ) );
+			this.dispatchEvent( new Event0( 'change' ) );
 
 		} );
 
@@ -3062,7 +3062,7 @@ class NumberInput extends Input {
 		this.max = max;
 		this.step = step;
 
-		this.dispatchEvent( new Event( 'range' ) );
+		this.dispatchEvent( new Event0( 'range' ) );
 
 		return this.setValue( this.getValue() );
 
@@ -3170,7 +3170,7 @@ class SliderInput extends Input {
 
 			rangeDOM.value = field.getValue();
 
-			this.dispatchEvent( new Event( 'change' ) );
+			this.dispatchEvent( new Event0( 'change' ) );
 
 		} );
 
@@ -3209,7 +3209,7 @@ class SliderInput extends Input {
 
 			updateRangeValue();
 
-			this.dispatchEvent( new Event( 'change' ) );
+			this.dispatchEvent( new Event0( 'change' ) );
 
 		}, { className: '' } );
 
@@ -3237,8 +3237,8 @@ class SliderInput extends Input {
 
 		this.field.setRange( min, max, getStep( min, max ) );
 
-		this.dispatchEvent( new Event( 'range' ) );
-		this.dispatchEvent( new Event( 'change' ) );
+		this.dispatchEvent( new Event0( 'range' ) );
+		this.dispatchEvent( new Event0( 'change' ) );
 
 		return this;
 
@@ -3249,7 +3249,7 @@ class SliderInput extends Input {
 		this.field.setValue( val );
 		this.rangeDOM.value = val;
 
-		if ( dispatch ) this.dispatchEvent( new Event( 'change' ) );
+		if ( dispatch ) this.dispatchEvent( new Event0( 'change' ) );
 
 		return this;
 
@@ -3294,7 +3294,7 @@ class ColorInput extends Input {
 
 		dom.oninput = () => {
 
-			this.dispatchEvent( new Event( 'change' ) );
+			this.dispatchEvent( new Event0( 'change' ) );
 
 		};
 
@@ -3327,13 +3327,13 @@ class TextInput extends Input {
 
 		dom.onblur = () => {
 
-			this.dispatchEvent( new Event( 'blur' ) );
+			this.dispatchEvent( new Event0( 'blur' ) );
 
 		};
 
 		dom.onchange = () => {
 
-			this.dispatchEvent( new Event( 'change' ) );
+			this.dispatchEvent( new Event0( 'change' ) );
 
 		};
 
@@ -3347,7 +3347,7 @@ class TextInput extends Input {
 
 			e.stopPropagation();
 
-			this.dispatchEvent( new Event( 'change' ) );
+			this.dispatchEvent( new Event0( 'change' ) );
 
 		};
 
@@ -3641,7 +3641,7 @@ class Menu extends EventTarget {
 
 		this.visible = true;
 
-		this.dispatchEvent( new Event( 'show' ) );
+		this.dispatchEvent( new Event0( 'show' ) );
 
 		return this;
 
@@ -3651,7 +3651,7 @@ class Menu extends EventTarget {
 
 		this.dom.classList.add( 'hidden' );
 
-		this.dispatchEvent( new Event( 'hide' ) );
+		this.dispatchEvent( new Event0( 'hide' ) );
 
 		this.visible = false;
 
@@ -3823,7 +3823,7 @@ class ContextMenu extends Menu {
 
 				if ( e.pointerType !== 'mouse' || ( e.pageX === 0 && e.pageY === 0 ) ) return;
 
-				this.dispatchEvent( new Event( 'context' ) );
+				this.dispatchEvent( new Event0( 'context' ) );
 
 				this.open();
 
@@ -4064,7 +4064,7 @@ class Search extends Menu {
 
 				if ( filterNeedUpdate ) {
 
-					this.dispatchEvent( new Event( 'filter' ) );
+					this.dispatchEvent( new Event0( 'filter' ) );
 
 					filterNeedUpdate = false;
 
@@ -4103,7 +4103,7 @@ class Search extends Menu {
 
 	submit() {
 
-		this.dispatchEvent( new Event( 'submit' ) );
+		this.dispatchEvent( new Event0( 'submit' ) );
 
 		return this.setValue( '' );
 
@@ -4290,13 +4290,13 @@ class SelectInput extends Input {
 
 		dom.onchange = () => {
 
-			this.dispatchEvent( new Event( 'change' ) );
+			this.dispatchEvent( new Event0( 'change' ) );
 
 		};
 
 		dom.onmousedown = dom.ontouchstart = () => {
 
-			this.dispatchEvent( new Event( 'click' ) );
+			this.dispatchEvent( new Event0( 'click' ) );
 
 		};
 
@@ -4385,8 +4385,8 @@ class ToggleInput extends Input {
 		dom.className = 'toggle';
 		dom.checked = value;
 
-		dom.onclick = () => this.dispatchEvent( new Event( 'click' ) );
-		dom.onchange = () => this.dispatchEvent( new Event( 'change' ) );
+		dom.onclick = () => this.dispatchEvent( new Event0( 'click' ) );
+		dom.onchange = () => this.dispatchEvent( new Event0( 'change' ) );
 
 	}
 
@@ -4394,7 +4394,7 @@ class ToggleInput extends Input {
 
 		this.dom.checked = val;
 
-		this.dispatchEvent( new Event( 'change' ) );
+		this.dispatchEvent( new Event0( 'change' ) );
 
 		return this;
 

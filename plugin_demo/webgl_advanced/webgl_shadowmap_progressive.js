@@ -4,7 +4,7 @@ import {
 	window,
 	requestAnimationFrame,
 	cancelAnimationFrame,
-	Event,
+	Event0,
 	core
 } from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
@@ -17,7 +17,7 @@ import {
 } from './jsm/loaders/GLTFLoader.js';
 import {
 	OrbitControls
-} from './jsm/controls/OrbitControls.js';
+} from './jsm/controls/OrbitControls0.js';
 import {
 	TransformControls
 } from './jsm/controls/TransformControls.js';

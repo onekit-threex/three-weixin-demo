@@ -1,5 +1,5 @@
 // svg/svg_lines.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event,core} from 'dhtml-weixin';
+import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
 import { SVGRenderer } from './jsm/renderers/SVGRenderer.js';
 import { GUI } from './jsm/libs/lil-gui.module.min.js';

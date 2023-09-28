@@ -1,9 +1,9 @@
 // webgl_advanced/webgl_buffergeometry_compression.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event,core} from 'dhtml-weixin';
+import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
 
 import Stats from './jsm/libs/stats.module.js';
-import { OrbitControls } from './jsm/controls/OrbitControls.js';
+import { OrbitControls } from './jsm/controls/OrbitControls0.js';
 import * as GeometryCompressionUtils from './jsm/utils/GeometryCompressionUtils.js';
 import * as BufferGeometryUtils from './jsm/utils/BufferGeometryUtils.js';
 import { TeapotGeometry } from './jsm/geometries/TeapotGeometry.js';
@@ -25,7 +25,7 @@ this.worker && this.worker.terminate()
 		}, 0)
 	},
 	    webgl_touch(e) {
-        const web_e = Event.fix(e)
+        const web_e = Event0.fix(e)
         //window.dispatchEvent(web_e)
         //document.dispatchEvent(web_e)
         this.canvas.dispatchEvent(web_e)

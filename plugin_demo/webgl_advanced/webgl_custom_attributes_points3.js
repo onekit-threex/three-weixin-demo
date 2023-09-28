@@ -1,5 +1,5 @@
 // webgl_advanced/webgl_custom_attributes_points3.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event,core} from 'dhtml-weixin';
+import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
 import Stats from './jsm/libs/stats.module.js';
 
@@ -65,7 +65,7 @@ this.worker && this.worker.terminate()
 		}, 0)
 	},
 	    webgl_touch(e) {
-        const web_e = Event.fix(e)
+        const web_e = Event0.fix(e)
         //window.dispatchEvent(web_e)
         //document.dispatchEvent(web_e)
         this.canvas.dispatchEvent(web_e)

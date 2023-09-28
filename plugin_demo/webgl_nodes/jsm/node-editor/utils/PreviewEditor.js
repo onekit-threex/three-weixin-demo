@@ -30,7 +30,7 @@ import {
 	TextDecoder,
     core
     } from 'dhtml-weixin';
-import { OrbitControls } from '../../controls/OrbitControls.js';
+import { OrbitControls } from '../../controls/OrbitControls0.js';
 import { ViewHelper } from '../../helpers/ViewHelper.js';
 import { Element, LabelElement, SelectInput } from '../../libs/flow.module.js';
 import { BaseNode } from '../core/BaseNode.js';

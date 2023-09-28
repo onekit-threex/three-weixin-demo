@@ -3,8 +3,10 @@ import {
 	window,
 	requestAnimationFrame,
 	cancelAnimationFrame,
-	Event
+	Event0
 } from 'dhtml-weixin';
+
+import { OrbitControls } from './jsm/controls/OrbitControls0.js';
 import * as THREE from '../three/Three.js';
 
 import Stats from './jsm/libs/stats.module.js';
@@ -31,7 +33,7 @@ this.worker && this.worker.terminate()
 		}
 	},
 	    webgl_touch(e) {
-        const web_e = Event.fix(e)
+        const web_e = Event0.fix(e)
         //window.dispatchEvent(web_e)
         //document.dispatchEvent(web_e)
         this.canvas.dispatchEvent(web_e)
@@ -63,7 +65,12 @@ this.canvas = canvas3d
             camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
             camera.position.set( 1, 2, - 3 );
             camera.lookAt( 0, 1, 0 );
-
+            const controls = new OrbitControls(camera, that.canvas);
+			controls.enablePan = true;
+			controls.enableZoom = true;
+			controls.target.set(0, 1, 0);
+            controls.update();
+            
             clock = new THREE.Clock();
 
             scene = new THREE.Scene();

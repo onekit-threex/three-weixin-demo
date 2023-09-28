@@ -483,7 +483,7 @@ class OrbitControls extends EventDispatcher {
 				} else {
 
 					// camera neither orthographic nor perspective
-					console.warn( 'WARNING: OrbitControls.js encountered an unknown camera type - pan disabled.' );
+					console.warn( 'WARNING: OrbitControls0.js encountered an unknown camera type - pan disabled.' );
 					scope.enablePan = false;
 
 				}
@@ -506,7 +506,7 @@ class OrbitControls extends EventDispatcher {
 
 			} else {
 
-				console.warn( 'WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled.' );
+				console.warn( 'WARNING: OrbitControls0.js encountered an unknown camera type - dolly/zoom disabled.' );
 				scope.enableZoom = false;
 
 			}
@@ -527,7 +527,7 @@ class OrbitControls extends EventDispatcher {
 
 			} else {
 
-				console.warn( 'WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled.' );
+				console.warn( 'WARNING: OrbitControls0.js encountered an unknown camera type - dolly/zoom disabled.' );
 				scope.enableZoom = false;
 
 			}
