@@ -96,7 +96,7 @@ console.error(effect)
         //
 
         function animate() {
-        // requestId = requestAnimationFrame(animate);
+       requestId = requestAnimationFrame(animate);
 
             render();
 

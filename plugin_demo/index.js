@@ -15,7 +15,7 @@ Page({
           }
     },
 	onLoad() {
-
+/*
 		const sections = []
 		const platform = wx.getSystemInfoSync()
 		for (const sectionName of Object.keys(files)) {
@@ -32,10 +32,10 @@ Page({
 		}
 		this.setData({
 			sections
-		})
-	/*	wx.navigateTo({
-			url: 'webgl/webgl_animation_skinning_additive_blending',
 		})*/
+		wx.navigateTo({
+			url: 'webgl/webgl_effects_ascii',
+		})
 	},
 	/*
 	run() {
