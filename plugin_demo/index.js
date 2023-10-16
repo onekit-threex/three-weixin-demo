@@ -2,6 +2,9 @@ import files from './files.json'
 //var index = 0
 //var timer
 Page({
+  data:{
+    onekit_path:getApp().onekit_path
+  },
     onshareAppMessage(){
         return {
             title: 'ThreeJS原生引擎',
@@ -15,7 +18,6 @@ Page({
           }
     },
 	onLoad() {
-/*
 		const sections = []
 		const platform = wx.getSystemInfoSync()
 		for (const sectionName of Object.keys(files)) {
@@ -32,9 +34,6 @@ Page({
 		}
 		this.setData({
 			sections
-		})*/
-		wx.navigateTo({
-			url: 'webgl/webgl_effects_ascii',
 		})
 	},
 	/*

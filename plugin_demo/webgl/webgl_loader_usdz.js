@@ -1,4 +1,3 @@
-// webgl/webgl_loader_ttf.js
 import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
 import * as THREE from '../three/Three.js';
 import { OrbitControls } from './jsm/controls/OrbitControls0.js';
