@@ -1,7 +1,7 @@
-export default class Event0 {
+export default class Event {
     
     static fix(wx_e){
-        const web_e = new Event0(wx_e.type)
+        const web_e = new Event(wx_e.type)
         web_e.button = null;
         web_e.ctrlKey = false;
         web_e.metaKey = false;

@@ -23,7 +23,7 @@ import core from "./core/index";
 import EventTarget from "./EventTarget";
 import Element from "./Element";
 import Node from "./Node";
-import Event0 from "./Event0";
+import Event from "./Event";
 import Performance from "./Performance";
 import btoa from "./btoa"
 const performance = new Performance();
@@ -49,7 +49,7 @@ module.exports = {
   location,
   navigator,
   Node,
-  Event0,
+  Event,
   Request,
   requestAnimationFrame,
   cancelAnimationFrame,
