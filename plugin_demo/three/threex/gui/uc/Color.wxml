@@ -1,0 +1,6 @@
+<view style="display:flex;align-items:center;">
+	<text style="flex-grow:1;font-size:30rpx;" style="width:300rpx;">{{name}}</text>
+	<view bindtap="button_tap" style="flex-grow:1;height:50rpx;margin-right:5rpx;background:{{color2}}"></view>
+	<input  bindinput="input_input" style="width:300rpx;background:#fff8;width:150rpx;" value="{{color}}" />
+</view>
+<color-picker bindchangeColor="picker_changeColor" initColor="{{rgb}}" show="{{show}}" />

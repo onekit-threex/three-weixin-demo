@@ -1,0 +1,5 @@
+<view style="display:flex;align-items:center;">
+	<text style="flex-grow:1;font-size:30rpx;" style="width:300rpx;">{{name}}</text>
+	<slider activeColor="#2cc9ff" max="{{max}}" min="{{min}}" step="{{step}}" value="{{value}}" step="{{step}}" catchchanging="slider_changing" style="flex-grow:1;background:#fff8;margin-left:0rpx;" />
+	<input type="digit" catchinput="input_input" style="width:100rpx;background:#fff8;color:#2cc9ff;" value="{{value}}" />
+</view>

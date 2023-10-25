@@ -1,1 +1,0 @@
-export { LoopSubdivision } from './LoopSubdivision.js';

@@ -1,19 +1,35 @@
-// webgl/webgl_materials_physical_clearcoat.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  Stats from './jsm/libs/stats.module.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
-import { HDRCubeTextureLoader } from './jsm/loaders/HDRCubeTextureLoader.js';
+import Stats from 'three/addons/libs/stats.module.js';
 
-import { FlakesTexture } from './jsm/textures/FlakesTexture.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+import { HDRCubeTextureLoader } from 'three/addons/loaders/HDRCubeTextureLoader.js';
+
+import { FlakesTexture } from 'three/addons/textures/FlakesTexture.js';
 
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -23,232 +39,232 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-
-        let container, stats;
-
-			let camera, scene, renderer;
-
-			let particleLight;
-			let group;
-
-			init();
-			animate();
-
-			function init() {
-
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
-
-				camera = new THREE.PerspectiveCamera( 27, window.innerWidth / window.innerHeight, 1, 10000 );
-				camera.position.z = 1000;
-
-				scene = new THREE.Scene();
-
-				group = new THREE.Group();
-				scene.add( group );
-
-				new HDRCubeTextureLoader()
-					.setPath( 'textures/cube/pisaHDR/' )
-					.load( [ 'px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr' ],
-					async	function ( texture ) {
-
-							const geometry = new THREE.SphereGeometry( 80, 64, 32 );
-
-							const textureLoader = new THREE.TextureLoader( );
-
-							const diffuse = textureLoader.load( 'textures/carbon/Carbon.png' );
-							diffuse.encoding = THREE.sRGBEncoding;
-							diffuse.wrapS = THREE.RepeatWrapping;
-							diffuse.wrapT = THREE.RepeatWrapping;
-							diffuse.repeat.x = 10;
-							diffuse.repeat.y = 10;
-
-							const normalMap = textureLoader.load( 'textures/carbon/Carbon_Normal.png' );
-							normalMap.wrapS = THREE.RepeatWrapping;
-							normalMap.wrapT = THREE.RepeatWrapping;
-
-							const normalMap2 = textureLoader.load( 'textures/water/Water_1_M_Normal.jpg' );
-
-							const normalMap3 = new THREE.CanvasTexture(await core.Canvas.fix(canvas3d, new FlakesTexture() ));
-							normalMap3.wrapS = THREE.RepeatWrapping;
-							normalMap3.wrapT = THREE.RepeatWrapping;
-							normalMap3.repeat.x = 10;
-							normalMap3.repeat.y = 6;
-							normalMap3.anisotropy = 16;
-
-							const normalMap4 = textureLoader.load( 'textures/golfball.jpg' );
-
-							const clearcoatNormalMap = textureLoader.load( 'textures/pbr/Scratched_gold/Scratched_gold_01_1K_Normal.png' );
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {	
+  let container, stats;
+
+  let camera, scene, renderer;
+
+  let particleLight;
+  let group;
+
+  init();
+  animate();
+
+  function init() {
+
+    container = document.createElement( 'div' );
+    document.body.appendChild( container );
+
+    camera = new THREE.PerspectiveCamera( 27, window.innerWidth / window.innerHeight, 0.25, 50 );
+    camera.position.z = 10;
+
+    scene = new THREE.Scene();
+
+    group = new THREE.Group();
+    scene.add( group );
+
+    new HDRCubeTextureLoader()
+      .setPath( 'textures/cube/pisaHDR/' )
+      .load( [ 'px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr' ],
+       async function ( texture ) {
+
+          const geometry = new THREE.SphereGeometry( .8, 64, 32 );
+
+          const textureLoader = new THREE.TextureLoader();
+
+          const diffuse = textureLoader.load( 'textures/carbon/Carbon.png' );
+          diffuse.colorSpace = THREE.SRGBColorSpace;
+          diffuse.wrapS = THREE.RepeatWrapping;
+          diffuse.wrapT = THREE.RepeatWrapping;
+          diffuse.repeat.x = 10;
+          diffuse.repeat.y = 10;
+
+          const normalMap = textureLoader.load( 'textures/carbon/Carbon_Normal.png' );
+          normalMap.wrapS = THREE.RepeatWrapping;
+          normalMap.wrapT = THREE.RepeatWrapping;
+          normalMap.repeat.x = 10;
+          normalMap.repeat.y = 10;
+
+          const normalMap2 = textureLoader.load( 'textures/water/Water_1_M_Normal.jpg' );
+
+          const normalMap3 = new THREE.CanvasTexture(await core.Canvas.fix(canvas3d,new FlakesTexture() ));
+          normalMap3.wrapS = THREE.RepeatWrapping;
+          normalMap3.wrapT = THREE.RepeatWrapping;
+          normalMap3.repeat.x = 10;
+          normalMap3.repeat.y = 6;
+          normalMap3.anisotropy = 16;
+
+          const normalMap4 = textureLoader.load( 'textures/golfball.jpg' );
+
+          const clearcoatNormalMap = textureLoader.load( 'textures/pbr/Scratched_gold/Scratched_gold_01_1K_Normal.png' );
+
+          // car paint
+
+          let material = new THREE.MeshPhysicalMaterial( {
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.1,
+            metalness: 0.9,
+            roughness: 0.5,
+            color: 0x0000ff,
+            normalMap: normalMap3,
+            normalScale: new THREE.Vector2( 0.15, 0.15 )
+          } );
 
-							// car paint
+          let mesh = new THREE.Mesh( geometry, material );
+          mesh.position.x = - 1;
+          mesh.position.y = 1;
+          group.add( mesh );
 
-							let material = new THREE.MeshPhysicalMaterial( {
-								clearcoat: 1.0,
-								clearcoatRoughness: 0.1,
-								metalness: 0.9,
-								roughness: 0.5,
-								color: 0x0000ff,
-								normalMap: normalMap3,
-								normalScale: new THREE.Vector2( 0.15, 0.15 )
-							} );
+          // fibers
 
-							let mesh = new THREE.Mesh( geometry, material );
-							mesh.position.x = - 100;
-							mesh.position.y = 100;
-							group.add( mesh );
+          material = new THREE.MeshPhysicalMaterial( {
+            roughness: 0.5,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.1,
+            map: diffuse,
+            normalMap: normalMap
+          } );
+          mesh = new THREE.Mesh( geometry, material );
+          mesh.position.x = 1;
+          mesh.position.y = 1;
+          group.add( mesh );
 
-							// fibers
+          // golf
 
-							material = new THREE.MeshPhysicalMaterial( {
-								roughness: 0.5,
-								clearcoat: 1.0,
-								clearcoatRoughness: 0.1,
-								map: diffuse,
-								normalMap: normalMap
-							} );
-							mesh = new THREE.Mesh( geometry, material );
-							mesh.position.x = 100;
-							mesh.position.y = 100;
-							group.add( mesh );
+          material = new THREE.MeshPhysicalMaterial( {
+            metalness: 0.0,
+            roughness: 0.1,
+            clearcoat: 1.0,
+            normalMap: normalMap4,
+            clearcoatNormalMap: clearcoatNormalMap,
 
-							// golf
+            // y scale is negated to compensate for normal map handedness.
+            clearcoatNormalScale: new THREE.Vector2( 2.0, - 2.0 )
+          } );
+          mesh = new THREE.Mesh( geometry, material );
+          mesh.position.x = - 1;
+          mesh.position.y = - 1;
+          group.add( mesh );
 
-							material = new THREE.MeshPhysicalMaterial( {
-								metalness: 0.0,
-								roughness: 0.1,
-								clearcoat: 1.0,
-								normalMap: normalMap4,
-								clearcoatNormalMap: clearcoatNormalMap,
+          // clearcoat + normalmap
 
-								// y scale is negated to compensate for normal map handedness.
-								clearcoatNormalScale: new THREE.Vector2( 2.0, - 2.0 )
-							} );
-							mesh = new THREE.Mesh( geometry, material );
-							mesh.position.x = - 100;
-							mesh.position.y = - 100;
-							group.add( mesh );
+          material = new THREE.MeshPhysicalMaterial( {
+            clearcoat: 1.0,
+            metalness: 1.0,
+            color: 0xff0000,
+            normalMap: normalMap2,
+            normalScale: new THREE.Vector2( 0.15, 0.15 ),
+            clearcoatNormalMap: clearcoatNormalMap,
 
-							// clearcoat + normalmap
+            // y scale is negated to compensate for normal map handedness.
+            clearcoatNormalScale: new THREE.Vector2( 2.0, - 2.0 )
+          } );
+          mesh = new THREE.Mesh( geometry, material );
+          mesh.position.x = 1;
+          mesh.position.y = - 1;
+          group.add( mesh );
 
-							material = new THREE.MeshPhysicalMaterial( {
-								clearcoat: 1.0,
-								metalness: 1.0,
-								color: 0xff0000,
-								normalMap: normalMap2,
-								normalScale: new THREE.Vector2( 0.15, 0.15 ),
-								clearcoatNormalMap: clearcoatNormalMap,
+          //
 
-								// y scale is negated to compensate for normal map handedness.
-								clearcoatNormalScale: new THREE.Vector2( 2.0, - 2.0 )
-							} );
-							mesh = new THREE.Mesh( geometry, material );
-							mesh.position.x = 100;
-							mesh.position.y = - 100;
-							group.add( mesh );
+          scene.background = texture;
+          scene.environment = texture;
 
-							//
+        }
 
-							scene.background = texture;
-							scene.environment = texture;
+      );
 
-						}
+    // LIGHTS
 
-					);
+    particleLight = new THREE.Mesh(
+      new THREE.SphereGeometry( .05, 8, 8 ),
+      new THREE.MeshBasicMaterial( { color: 0xffffff } )
+    );
+    scene.add( particleLight );
 
-				// LIGHTS
+    particleLight.add( new THREE.PointLight( 0xffffff, 30 ) );
 
-				particleLight = new THREE.Mesh(
-					new THREE.SphereGeometry( 4, 8, 8 ),
-					new THREE.MeshBasicMaterial( { color: 0xffffff } )
-				);
-				scene.add( particleLight );
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    container.appendChild( renderer.domElement );
 
-				particleLight.add( new THREE.PointLight( 0xffffff, 1 ) );
+    //
 
-				renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				container.appendChild( renderer.domElement );
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.25;
 
-				//
+    //
 
-				renderer.toneMapping = THREE.ACESFilmicToneMapping;
-				renderer.toneMappingExposure = 1.25;
 
-				//
+    //
 
-				renderer.outputEncoding = THREE.sRGBEncoding;
+    stats = new Stats();
+    container.appendChild( stats.dom );
 
-				//
+    // EVENTS
 
-				stats = new Stats();
-				container.appendChild( stats.dom );
+    const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+    controls.minDistance = 3;
+    controls.maxDistance = 30;
 
-				// EVENTS
+    window.addEventListener( 'resize', onWindowResize );
 
-				new OrbitControls( camera, renderer.domElement );
+  }
 
-				window.addEventListener( 'resize', onWindowResize );
+  //
 
-			}
+  function onWindowResize() {
 
-			//
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
-			function onWindowResize() {
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
 
-				const width = window.innerWidth;
-				const height = window.innerHeight;
+    renderer.setSize( width, height );
 
-				camera.aspect = width / height;
-				camera.updateProjectionMatrix();
+  }
 
-				renderer.setSize( width, height );
+  //
 
-			}
+  function animate() {
 
-			//
+    requestId = requestAnimationFrame( animate );
 
-			function animate() {
+    render();
 
-				requestId = requestAnimationFrame(animate);
+    stats.update();
 
-				render();
+  }
 
-				stats.update();
+  function render() {
 
-			}
+    const timer = Date.now() * 0.00025;
 
-			function render() {
+    particleLight.position.x = Math.sin( timer * 7 ) * 3;
+    particleLight.position.y = Math.cos( timer * 5 ) * 4;
+    particleLight.position.z = Math.cos( timer * 3 ) * 3;
 
-				const timer = Date.now() * 0.00025;
+    for ( let i = 0; i < group.children.length; i ++ ) {
 
-				particleLight.position.x = Math.sin( timer * 7 ) * 300;
-				particleLight.position.y = Math.cos( timer * 5 ) * 400;
-				particleLight.position.z = Math.cos( timer * 3 ) * 300;
+      const child = group.children[ i ];
+      child.rotation.y += 0.005;
 
-				for ( let i = 0; i < group.children.length; i ++ ) {
-
-					const child = group.children[ i ];
-					child.rotation.y += 0.005;
-
-				}
-
-				renderer.render( scene, camera );
-
-			}
     }
+
+    renderer.render( scene, camera );
+
+  }
+  }
 })

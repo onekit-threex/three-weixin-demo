@@ -1,26 +1,40 @@
-// webgl_postprocessing/webgl_postprocessing_ssr.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import Stats from './jsm/libs/stats.module.js';
+import Stats from 'three/addons/libs/stats.module.js';
 
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
 
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-import { EffectComposer } from './jsm/postprocessing/EffectComposer.js';
-import { SSRPass } from './jsm/postprocessing/SSRPass.js';
-import { ShaderPass } from './jsm/postprocessing/ShaderPass.js';
-import { GammaCorrectionShader } from './jsm/shaders/GammaCorrectionShader.js';
-import { ReflectorForSSRPass } from './jsm/objects/ReflectorForSSRPass.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { SSRPass } from 'three/addons/postprocessing/SSRPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ReflectorForSSRPass } from 'three/addons/objects/ReflectorForSSRPass.js';
 
-import { DRACOLoader } from './jsm/loaders/DRACOLoader.js';
-
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -29,40 +43,46 @@ this.worker && this.worker.terminate()
 				this.renderer.domElement = null
 				this.renderer = null
 			}
-		}, 0)      
-          
+		}, 0)
 	},
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-
-const params = {
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {	
+  const params = {
     enableSSR: true,
     autoRotate: true,
     otherMeshes: true,
     groundReflector: true,
-};
-let composer;
-let ssrPass;
-let gui;
-let stats;
-let controls;
-let camera, scene, renderer;
-const otherMeshes = [];
-let groundReflector;
-const selects = [];
+  };
+  let composer;
+  let ssrPass;
+  let gui;
+  let stats;
+  let controls;
+  let camera, scene, renderer;
+  const otherMeshes = [];
+  let groundReflector;
+  const selects = [];
 
-const container = document.querySelector( '#container' );
+  const container = document.querySelector( '#container' );
 
-// Configure and create Draco decoder.
-const dracoLoader = this.dracoLoader= new DRACOLoader();
-dracoLoader.setDecoderPath( 'js/libs/draco/' );
-dracoLoader.setDecoderConfig( { type: 'js' } );
+  // Configure and create Draco decoder.
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath( 'jsm/libs/draco/' );
+  dracoLoader.setDecoderConfig( { type: 'js' } );
 
-init();
-animate();
+  init();
+  animate();
 
-function init() {
+  function init() {
 
     camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 0.1, 15 );
     camera.position.set( 0.13271600513224902, 0.3489546826045913, 0.43921296427927076 );
@@ -73,8 +93,8 @@ function init() {
 
     // Ground
     const plane = new THREE.Mesh(
-        new THREE.PlaneGeometry( 8, 8 ),
-        new THREE.MeshPhongMaterial( { color: 0x999999, specular: 0x101010 } )
+      new THREE.PlaneGeometry( 8, 8 ),
+      new THREE.MeshPhongMaterial( { color: 0xcbcbcb } )
     );
     plane.rotation.x = - Math.PI / 2;
     plane.position.y = - 0.0001;
@@ -82,10 +102,11 @@ function init() {
     scene.add( plane );
 
     // Lights
-    const hemiLight = new THREE.HemisphereLight( 0x443333, 0x111122 );
+    const hemiLight = new THREE.HemisphereLight( 0x8d7c7c, 0x494966, 3 );
     scene.add( hemiLight );
 
     const spotLight = new THREE.SpotLight();
+    spotLight.intensity = 8;
     spotLight.angle = Math.PI / 16;
     spotLight.penumbra = 0.5;
     // spotLight.castShadow = true;
@@ -94,16 +115,16 @@ function init() {
 
     dracoLoader.load( 'models/draco/bunny.drc', function ( geometry ) {
 
-        geometry.computeVertexNormals();
+      geometry.computeVertexNormals();
 
-        const material = new THREE.MeshStandardMaterial( { color: 0x606060 } );
-        const mesh = new THREE.Mesh( geometry, material );
-        mesh.position.y = - 0.0365;
-        scene.add( mesh );
-        selects.push( mesh );
+      const material = new THREE.MeshStandardMaterial( { color: 0xa5a5a5 } );
+      const mesh = new THREE.Mesh( geometry, material );
+      mesh.position.y = - 0.0365;
+      scene.add( mesh );
+      selects.push( mesh );
 
-        // Release decoder resources.
-        dracoLoader.dispose();
+      // Release decoder resources.
+      dracoLoader.dispose();
 
     } );
 
@@ -135,11 +156,11 @@ function init() {
 
     geometry = new THREE.PlaneGeometry( 1, 1 );
     groundReflector = new ReflectorForSSRPass( geometry, {
-        clipBias: 0.0003,
-        textureWidth: window.innerWidth,
-        textureHeight: window.innerHeight,
-        color: 0x888888,
-        useDepthTexture: true,
+      clipBias: 0.0003,
+      textureWidth: window.innerWidth,
+      textureHeight: window.innerHeight,
+      color: 0x888888,
+      useDepthTexture: true,
     } );
     groundReflector.material.depthWrite = false;
     groundReflector.rotation.x = - Math.PI / 2;
@@ -147,13 +168,13 @@ function init() {
     scene.add( groundReflector );
 
     // renderer
-    renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: false } );
+    renderer = new THREE.WebGLRenderer( { antialias: false } );
     renderer.setSize( window.innerWidth, window.innerHeight );
     container.appendChild( renderer.domElement );
 
     //
 
-    controls = new OrbitControls( camera, renderer.domElement );
+    controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
     controls.enableDamping = true;
     controls.target.set( 0, 0.0635, 0 );
     controls.update();
@@ -170,17 +191,17 @@ function init() {
 
     composer = new EffectComposer( renderer );
     ssrPass = new SSRPass( {
-        renderer,
-        scene,
-        camera,
-        width: innerWidth,
-        height: innerHeight,
-        groundReflector: params.groundReflector ? groundReflector : null,
-        selects: params.groundReflector ? selects : null
+      renderer,
+      scene,
+      camera,
+      width: innerWidth,
+      height: innerHeight,
+      groundReflector: params.groundReflector ? groundReflector : null,
+      selects: params.groundReflector ? selects : null
     } );
 
     composer.addPass( ssrPass );
-    composer.addPass( new ShaderPass( GammaCorrectionShader ) );
+    composer.addPass( new OutputPass() );
 
     // GUI
 
@@ -188,17 +209,17 @@ function init() {
     gui.add( params, 'enableSSR' ).name( 'Enable SSR' );
     gui.add( params, 'groundReflector' ).onChange( () => {
 
-        if ( params.groundReflector ) {
+      if ( params.groundReflector ) {
 
-            ssrPass.groundReflector = groundReflector,
-            ssrPass.selects = selects;
+        ssrPass.groundReflector = groundReflector,
+        ssrPass.selects = selects;
 
-        } else {
+      } else {
 
-            ssrPass.groundReflector = null,
-            ssrPass.selects = null;
+        ssrPass.groundReflector = null,
+        ssrPass.selects = null;
 
-        }
+      }
 
     } );
     ssrPass.thickness = 0.018;
@@ -207,69 +228,69 @@ function init() {
     gui.add( ssrPass, 'infiniteThick' );
     gui.add( params, 'autoRotate' ).onChange( () => {
 
-        controls.enabled = ! params.autoRotate;
+      controls.enabled = ! params.autoRotate;
 
     } );
 
     const folder = gui.addFolder( 'more settings' );
     folder.add( ssrPass, 'fresnel' ).onChange( ()=>{
 
-        groundReflector.fresnel = ssrPass.fresnel;
+      groundReflector.fresnel = ssrPass.fresnel;
 
     } );
     folder.add( ssrPass, 'distanceAttenuation' ).onChange( ()=>{
 
-        groundReflector.distanceAttenuation = ssrPass.distanceAttenuation;
+      groundReflector.distanceAttenuation = ssrPass.distanceAttenuation;
 
     } );
     ssrPass.maxDistance = .1;
     groundReflector.maxDistance = ssrPass.maxDistance;
     folder.add( ssrPass, 'maxDistance' ).min( 0 ).max( .5 ).step( .001 ).onChange( ()=>{
 
-        groundReflector.maxDistance = ssrPass.maxDistance;
+      groundReflector.maxDistance = ssrPass.maxDistance;
 
     } );
     folder.add( params, 'otherMeshes' ).onChange( () => {
 
-        if ( params.otherMeshes ) {
+      if ( params.otherMeshes ) {
 
-            otherMeshes.forEach( mesh => mesh.visible = true );
+        otherMeshes.forEach( mesh => mesh.visible = true );
 
-        } else {
+      } else {
 
-            otherMeshes.forEach( mesh => mesh.visible = false );
+        otherMeshes.forEach( mesh => mesh.visible = false );
 
-        }
+      }
 
     } );
     folder.add( ssrPass, 'bouncing' );
     folder.add( ssrPass, 'output', {
-        'Default': SSRPass.OUTPUT.Default,
-        'SSR Only': SSRPass.OUTPUT.SSR,
-        'Beauty': SSRPass.OUTPUT.Beauty,
-        'Depth': SSRPass.OUTPUT.Depth,
-        'Normal': SSRPass.OUTPUT.Normal,
-        'Metalness': SSRPass.OUTPUT.Metalness,
+      'Default': SSRPass.OUTPUT.Default,
+      'SSR Only': SSRPass.OUTPUT.SSR,
+      'Beauty': SSRPass.OUTPUT.Beauty,
+      'Depth': SSRPass.OUTPUT.Depth,
+      'Normal': SSRPass.OUTPUT.Normal,
+      'Metalness': SSRPass.OUTPUT.Metalness,
     } ).onChange( function ( value ) {
 
-        ssrPass.output = parseInt( value );
+      ssrPass.output = value;
 
     } );
     ssrPass.opacity = 1;
     groundReflector.opacity = ssrPass.opacity;
     folder.add( ssrPass, 'opacity' ).min( 0 ).max( 1 ).onChange( ()=>{
 
-        groundReflector.opacity = ssrPass.opacity;
+      groundReflector.opacity = ssrPass.opacity;
 
     } );
     folder.add( ssrPass, 'blur' );
     // folder.open()
     // gui.close()
 
-}
+  }
 
 
-function onWindowResize() {
+  function onWindowResize() {
 
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
@@ -279,47 +300,47 @@ function onWindowResize() {
     groundReflector.getRenderTarget().setSize( window.innerWidth, window.innerHeight );
     groundReflector.resolution.set( window.innerWidth, window.innerHeight );
 
-}
+  }
 
-function animate() {
+  function animate() {
 
-    requestId = requestAnimationFrame(animate);
+    requestId = requestAnimationFrame( animate );
 
     stats.begin();
     render();
     stats.end();
 
-}
+  }
 
-function render() {
+  function render() {
 
     if ( params.autoRotate ) {
 
-        const timer = Date.now() * 0.0003;
+      const timer = Date.now() * 0.0003;
 
-        camera.position.x = Math.sin( timer ) * 0.5;
-        camera.position.y = 0.2135;
-        camera.position.z = Math.cos( timer ) * 0.5;
-        camera.lookAt( 0, 0.0635, 0 );
+      camera.position.x = Math.sin( timer ) * 0.5;
+      camera.position.y = 0.2135;
+      camera.position.z = Math.cos( timer ) * 0.5;
+      camera.lookAt( 0, 0.0635, 0 );
 
     } else {
 
-        controls.update();
+      controls.update();
 
     }
 
     if ( params.enableSSR ) {
 
-        // TODO: groundReflector has full ground info, need use it to solve reflection gaps problem on objects when camera near ground.
-        // TODO: the normal and depth info where groundReflector reflected need to be changed.
-        composer.render();
+      // TODO: groundReflector has full ground info, need use it to solve reflection gaps problem on objects when camera near ground.
+      // TODO: the normal and depth info where groundReflector reflected need to be changed.
+      composer.render();
 
     } else {
 
-        renderer.render( scene, camera );
+      renderer.render( scene, camera );
 
     }
 
-}
-}
+  }
+  }
 })

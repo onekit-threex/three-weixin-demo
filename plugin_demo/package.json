@@ -1,8 +1,19 @@
 {
-	"dependencies": {
-		"dhtml-weixin": "6.6.8",
-		"pako": "^1.0.5",
-		"three-weixin": "^6.6.7",
-		"weixin-color-picker": "^1.1.0"
-	}
+  "name": "miniprogram_dev",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "dhtml-weixin": "^10.10.2",
+    "three-weixin": "^10.10.3",
+    "weixin-color-picker": "^1.2.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
 }

@@ -1,50 +1,64 @@
-// webgl_advanced/webgl_custom_attributes_lines.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import { FontLoader } from './jsm/loaders/FontLoader.js';
-            import { TextGeometry } from './jsm/geometries/TextGeometry.js';
-            import Stats from './jsm/libs/stats.module.js';
-const onekit = {
-   "vertexshader":`
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-    uniform float amplitude;
+  import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+  import { TextGeometry } from './three/addons/geometries/TextGeometry.js';
 
-    attribute vec3 displacement;
-    attribute vec3 customColor;
+  import Stats from 'three/addons/libs/stats.module.js';
 
-    varying vec3 vColor;
+const vertexshader = `
 
-    void main() {
+uniform float amplitude;
 
-        vec3 newPosition = position + amplitude * displacement;
+attribute vec3 displacement;
+attribute vec3 customColor;
 
-        vColor = customColor;
+varying vec3 vColor;
 
-        gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
+void main() {
 
-    }
-`
-,
-"fragmentshader":`
+  vec3 newPosition = position + amplitude * displacement;
 
-    uniform vec3 color;
-    uniform float opacity;
+  vColor = customColor;
 
-    varying vec3 vColor;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
 
-    void main() {
+}`
 
-        gl_FragColor = vec4( vColor * color, opacity );
+const fragmentshader = `
 
-    }
-`
+uniform vec3 color;
+uniform float opacity;
+
+varying vec3 vColor;
+
+void main() {
+
+  gl_FragColor = vec4( vColor * color, opacity );
+
 }
-
+`
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -55,152 +69,154 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-let renderer, scene, camera, stats;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-let line, uniforms;
+			let renderer, scene, camera, stats;
 
-const loader = new FontLoader();
-loader.load( 'fonts/helvetiker_bold.typeface.json', function ( font ) {
+			let line, uniforms;
 
-    init( font );
-    animate();
+			const loader = new FontLoader();
+			loader.load( 'fonts/helvetiker_bold.typeface.json', function ( font ) {
 
-} );
+				init( font );
+				animate();
 
-function init( font ) {
+			} );
 
-    camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 10000 );
-    camera.position.z = 400;
+			function init( font ) {
 
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color( 0x050505 );
+				camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 10000 );
+				camera.position.z = 400;
 
-    uniforms = {
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x050505 );
 
-        amplitude: { value: 5.0 },
-        opacity: { value: 0.3 },
-        color: { value: new THREE.Color( 0xffffff ) }
+				uniforms = {
 
-    };
+					amplitude: { value: 5.0 },
+					opacity: { value: 0.3 },
+					color: { value: new THREE.Color( 0xffffff ) }
 
-    const shaderMaterial = new THREE.ShaderMaterial( {
+				};
 
-        uniforms: uniforms,
-        vertexShader:onekit['vertexshader' ],
-        fragmentShader: onekit['fragmentshader' ],
-        blending: THREE.AdditiveBlending,
-        depthTest: false,
-        transparent: true
+				const shaderMaterial = new THREE.ShaderMaterial( {
 
-    } );
+					uniforms: uniforms,
+					vertexShader: vertexshader,
+					fragmentShader: fragmentshader,
+					blending: THREE.AdditiveBlending,
+					depthTest: false,
+					transparent: true
+
+				} );
 
 
-    const geometry = new TextGeometry( 'three.js', {
+				const geometry = new TextGeometry( 'three.js', {
 
-        font: font,
+					font: font,
 
-        size: 50,
-        height: 15,
-        curveSegments: 10,
+					size: 50,
+					height: 15,
+					curveSegments: 10,
 
-        bevelThickness: 5,
-        bevelSize: 1.5,
-        bevelEnabled: true,
-        bevelSegments: 10,
+					bevelThickness: 5,
+					bevelSize: 1.5,
+					bevelEnabled: true,
+					bevelSegments: 10,
 
-    } );
+				} );
 
-    geometry.center();
+				geometry.center();
 
-    const count = geometry.attributes.position.count;
+				const count = geometry.attributes.position.count;
 
-    const displacement = new THREE.Float32BufferAttribute( count * 3, 3 );
-    geometry.setAttribute( 'displacement', displacement );
+				const displacement = new THREE.Float32BufferAttribute( count * 3, 3 );
+				geometry.setAttribute( 'displacement', displacement );
 
-    const customColor = new THREE.Float32BufferAttribute( count * 3, 3 );
-    geometry.setAttribute( 'customColor', customColor );
+				const customColor = new THREE.Float32BufferAttribute( count * 3, 3 );
+				geometry.setAttribute( 'customColor', customColor );
 
-    const color = new THREE.Color( 0xffffff );
+				const color = new THREE.Color( 0xffffff );
 
-    for ( let i = 0, l = customColor.count; i < l; i ++ ) {
+				for ( let i = 0, l = customColor.count; i < l; i ++ ) {
 
-        color.setHSL( i / l, 0.5, 0.5 );
-        color.toArray( customColor.array, i * customColor.itemSize );
+					color.setHSL( i / l, 0.5, 0.5 );
+					color.toArray( customColor.array, i * customColor.itemSize );
 
-    }
+				}
 
-    line = new THREE.Line( geometry, shaderMaterial );
-    line.rotation.x = 0.2;
-    scene.add( line );
+				line = new THREE.Line( geometry, shaderMaterial );
+				line.rotation.x = 0.2;
+				scene.add( line );
 
-    renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
 
-    const container = document.getElementById( 'container' );
-    container.appendChild( renderer.domElement );
+				const container = document.getElementById( 'container' );
+				container.appendChild( renderer.domElement );
 
-    stats = new Stats();
-    container.appendChild( stats.dom );
+				stats = new Stats();
+				container.appendChild( stats.dom );
 
-    //
+				//
 
-    window.addEventListener( 'resize', onWindowResize );
+				window.addEventListener( 'resize', onWindowResize );
 
-}
+			}
 
-function onWindowResize() {
+			function onWindowResize() {
 
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
 
-    renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setSize( window.innerWidth, window.innerHeight );
 
-}
+			}
 
-function animate() {
+			function animate() {
 
-    requestId = requestAnimationFrame(animate);
+				requestId = requestAnimationFrame( animate );
 
-    render();
-    stats.update();
+				render();
+				stats.update();
 
-}
+			}
 
-function render() {
+			function render() {
 
-    const time = Date.now() * 0.001;
+				const time = Date.now() * 0.001;
 
-    line.rotation.y = 0.25 * time;
+				line.rotation.y = 0.25 * time;
 
-    uniforms.amplitude.value = Math.sin( 0.5 * time );
-    uniforms.color.value.offsetHSL( 0.0005, 0, 0 );
+				uniforms.amplitude.value = Math.sin( 0.5 * time );
+				uniforms.color.value.offsetHSL( 0.0005, 0, 0 );
 
-    const attributes = line.geometry.attributes;
-    const array = attributes.displacement.array;
+				const attributes = line.geometry.attributes;
+				const array = attributes.displacement.array;
 
-    for ( let i = 0, l = array.length; i < l; i += 3 ) {
+				for ( let i = 0, l = array.length; i < l; i += 3 ) {
 
-        array[ i ] += 0.3 * ( 0.5 - Math.random() );
-        array[ i + 1 ] += 0.3 * ( 0.5 - Math.random() );
-        array[ i + 2 ] += 0.3 * ( 0.5 - Math.random() );
+					array[ i ] += 0.3 * ( 0.5 - Math.random() );
+					array[ i + 1 ] += 0.3 * ( 0.5 - Math.random() );
+					array[ i + 2 ] += 0.3 * ( 0.5 - Math.random() );
 
-    }
+				}
 
-    attributes.displacement.needsUpdate = true;
+				attributes.displacement.needsUpdate = true;
 
-    renderer.render( scene, camera );
+				renderer.render( scene, camera );
 
-}
-
-}
+			}
+  }
 })

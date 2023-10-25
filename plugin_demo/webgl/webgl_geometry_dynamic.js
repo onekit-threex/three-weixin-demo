@@ -1,16 +1,30 @@
-// webgl/webgl_geometry_dynamic.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';	
 
-import Stats from './jsm/libs/stats.module.js';
+import Stats from 'three/addons/libs/stats.module.js';
 
-import { FirstPersonControls } from './jsm/controls/FirstPersonControls.js';
+import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.js';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -20,123 +34,122 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        
-			let camera, controls, scene, renderer, stats;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-			let mesh, geometry, material, clock;
+  let camera, controls, scene, renderer, stats;
 
-			const worldWidth = 128, worldDepth = 128;
+  let mesh, geometry, material, clock;
 
-			init();
-			animate();
+  const worldWidth = 128, worldDepth = 128;
 
-			function init() {
+  init();
+  animate();
 
-				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
-				camera.position.y = 200;
+  function init() {
 
-				clock = new THREE.Clock();
+    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+    camera.position.y = 200;
 
-				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xaaccff );
-				scene.fog = new THREE.FogExp2( 0xaaccff, 0.0007 );
+    clock = new THREE.Clock();
 
-				geometry = new THREE.PlaneGeometry( 20000, 20000, worldWidth - 1, worldDepth - 1 );
-				geometry.rotateX( - Math.PI / 2 );
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color( 0xaaccff );
+    scene.fog = new THREE.FogExp2( 0xaaccff, 0.0007 );
 
-				const position = geometry.attributes.position;
-				position.usage = THREE.DynamicDrawUsage;
+    geometry = new THREE.PlaneGeometry( 20000, 20000, worldWidth - 1, worldDepth - 1 );
+    geometry.rotateX( - Math.PI / 2 );
 
-				for ( let i = 0; i < position.count; i ++ ) {
+    const position = geometry.attributes.position;
+    position.usage = THREE.DynamicDrawUsage;
 
-					const y = 35 * Math.sin( i / 2 );
-					position.setY( i, y );
+    for ( let i = 0; i < position.count; i ++ ) {
 
-				}
+      const y = 35 * Math.sin( i / 2 );
+      position.setY( i, y );
 
-				const texture = new THREE.TextureLoader( ).load( 'textures/water.jpg' );
-				texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-				texture.repeat.set( 5, 5 );
-
-				material = new THREE.MeshBasicMaterial( { color: 0x0044ff, map: texture } );
-
-				mesh = new THREE.Mesh( geometry, material );
-				scene.add( mesh );
-
-				renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
-
-				controls = new FirstPersonControls( camera, renderer.domElement );
-
-				controls.movementSpeed = 500;
-				controls.lookSpeed = 0.1;
-
-				stats = new Stats();
-				document.body.appendChild( stats.dom );
-
-				//
-
-				window.addEventListener( 'resize', onWindowResize );
-
-			}
-
-			function onWindowResize() {
-
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-				controls.handleResize();
-
-			}
-
-			//
-
-			function animate() {
-
-				requestId = requestAnimationFrame(animate);
-
-				render();
-			//	//stats.update();
-
-			}
-
-			function render() {
-
-				const delta = clock.getDelta();
-				const time = clock.getElapsedTime() * 10;
-
-				const position = geometry.attributes.position;
-
-				for ( let i = 0; i < position.count; i ++ ) {
-
-					const y = 35 * Math.sin( i / 5 + ( time + i ) / 7 );
-					position.setY( i, y );
-
-				}
-
-				position.needsUpdate = true;
-
-				controls.update( delta );
-				renderer.render( scene, camera );
-
-			}
     }
+
+    const texture = new THREE.TextureLoader().load( 'textures/water.jpg' );
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set( 5, 5 );
+    texture.colorSpace = THREE.SRGBColorSpace;
+
+    material = new THREE.MeshBasicMaterial( { color: 0x0044ff, map: texture } );
+
+    mesh = new THREE.Mesh( geometry, material );
+    scene.add( mesh );
+
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
+
+    controls = new FirstPersonControls( camera, renderer.domElement );
+
+    controls.movementSpeed = 500;
+    controls.lookSpeed = 0.1;
+
+    stats = new Stats();
+    document.body.appendChild( stats.dom );
+
+    //
+
+    window.addEventListener( 'resize', onWindowResize );
+
+  }
+
+  function onWindowResize() {
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+    controls.handleResize();
+
+  }
+
+  //
+
+  function animate() {
+
+    requestId = requestAnimationFrame( animate );
+
+    render();
+    stats.update();
+
+  }
+
+  function render() {
+
+    const delta = clock.getDelta();
+    const time = clock.getElapsedTime() * 10;
+
+    const position = geometry.attributes.position;
+
+    for ( let i = 0; i < position.count; i ++ ) {
+
+      const y = 35 * Math.sin( i / 5 + ( time + i ) / 7 );
+      position.setY( i, y );
+
+    }
+
+    position.needsUpdate = true;
+
+    controls.update( delta );
+    renderer.render( scene, camera );
+
+  }
+  }
 })

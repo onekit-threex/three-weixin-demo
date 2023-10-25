@@ -1,15 +1,31 @@
-// webgl/webgl_loader_3mf.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { OrbitControls } from './jsm/controls/OrbitControls0.js';
-import { ThreeMFLoader } from './jsm/loaders/3MFLoader.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+import { ThreeMFLoader } from 'three/addons/loaders/3MFLoader.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -19,141 +35,140 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {	
 
-        let camera, scene, renderer, object, loader, controls;
+  let camera, scene, renderer, object, loader, controls;
 
-			const params = {
-				asset: 'cube_gears'
-			};
+  const params = {
+    asset: 'cube_gears'
+  };
 
-			const assets = [
-				'cube_gears',
-				'facecolors',
-				'multipletextures',
-				'vertexcolors'
-			];
+  const assets = [
+    'cube_gears',
+    'facecolors',
+    'multipletextures',
+    'vertexcolors'
+  ];
 
-			init();
+  init();
 
-			function init() {
+  function init() {
 
-				renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
 
-				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0x333333 );
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color( 0x333333 );
 
-				scene.add( new THREE.AmbientLight( 0xffffff, 0.2 ) );
+    camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 500 );
 
-				camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 500 );
+    // Z is up for objects intended to be 3D printed.
 
-				// Z is up for objects intended to be 3D printed.
+    camera.up.set( 0, 0, 1 );
+    camera.position.set( - 100, - 250, 100 );
+    scene.add( camera );
 
-				camera.up.set( 0, 0, 1 );
-				camera.position.set( - 100, - 250, 100 );
-				scene.add( camera );
+    controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+    controls.addEventListener( 'change', render );
+    controls.minDistance = 50;
+    controls.maxDistance = 400;
+    controls.enablePan = false;
+    controls.update();
 
-				controls = new OrbitControls( camera, renderer.domElement );
-				controls.addEventListener( 'change', render );
-				controls.minDistance = 50;
-				controls.maxDistance = 400;
-				controls.enablePan = false;
-				controls.update();
+    scene.add( new THREE.AmbientLight( 0xffffff, 0.6 ) );
 
-				const pointLight = new THREE.PointLight( 0xffffff, 0.8 );
-				camera.add( pointLight );
+    const light = new THREE.DirectionalLight( 0xffffff, 2 );
+    light.position.set( - 1, - 2.5, 1 );
+    scene.add( light );
 
-				const manager = new THREE.LoadingManager();
+    const manager = new THREE.LoadingManager();
 
-				manager.onLoad = function () {
+    manager.onLoad = function () {
 
-					const aabb = new THREE.Box3().setFromObject( object );
-					const center = aabb.getCenter( new THREE.Vector3() );
+      const aabb = new THREE.Box3().setFromObject( object );
+      const center = aabb.getCenter( new THREE.Vector3() );
 
-					object.position.x += ( object.position.x - center.x );
-					object.position.y += ( object.position.y - center.y );
-					object.position.z += ( object.position.z - center.z );
+      object.position.x += ( object.position.x - center.x );
+      object.position.y += ( object.position.y - center.y );
+      object.position.z += ( object.position.z - center.z );
 
-					controls.reset();
+      controls.reset();
 
-					scene.add( object );
-					render();
+      scene.add( object );
+      render();
 
-				};
+    };
 
-				loader = new ThreeMFLoader( manager );
-				loadAsset( params.asset );
+    loader = new ThreeMFLoader( manager );
+    loadAsset( params.asset );
 
-				window.addEventListener( 'resize', onWindowResize );
+    window.addEventListener( 'resize', onWindowResize );
 
-				//
+    //
 
-				const gui = new GUI();
-				gui.add( params, 'asset', assets ).onChange( function ( value ) {
+    const gui = new GUI();
+    gui.add( params, 'asset', assets ).onChange( function ( value ) {
 
-					loadAsset( value );
+      loadAsset( value );
 
-				} );
+    } );
 
-			}
+  }
 
-			function loadAsset( asset ) {
+  function loadAsset( asset ) {
 
-				loader.load( 'models/3mf/' + asset + '.3mf', function ( group ) {
-                  //  console.error( group );
-					if ( object ) {
+    loader.load( 'models/3mf/' + asset + '.3mf', function ( group ) {
 
-						object.traverse( function ( child ) {
+      if ( object ) {
 
-							if ( child.material ) child.material.dispose();
-							if ( child.material && child.material.map ) child.material.map.dispose();
-							if ( child.geometry ) child.geometry.dispose();
+        object.traverse( function ( child ) {
 
-						} );
+          if ( child.material ) child.material.dispose();
+          if ( child.material && child.material.map ) child.material.map.dispose();
+          if ( child.geometry ) child.geometry.dispose();
 
-						scene.remove( object );
+        } );
 
-					}
+        scene.remove( object );
 
-					//
+      }
 
-					object = group;
+      //
 
-				} );
+      object = group;
 
-			}
+    } );
 
-			function onWindowResize() {
+  }
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+  function onWindowResize() {
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
 
-				render();
+    renderer.setSize( window.innerWidth, window.innerHeight );
 
-			}
+    render();
 
-			function render() {
-               // console.error( scene, camera );
-				renderer.render( scene, camera );
+  }
 
-			}
-    }
+  function render() {
+
+    renderer.render( scene, camera );
+
+  }
+  }
 })

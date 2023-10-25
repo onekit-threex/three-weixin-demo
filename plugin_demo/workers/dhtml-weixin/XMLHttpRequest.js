@@ -1,11 +1,11 @@
 /* eslint-disable camelcase */
 import EventTarget from "./EventTarget";
 
-function run(cb, wx_object) {
+function run(cb, mini_object) {
   return new Promise((resolve, reject) => {
-    wx_object.success = resolve;
-    wx_object.fail = reject;
-    cb(wx.request(wx_object));
+    mini_object.success = resolve;
+    mini_object.fail = reject;
+    cb(wx.request(mini_object));
   });
 }
 export default class XMLHttpRequest extends EventTarget {
@@ -37,7 +37,7 @@ export default class XMLHttpRequest extends EventTarget {
         });
       }
     };
-    const wx_object = {
+    const mini_object = {
       url: this._url,
       dataType: "text",
       responseType: this._responseType,
@@ -45,16 +45,16 @@ export default class XMLHttpRequest extends EventTarget {
       data: body,
     };
     if (this._async) {
-      wx_object.success = (res) => {
+      mini_object.success = (res) => {
         callback.call(this, res);
       };
-      wx_object.fail = console.error
-      this._task = wx.request(wx_object);
+      mini_object.fail = console.error
+      this._task = wx.request(mini_object);
     } else {
       try {
         const res = await run((task) => {
           this._task = task;
-        }, wx_object);
+        }, mini_object);
         callback.call(this, res);
       } catch (ex) {
         console.error(ex);

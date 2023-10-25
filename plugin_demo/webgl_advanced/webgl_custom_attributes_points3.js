@@ -1,59 +1,73 @@
-// webgl_advanced/webgl_custom_attributes_points3.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import Stats from './jsm/libs/stats.module.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import * as BufferGeometryUtils from './jsm/utils/BufferGeometryUtils.js';
-const onekit = {
-    "vertexshader":`
+  import Stats from 'three/addons/libs/stats.module.js';
 
-    attribute float size;
-    attribute vec4 ca;
+  import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
-    varying vec4 vColor;
+const vertexshader = `
 
-    void main() {
+attribute float size;
+attribute vec4 ca;
 
-        vColor = ca;
+varying vec4 vColor;
 
-        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+void main() {
 
-        gl_PointSize = size * ( 150.0 / -mvPosition.z );
+  vColor = ca;
 
-        gl_Position = projectionMatrix * mvPosition;
+  vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
 
-    }
-`,
-"fragmentshader":`
+  gl_PointSize = size * ( 150.0 / -mvPosition.z );
 
-    uniform vec3 color;
-    uniform sampler2D pointTexture;
+  gl_Position = projectionMatrix * mvPosition;
 
-    varying vec4 vColor;
-
-    void main() {
-
-        vec4 outColor = texture2D( pointTexture, gl_PointCoord );
-
-        if ( outColor.a < 0.5 ) discard;
-
-        gl_FragColor = outColor * vec4( color * vColor.xyz, 1.0 );
-
-        float depth = gl_FragCoord.z / gl_FragCoord.w;
-        const vec3 fogColor = vec3( 0.0 );
-
-        float fogFactor = smoothstep( 200.0, 600.0, depth );
-        gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );
-
-    }
-`
 }
+`
+const fragmentshader = `
 
+uniform vec3 color;
+uniform sampler2D pointTexture;
+
+varying vec4 vColor;
+
+void main() {
+
+  vec4 outColor = texture2D( pointTexture, gl_PointCoord );
+
+  if ( outColor.a < 0.5 ) discard;
+
+  gl_FragColor = outColor * vec4( color * vColor.xyz, 1.0 );
+
+  float depth = gl_FragCoord.z / gl_FragCoord.w;
+  const vec3 fogColor = vec3( 0.0 );
+
+  float fogFactor = smoothstep( 200.0, 600.0, depth );
+  gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );
+
+}
+`
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -64,16 +78,19 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-let renderer, scene, camera, stats;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+
+			let renderer, scene, camera, stats;
 
 			let object;
 
@@ -140,7 +157,7 @@ let renderer, scene, camera, stats;
 
 					const positionAttribute = geo.getAttribute( 'position' );
 
-					for ( var i = 0, l = positionAttribute.count; i < l; i ++ ) {
+					for ( let i = 0, l = positionAttribute.count; i < l; i ++ ) {
 
 						vertex.fromBufferAttribute( positionAttribute, i );
 						vertex.applyMatrix4( matrix );
@@ -210,7 +227,7 @@ let renderer, scene, camera, stats;
 
 				//
 
-				const texture = new THREE.TextureLoader( ).load( 'textures/sprites/ball.png' );
+				const texture = new THREE.TextureLoader().load( 'textures/sprites/ball.png' );
 				texture.wrapS = THREE.RepeatWrapping;
 				texture.wrapT = THREE.RepeatWrapping;
 
@@ -221,8 +238,8 @@ let renderer, scene, camera, stats;
 						color: { value: new THREE.Color( 0xffffff ) },
 						pointTexture: { value: texture }
 					},
-					vertexShader:onekit[ 'vertexshader' ],
-					fragmentShader: onekit['fragmentshader' ]
+					vertexShader:vertexshader,
+					fragmentShader:fragmentshader
 
 				} );
 
@@ -233,7 +250,7 @@ let renderer, scene, camera, stats;
 
 				//
 
-				renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
+				renderer = new THREE.WebGLRenderer();
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( WIDTH, HEIGHT );
 
@@ -260,7 +277,7 @@ let renderer, scene, camera, stats;
 
 			function animate() {
 
-				requestId = requestAnimationFrame(animate);
+				requestId = requestAnimationFrame( animate );
 
 				render();
 				stats.update();
@@ -292,5 +309,5 @@ let renderer, scene, camera, stats;
 
 			}
 
-}
+  }
 })

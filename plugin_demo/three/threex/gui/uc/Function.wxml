@@ -1,0 +1,3 @@
+<view>
+	<button disabled="{{disabled?'disabled':false}}" catchtap="button_tap" style="width:100%;font-size:30rpx;padding:0rpx;background:#fff3;">{{name}}</button>
+</view>

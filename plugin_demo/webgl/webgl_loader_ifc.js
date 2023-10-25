@@ -1,37 +1,66 @@
 // webgl/webgl_loader_ifc.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-var requestId
 Page({
-	   
-         onUnload() {
-/*
-		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
-		setTimeout(() => {
-			if (this.renderer instanceof THREE.WebGLRenderer) {
-				this.renderer.dispose()
-				this.renderer.forceContextLoss()
-				this.renderer.context = null
-				this.renderer.domElement = null
-				this.renderer = null
-			}
-		}, 0)*/
-        
-	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
 
-       
-    }
+  /**
+   * 页面的初始数据
+   */
+  data: {
+
+  },
+
+  /**
+   * 生命周期函数--监听页面加载
+   */
+  onLoad(options) {
+
+  },
+
+  /**
+   * 生命周期函数--监听页面初次渲染完成
+   */
+  onReady() {
+
+  },
+
+  /**
+   * 生命周期函数--监听页面显示
+   */
+  onShow() {
+
+  },
+
+  /**
+   * 生命周期函数--监听页面隐藏
+   */
+  onHide() {
+
+  },
+
+  /**
+   * 生命周期函数--监听页面卸载
+   */
+  onUnload() {
+
+  },
+
+  /**
+   * 页面相关事件处理函数--监听用户下拉动作
+   */
+  onPullDownRefresh() {
+
+  },
+
+  /**
+   * 页面上拉触底事件的处理函数
+   */
+  onReachBottom() {
+
+  },
+
+  /**
+   * 用户点击右上角分享
+   */
+  onShareAppMessage() {
+
+  }
 })

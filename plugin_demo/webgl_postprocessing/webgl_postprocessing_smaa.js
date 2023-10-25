@@ -1,18 +1,35 @@
-// webgl_postprocessing/webgl_postprocessing_smaa.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import Stats from './jsm/libs/stats.module.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import { EffectComposer } from './jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from './jsm/postprocessing/RenderPass.js';
-import { SMAAPass } from './jsm/postprocessing/SMAAPass.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import Stats from 'three/addons/libs/stats.module.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -23,99 +40,125 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-let camera, scene, renderer, composer, stats,canvas;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {	
+  let camera, scene, renderer, composer, stats, smaaPass;
 
-			init();
-			animate();
+  const params = {
+    enabled: true,
+    autoRotate: true
 
-			function init() {
+  };
 
-				const container = document.getElementById( 'container' );
+  init();
+  animate();
 
-				renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
+  function init() {
 
-				stats = new Stats();
-				container.appendChild( stats.dom );
+    const container = document.getElementById( 'container' );
 
-				//
+    renderer = new THREE.WebGLRenderer();
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
 
-				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-				camera.position.z = 300;
+    stats = new Stats();
+    container.appendChild( stats.dom );
 
-				scene = new THREE.Scene();
+    //
 
-				const geometry = new THREE.BoxGeometry( 120, 120, 120 );
-				const material1 = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
+    camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+    camera.position.z = 300;
 
-				const mesh1 = new THREE.Mesh( geometry, material1 );
-				mesh1.position.x = - 100;
-				scene.add( mesh1 );
+    scene = new THREE.Scene();
 
-				const texture = new THREE.TextureLoader( ).load( 'textures/brick_diffuse.jpg' );
-				texture.anisotropy = 4;
+    const geometry = new THREE.BoxGeometry( 120, 120, 120 );
+    const material1 = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
 
-				const material2 = new THREE.MeshBasicMaterial( { map: texture } );
+    const mesh1 = new THREE.Mesh( geometry, material1 );
+    mesh1.position.x = - 100;
+    scene.add( mesh1 );
 
-				const mesh2 = new THREE.Mesh( geometry, material2 );
-				mesh2.position.x = 100;
-				scene.add( mesh2 );
+    const texture = new THREE.TextureLoader().load( 'textures/brick_diffuse.jpg' );
+    texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    texture.colorSpace = THREE.SRGBColorSpace;
 
-				// postprocessing
+    const material2 = new THREE.MeshBasicMaterial( { map: texture } );
 
-				composer = new EffectComposer( renderer );
-				composer.addPass( new RenderPass( scene, camera ) );
+    const mesh2 = new THREE.Mesh( geometry, material2 );
+    mesh2.position.x = 100;
+    scene.add( mesh2 );
 
-				const pass = new SMAAPass( window.innerWidth * renderer.getPixelRatio(), window.innerHeight * renderer.getPixelRatio() ,canvas);
-				composer.addPass( pass );
+    // postprocessing
 
-				window.addEventListener( 'resize', onWindowResize );
+    composer = new EffectComposer( renderer );
+    composer.addPass( new RenderPass( scene, camera ) );
 
-			}
+    smaaPass = new SMAAPass( window.innerWidth * renderer.getPixelRatio(), window.innerHeight * renderer.getPixelRatio() );
+    composer.addPass( smaaPass );
 
-			function onWindowResize() {
+    const outputPass = new OutputPass();
+    composer.addPass( outputPass );
 
-				const width = window.innerWidth;
-				const height = window.innerHeight;
+    window.addEventListener( 'resize', onWindowResize );
 
-				camera.aspect = width / height;
-				camera.updateProjectionMatrix();
+    const gui = new GUI();
 
-				renderer.setSize( width, height );
-				composer.setSize( width, height );
+    const smaaFolder = gui.addFolder( 'SMAA' );
+    smaaFolder.add( params, 'enabled' );
 
-			}
+    const sceneFolder = gui.addFolder( 'Scene' );
+    sceneFolder.add( params, 'autoRotate' );
 
-			function animate() {
+  }
 
-				requestId = requestAnimationFrame(animate);
+  function onWindowResize() {
 
-				stats.begin();
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
-				for ( let i = 0; i < scene.children.length; i ++ ) {
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
 
-					const child = scene.children[ i ];
+    renderer.setSize( width, height );
+    composer.setSize( width, height );
 
-					child.rotation.x += 0.005;
-					child.rotation.y += 0.01;
+  }
 
-				}
+  function animate() {
 
-				composer.render();
+    requestId = requestAnimationFrame( animate );
 
-				stats.end();
+    stats.begin();
 
-			}
-}
+    if ( params.autoRotate === true ) {
+
+      for ( let i = 0; i < scene.children.length; i ++ ) {
+
+        const child = scene.children[ i ];
+
+        child.rotation.x += 0.005;
+        child.rotation.y += 0.01;
+
+      }
+
+    }
+
+    smaaPass.enabled = params.enabled;
+
+    composer.render();
+
+    stats.end();
+
+  }
+  }
 })

@@ -1,14 +1,29 @@
-// webgl/webgl_multiple_scenes_comparison.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { OrbitControls } from './jsm/controls/OrbitControls0.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -18,129 +33,128 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        let container, camera, renderer, controls;
-			let sceneL, sceneR;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-			let sliderPos = window.innerWidth / 2;
+  let container, camera, renderer, controls;
+  let sceneL, sceneR;
 
-			init();
+  let sliderPos = window.innerWidth / 2;
 
-			function init() {
+  init();
 
-				container = document.querySelector( '.container' );
+  function init() {
 
-				sceneL = new THREE.Scene();
-				sceneL.background = new THREE.Color( 0xBCD48F );
+    container = document.querySelector( '.container' );
 
-				sceneR = new THREE.Scene();
-				sceneR.background = new THREE.Color( 0x8FBCD4 );
+    sceneL = new THREE.Scene();
+    sceneL.background = new THREE.Color( 0xBCD48F );
 
-				camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 0.1, 100 );
-				camera.position.z = 6;
+    sceneR = new THREE.Scene();
+    sceneR.background = new THREE.Color( 0x8FBCD4 );
 
-				controls = new OrbitControls( camera, container );
+    camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 0.1, 100 );
+    camera.position.z = 6;
 
-				const light = new THREE.HemisphereLight( 0xffffff, 0x444444, 1 );
-				light.position.set( - 2, 2, 2 );
-				sceneL.add( light.clone() );
-				sceneR.add( light.clone() );
+    controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, container );
 
-				initMeshes();
-				initSlider();
+    const light = new THREE.HemisphereLight( 0xffffff, 0x444444, 3 );
+    light.position.set( - 2, 2, 2 );
+    sceneL.add( light.clone() );
+    sceneR.add( light.clone() );
 
-				renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.setScissorTest( true );
-				renderer.setAnimationLoop( render );
-				container.appendChild( renderer.domElement );
+    initMeshes();
+    initSlider();
 
-				window.addEventListener( 'resize', onWindowResize );
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setScissorTest( true );
+    renderer.setAnimationLoop( render );
+    container.appendChild( renderer.domElement );
 
-			}
+    window.addEventListener( 'resize', onWindowResize );
 
-			function initMeshes() {
+  }
 
-				const geometry = new THREE.IcosahedronGeometry( 1, 3 );
+  function initMeshes() {
 
-				const meshL = new THREE.Mesh( geometry, new THREE.MeshStandardMaterial() );
-				sceneL.add( meshL );
+    const geometry = new THREE.IcosahedronGeometry( 1, 3 );
 
-				const meshR = new THREE.Mesh( geometry, new THREE.MeshStandardMaterial( { wireframe: true } ) );
-				sceneR.add( meshR );
+    const meshL = new THREE.Mesh( geometry, new THREE.MeshStandardMaterial() );
+    sceneL.add( meshL );
 
-			}
+    const meshR = new THREE.Mesh( geometry, new THREE.MeshStandardMaterial( { wireframe: true } ) );
+    sceneR.add( meshR );
 
-			function initSlider() {
+  }
 
-				const slider = document.querySelector( '.slider' );
+  function initSlider() {
 
-				function onPointerDown() {
+    const slider = document.querySelector( '.slider' );
 
-					if ( event.isPrimary === false ) return;
+    function onPointerDown() {
 
-					controls.enabled = false;
+      if ( event.isPrimary === false ) return;
 
-					window.addEventListener( 'pointermove', onPointerMove );
-					window.addEventListener( 'pointerup', onPointerUp );
+      controls.enabled = false;
 
-				}
+      window.addEventListener( 'pointermove', onPointerMove );
+      window.addEventListener( 'pointerup', onPointerUp );
 
-				function onPointerUp() {
-
-					controls.enabled = true;
-
-					window.removeEventListener( 'pointermove', onPointerMove );
-					window.removeEventListener( 'pointerup', onPointerUp );
-
-				}
-
-				function onPointerMove( e ) {
-
-					if ( event.isPrimary === false ) return;
-
-					sliderPos = Math.max( 0, Math.min( window.innerWidth, e.pageX ) );
-
-					slider.style.left = sliderPos - ( slider.offsetWidth / 2 ) + 'px';
-
-				}
-
-				slider.style.touchAction = 'none'; // disable touch scroll
-				slider.addEventListener( 'pointerdown', onPointerDown );
-
-			}
-
-			function onWindowResize() {
-
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-			}
-
-			function render() {
-
-				renderer.setScissor( 0, 0, sliderPos, window.innerHeight );
-				renderer.render( sceneL, camera );
-
-				renderer.setScissor( sliderPos, 0, window.innerWidth, window.innerHeight );
-				renderer.render( sceneR, camera );
-
-			}
     }
+
+    function onPointerUp() {
+
+      controls.enabled = true;
+
+      window.removeEventListener( 'pointermove', onPointerMove );
+      window.removeEventListener( 'pointerup', onPointerUp );
+
+    }
+
+    function onPointerMove( e ) {
+
+      if ( event.isPrimary === false ) return;
+
+      sliderPos = Math.max( 0, Math.min( window.innerWidth, e.pageX ) );
+
+      slider.style.left = sliderPos - ( slider.offsetWidth / 2 ) + 'px';
+
+    }
+
+    slider.style.touchAction = 'none'; // disable touch scroll
+    slider.addEventListener( 'pointerdown', onPointerDown );
+
+  }
+
+  function onWindowResize() {
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+  }
+
+  function render() {
+
+    renderer.setScissor( 0, 0, sliderPos, window.innerHeight );
+    renderer.render( sceneL, camera );
+
+    renderer.setScissor( sliderPos, 0, window.innerWidth, window.innerHeight );
+    renderer.render( sceneR, camera );
+
+  }
+  }
 })

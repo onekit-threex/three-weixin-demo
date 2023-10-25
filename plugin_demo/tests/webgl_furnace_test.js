@@ -1,13 +1,26 @@
-// tests/webgl_furnace_test.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -18,137 +31,138 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-let scene, camera, renderer, radianceMap;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-const COLOR = 0xcccccc;
+    let scene, camera, renderer, radianceMap;
 
-function init() {
+    const COLOR = 0xcccccc;
 
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    const aspect = width / height;
+    function init() {
 
-    // renderer
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const aspect = width / height;
 
-    renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-    renderer.setSize( width, height );
-    renderer.setPixelRatio( window.devicePixelRatio );
-    document.body.appendChild( renderer.domElement );
+      // renderer
 
-    //renderer.outputEncoding = THREE.sRGBEncoding; // optional
+      renderer = new THREE.WebGLRenderer( { antialias: true } );
+      renderer.setSize( width, height );
+      renderer.setPixelRatio( window.devicePixelRatio );
+      document.body.appendChild( renderer.domElement );
 
-    window.addEventListener( 'resize', onWindowResize );
+      window.addEventListener( 'resize', onWindowResize );
 
-    document.body.addEventListener( 'mouseover', function () {
+      document.body.addEventListener( 'mouseover', function () {
 
         scene.traverse( function ( child ) {
 
-            if ( child.isMesh ) child.material.color.setHex( 0xffffff );
+          if ( child.isMesh ) child.material.color.setHex( 0xffffff );
 
         } );
 
         render();
 
-    } );
+      } );
 
-    document.body.addEventListener( 'mouseout', function () {
+      document.body.addEventListener( 'mouseout', function () {
 
         scene.traverse( function ( child ) {
 
-            if ( child.isMesh ) child.material.color.setHex( 0xccccff ); // tinted for visibility
+          if ( child.isMesh ) child.material.color.setHex( 0xccccff ); // tinted for visibility
 
         } );
 
         render();
 
-    } );
+      } );
 
-    // scene
+      // scene
 
-    scene = new THREE.Scene();
+      scene = new THREE.Scene();
 
-    // camera
-    camera = new THREE.PerspectiveCamera( 40, aspect, 1, 30 );
-    camera.position.set( 0, 0, 18 );
-
-}
-
-function createObjects() {
-
-    const geometry = new THREE.SphereGeometry( 0.4, 32, 16 );
-
-    for ( let x = 0; x <= 10; x ++ ) {
-
-        for ( let y = 0; y <= 10; y ++ ) {
-
-            const material = new THREE.MeshPhysicalMaterial( {
-                roughness: x / 10,
-                metalness: y / 10,
-                color: 0xffffff,
-                envMap: radianceMap,
-                envMapIntensity: 1,
-                transmission: 0,
-                ior: 1.5
-            } );
-
-            const mesh = new THREE.Mesh( geometry, material );
-            mesh.position.x = x - 5;
-            mesh.position.y = 5 - y;
-            scene.add( mesh );
-
-        }
+      // camera
+      camera = new THREE.PerspectiveCamera( 40, aspect, 1, 30 );
+      camera.position.set( 0, 0, 18 );
 
     }
 
-}
+    function createObjects() {
 
-function createEnvironment() {
+      const geometry = new THREE.SphereGeometry( 0.4, 32, 16 );
 
-    const envScene = new THREE.Scene();
-    envScene.background = new THREE.Color( COLOR );
-    if ( renderer.outputEncoding === THREE.sRGBEncoding ) envScene.background.convertSRGBToLinear();
+      for ( let x = 0; x <= 10; x ++ ) {
 
-    const pmremGenerator = new THREE.PMREMGenerator( renderer );
-    radianceMap = pmremGenerator.fromScene( envScene ).texture;
-    pmremGenerator.dispose();
+        for ( let y = 0; y <= 10; y ++ ) {
 
-    scene.background = radianceMap;
+          const material = new THREE.MeshPhysicalMaterial( {
+            roughness: x / 10,
+            metalness: y / 10,
+            color: 0xffffff,
+            envMap: radianceMap,
+            envMapIntensity: 1,
+            transmission: 0,
+            ior: 1.5
+          } );
 
-}
+          const mesh = new THREE.Mesh( geometry, material );
+          mesh.position.x = x - 5;
+          mesh.position.y = 5 - y;
+          scene.add( mesh );
 
-function onWindowResize() {
+        }
 
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+      }
 
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
+    }
 
-    renderer.setSize( width, height );
+    function createEnvironment() {
 
-    render();
+      const envScene = new THREE.Scene();
+      envScene.background = new THREE.Color( COLOR );
 
-}
+      const pmremGenerator = new THREE.PMREMGenerator( renderer );
+      radianceMap = pmremGenerator.fromScene( envScene ).texture;
+      pmremGenerator.dispose();
 
-function render() {
+      scene.background = envScene.background;
 
-    renderer.render( scene, camera );
+    }
 
-}
+    function onWindowResize() {
 
-Promise.resolve()
-    .then( init )
-    .then( createEnvironment )
-    .then( createObjects )
-    .then( render );
-}
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize( width, height );
+
+      render();
+
+    }
+
+    function render() {
+
+      renderer.render( scene, camera );
+
+    }
+
+    Promise.resolve()
+      .then( init )
+      .then( createEnvironment )
+      .then( createObjects )
+      .then( render );
+
+  }
 })

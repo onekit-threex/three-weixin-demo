@@ -1,15 +1,30 @@
-// webgl/webgl_materials_cubemap_refraction.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  Stats from './jsm/libs/stats.module.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import { PLYLoader } from './jsm/loaders/PLYLoader.js';
+import Stats from 'three/addons/libs/stats.module.js';
+
+import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -19,174 +34,152 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {	
 
-        
-			let container, stats;
+  let container, stats;
 
-			let camera, scene, renderer;
+  let camera, scene, renderer;
 
-			let pointLight;
+  let mouseX = 0, mouseY = 0;
 
-			let mouseX = 0, mouseY = 0;
+  let windowHalfX = window.innerWidth / 2;
+  let windowHalfY = window.innerHeight / 2;
 
-			let windowHalfX = window.innerWidth / 2;
-			let windowHalfY = window.innerHeight / 2;
+  init();
+  animate();
 
-			init();
-			animate();
+  function init() {
 
-			function init() {
+    container = document.createElement( 'div' );
+    document.body.appendChild( container );
 
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
+    camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 100000 );
+    camera.position.z = - 4000;
 
-				camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 100000 );
-				camera.position.z = - 4000;
+    //
 
-				//
+    const r = 'textures/cube/Park3Med/';
 
-				const r = 'textures/cube/Park3Med/';
+    const urls = [
+      r + 'px.jpg', r + 'nx.jpg',
+      r + 'py.jpg', r + 'ny.jpg',
+      r + 'pz.jpg', r + 'nz.jpg'
+    ];
 
-				const urls = [
-					r + 'px.jpg', r + 'nx.jpg',
-					r + 'py.jpg', r + 'ny.jpg',
-					r + 'pz.jpg', r + 'nz.jpg'
-				];
+    const textureCube = new THREE.CubeTextureLoader().load( urls );
+    textureCube.mapping = THREE.CubeRefractionMapping;
 
-				const textureCube = new THREE.CubeTextureLoader().load( urls );
-				textureCube.mapping = THREE.CubeRefractionMapping;
+    scene = new THREE.Scene();
+    scene.background = textureCube;
 
-				scene = new THREE.Scene();
-				scene.background = textureCube;
+    // LIGHTS
 
-				// LIGHTS
+    const ambient = new THREE.AmbientLight( 0xffffff, 3.5 );
+    scene.add( ambient );
 
-				const ambient = new THREE.AmbientLight( 0xffffff );
-				scene.add( ambient );
+    // material samples
 
-				pointLight = new THREE.PointLight( 0xffffff, 2 );
-				scene.add( pointLight );
+    const cubeMaterial3 = new THREE.MeshPhongMaterial( { color: 0xccddff, envMap: textureCube, refractionRatio: 0.98, reflectivity: 0.9 } );
+    const cubeMaterial2 = new THREE.MeshPhongMaterial( { color: 0xccfffd, envMap: textureCube, refractionRatio: 0.985 } );
+    const cubeMaterial1 = new THREE.MeshPhongMaterial( { color: 0xffffff, envMap: textureCube, refractionRatio: 0.98 } );
 
-				// light representation
+    //
 
-				const sphere = new THREE.SphereGeometry( 100, 16, 8 );
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    container.appendChild( renderer.domElement );
 
-				const mesh = new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) );
-				mesh.scale.set( 0.05, 0.05, 0.05 );
-				pointLight.add( mesh );
+    stats = new Stats();
+    container.appendChild( stats.dom );
 
-				// material samples
+    const loader = new PLYLoader();
+    loader.load( 'models/ply/binary/Lucy100k.ply', function ( geometry ) {
 
-				const cubeMaterial3 = new THREE.MeshPhongMaterial( { color: 0xccddff, envMap: textureCube, refractionRatio: 0.98, reflectivity: 0.9 } );
-				const cubeMaterial2 = new THREE.MeshPhongMaterial( { color: 0xccfffd, envMap: textureCube, refractionRatio: 0.985 } );
-				const cubeMaterial1 = new THREE.MeshPhongMaterial( { color: 0xffffff, envMap: textureCube, refractionRatio: 0.98 } );
+      createScene( geometry, cubeMaterial1, cubeMaterial2, cubeMaterial3 );
 
-				//
+    } );
 
-				renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				container.appendChild( renderer.domElement );
+    document.addEventListener( 'mousemove', onDocumentMouseMove );
 
-				stats = new Stats();
-				container.appendChild( stats.dom );
+    //
 
-				const loader = new PLYLoader();
-				loader.load( 'models/ply/binary/Lucy100k.ply', function ( geometry ) {
+    window.addEventListener( 'resize', onWindowResize );
 
-					createScene( geometry, cubeMaterial1, cubeMaterial2, cubeMaterial3 );
+  }
 
-				} );
+  function onWindowResize() {
 
-				document.addEventListener( 'mousemove', onDocumentMouseMove );
+    windowHalfX = window.innerWidth / 2;
+    windowHalfY = window.innerHeight / 2;
 
-				//
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
 
-				window.addEventListener( 'resize', onWindowResize );
+    renderer.setSize( window.innerWidth, window.innerHeight );
 
-			}
+  }
 
-			function onWindowResize() {
+  function createScene( geometry, m1, m2, m3 ) {
 
-				windowHalfX = window.innerWidth / 2;
-				windowHalfY = window.innerHeight / 2;
+    geometry.computeVertexNormals();
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+    const s = 1.5;
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+    let mesh = new THREE.Mesh( geometry, m1 );
+    mesh.scale.x = mesh.scale.y = mesh.scale.z = s;
+    scene.add( mesh );
 
-			}
+    mesh = new THREE.Mesh( geometry, m2 );
+    mesh.position.x = - 1500;
+    mesh.scale.x = mesh.scale.y = mesh.scale.z = s;
+    scene.add( mesh );
 
-			function createScene( geometry, m1, m2, m3 ) {
+    mesh = new THREE.Mesh( geometry, m3 );
+    mesh.position.x = 1500;
+    mesh.scale.x = mesh.scale.y = mesh.scale.z = s;
+    scene.add( mesh );
 
-				geometry.computeVertexNormals();
+  }
 
-				const s = 1.5;
+  function onDocumentMouseMove( event ) {
 
-				let mesh = new THREE.Mesh( geometry, m1 );
-				mesh.scale.x = mesh.scale.y = mesh.scale.z = s;
-				scene.add( mesh );
+    mouseX = ( event.clientX - windowHalfX ) * 4;
+    mouseY = ( event.clientY - windowHalfY ) * 4;
 
-				mesh = new THREE.Mesh( geometry, m2 );
-				mesh.position.x = - 1500;
-				mesh.scale.x = mesh.scale.y = mesh.scale.z = s;
-				scene.add( mesh );
+  }
 
-				mesh = new THREE.Mesh( geometry, m3 );
-				mesh.position.x = 1500;
-				mesh.scale.x = mesh.scale.y = mesh.scale.z = s;
-				scene.add( mesh );
+  //
 
-			}
+  function animate() {
 
-			function onDocumentMouseMove( event ) {
+    requestId = requestAnimationFrame( animate );
 
-				mouseX = ( event.clientX - windowHalfX ) * 4;
-				mouseY = ( event.clientY - windowHalfY ) * 4;
+    render();
+    stats.update();
 
-			}
+  }
 
-			//
+  function render() {
 
-			function animate() {
+    camera.position.x += ( mouseX - camera.position.x ) * .05;
+    camera.position.y += ( - mouseY - camera.position.y ) * .05;
 
-				requestId = requestAnimationFrame(animate);
+    camera.lookAt( scene.position );
 
-				render();
-				stats.update();
+    renderer.render( scene, camera );
 
-			}
-
-			function render() {
-
-				const timer = - 0.0002 * Date.now();
-
-				camera.position.x += ( mouseX - camera.position.x ) * .05;
-				camera.position.y += ( - mouseY - camera.position.y ) * .05;
-
-				camera.lookAt( scene.position );
-
-				pointLight.position.x = 1500 * Math.cos( timer );
-				pointLight.position.z = 1500 * Math.sin( timer );
-
-				renderer.render( scene, camera );
-
-			}
-
-    }
+  }
+  }
 })

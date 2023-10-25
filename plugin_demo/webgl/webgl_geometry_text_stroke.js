@@ -1,16 +1,31 @@
-// webgl/webgl_geometry_text_stroke.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { OrbitControls } from './jsm/controls/OrbitControls0.js';
-import { SVGLoader } from './jsm/loaders/SVGLoader.js';
-import { FontLoader } from './jsm/loaders/FontLoader.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';  
 
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -20,146 +35,145 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        
-			let camera, scene, renderer;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+ 
 
-			init();
+    let camera, scene, renderer;
 
-			function init( ) {
+    init();
 
-				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
-				camera.position.set( 0, - 400, 600 );
+    function init( ) {
 
-				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xf0f0f0 );
+      camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+      camera.position.set( 0, - 400, 600 );
 
-				const loader = new FontLoader();
-				loader.load( 'fonts/helvetiker_regular.typeface.json', function ( font ) {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color( 0xf0f0f0 );
 
-					const color = new THREE.Color( 0x006699 );
+      const loader = new FontLoader();
+      loader.load( 'fonts/helvetiker_regular.typeface.json', function ( font ) {
 
-					const matDark = new THREE.MeshBasicMaterial( {
-						color: color,
-						side: THREE.DoubleSide
-					} );
+        const color = new THREE.Color( 0x006699 );
 
-					const matLite = new THREE.MeshBasicMaterial( {
-						color: color,
-						transparent: true,
-						opacity: 0.4,
-						side: THREE.DoubleSide
-					} );
+        const matDark = new THREE.MeshBasicMaterial( {
+          color: color,
+          side: THREE.DoubleSide
+        } );
 
-					const message = '   Three.js\nStroke text.';
+        const matLite = new THREE.MeshBasicMaterial( {
+          color: color,
+          transparent: true,
+          opacity: 0.4,
+          side: THREE.DoubleSide
+        } );
 
-					const shapes = font.generateShapes( message, 100 );
+        const message = '   Three.js\nStroke text.';
 
-					const geometry = new THREE.ShapeGeometry( shapes );
+        const shapes = font.generateShapes( message, 100 );
 
-					geometry.computeBoundingBox();
+        const geometry = new THREE.ShapeGeometry( shapes );
 
-					const xMid = - 0.5 * ( geometry.boundingBox.max.x - geometry.boundingBox.min.x );
+        geometry.computeBoundingBox();
 
-					geometry.translate( xMid, 0, 0 );
+        const xMid = - 0.5 * ( geometry.boundingBox.max.x - geometry.boundingBox.min.x );
 
-					// make shape ( N.B. edge view not visible )
+        geometry.translate( xMid, 0, 0 );
 
-					const text = new THREE.Mesh( geometry, matLite );
-					text.position.z = - 150;
-					scene.add( text );
+        // make shape ( N.B. edge view not visible )
 
-					// make line shape ( N.B. edge view remains visible )
+        const text = new THREE.Mesh( geometry, matLite );
+        text.position.z = - 150;
+        scene.add( text );
 
-					const holeShapes = [];
+        // make line shape ( N.B. edge view remains visible )
 
-					for ( let i = 0; i < shapes.length; i ++ ) {
+        const holeShapes = [];
 
-						const shape = shapes[ i ];
+        for ( let i = 0; i < shapes.length; i ++ ) {
 
-						if ( shape.holes && shape.holes.length > 0 ) {
+          const shape = shapes[ i ];
 
-							for ( let j = 0; j < shape.holes.length; j ++ ) {
+          if ( shape.holes && shape.holes.length > 0 ) {
 
-								const hole = shape.holes[ j ];
-								holeShapes.push( hole );
+            for ( let j = 0; j < shape.holes.length; j ++ ) {
 
-							}
+              const hole = shape.holes[ j ];
+              holeShapes.push( hole );
 
-						}
+            }
 
-					}
+          }
 
-					shapes.push.apply( shapes, holeShapes );
+        }
 
-					const style = SVGLoader.getStrokeStyle( 5, color.getStyle() );
+        shapes.push.apply( shapes, holeShapes );
 
-					const strokeText = new THREE.Group();
+        const style = SVGLoader.getStrokeStyle( 5, color.getStyle() );
 
-					for ( let i = 0; i < shapes.length; i ++ ) {
+        const strokeText = new THREE.Group();
 
-						const shape = shapes[ i ];
+        for ( let i = 0; i < shapes.length; i ++ ) {
 
-						const points = shape.getPoints();
+          const shape = shapes[ i ];
 
-						const geometry = SVGLoader.pointsToStroke( points, style );
+          const points = shape.getPoints();
 
-						geometry.translate( xMid, 0, 0 );
+          const geometry = SVGLoader.pointsToStroke( points, style );
 
-						const strokeMesh = new THREE.Mesh( geometry, matDark );
-						strokeText.add( strokeMesh );
+          geometry.translate( xMid, 0, 0 );
 
-					}
+          const strokeMesh = new THREE.Mesh( geometry, matDark );
+          strokeText.add( strokeMesh );
 
-					scene.add( strokeText );
+        }
 
-					render();
+        scene.add( strokeText );
 
-				} ); //end load function
+        render();
 
-				renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
+      } ); //end load function
 
-				const controls = new OrbitControls( camera, renderer.domElement );
-				controls.target.set( 0, 0, 0 );
-				controls.update();
+      renderer = new THREE.WebGLRenderer( { antialias: true } );
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      document.body.appendChild( renderer.domElement );
 
-				controls.addEventListener( 'change', render );
+      const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+      controls.target.set( 0, 0, 0 );
+      controls.update();
 
-				window.addEventListener( 'resize', onWindowResize );
+      controls.addEventListener( 'change', render );
 
-			} // end init
+      window.addEventListener( 'resize', onWindowResize );
 
-			function onWindowResize() {
+    } // end init
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+    function onWindowResize() {
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
 
-				render();
+      renderer.setSize( window.innerWidth, window.innerHeight );
 
-			}
+      render();
 
-			function render() {
-
-				renderer.render( scene, camera );
-
-			}
     }
+
+    function render() {
+
+      renderer.render( scene, camera );
+
+    }
+  }
 })

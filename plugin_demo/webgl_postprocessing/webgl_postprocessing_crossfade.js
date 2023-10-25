@@ -1,17 +1,30 @@
-// webgl_postprocessing/webgl_postprocessing_crossfade.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import Stats from './jsm/libs/stats.module.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-import { TWEEN } from './jsm/libs/tween.module.min.js';
-
-
+import Stats from 'three/addons/libs/stats.module.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import TWEEN from './three/addons/libs/tween.module.js';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -22,378 +35,384 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-let container, stats;
-			let renderer;
-			let transition;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-			const transitionParams = {
-				'useTexture': true,
-				'transition': 0,
-				'texture': 5,
-				'cycle': true,
-				'animate': true,
-				'threshold': 0.3
-			};
+    let container, stats;
+    let renderer;
+    let transition;
 
-			const clock = new THREE.Clock();
+    const transitionParams = {
+      'useTexture': true,
+      'transition': 0,
+      'texture': 5,
+      'cycle': true,
+      'animate': true,
+      'threshold': 0.3
+    };
 
-			init();
-			animate();
+    const clock = new THREE.Clock();
 
-			function init() {
+    init();
+    animate();
 
-				initGUI();
+    function init() {
 
-				container = document.getElementById( 'container' );
+      initGUI();
 
-				renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				container.appendChild( renderer.domElement );
+      container = document.getElementById( 'container' );
 
-				stats = new Stats();
-				container.appendChild( stats.dom );
+      renderer = new THREE.WebGLRenderer( { antialias: true } );
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      container.appendChild( renderer.domElement );
 
-				const geometryA = new THREE.BoxGeometry( 2, 2, 2 );
-				const geometryB = new THREE.IcosahedronGeometry( 1, 1 );
-				const sceneA = new FXScene( geometryA, new THREE.Vector3( 0, - 0.4, 0 ), 0xffffff );
-				const sceneB = new FXScene( geometryB, new THREE.Vector3( 0, 0.2, 0.1 ), 0x000000 );
+      stats = new Stats();
+      container.appendChild( stats.dom );
 
-				transition = new Transition( sceneA, sceneB );
+      const geometryA = new THREE.BoxGeometry( 2, 2, 2 );
+      const geometryB = new THREE.IcosahedronGeometry( 1, 1 );
+      const sceneA = new FXScene( geometryA, new THREE.Vector3( 0, - 0.4, 0 ), 0xffffff );
+      const sceneB = new FXScene( geometryB, new THREE.Vector3( 0, 0.2, 0.1 ), 0x000000 );
 
-			}
+      transition = new Transition( sceneA, sceneB );
 
-			function animate() {
+    }
 
-				requestId = requestAnimationFrame(animate);
+    function animate() {
 
-				render();
-				stats.update();
+      requestId = requestAnimationFrame( animate );
 
-			}
+      render();
+      stats.update();
 
-			function initGUI() {
+    }
 
-				const gui = new GUI();
+    function initGUI() {
 
-				gui.add( transitionParams, 'animate' );
-				gui.add( transitionParams, 'transition', 0, 1, 0.01 ).listen();
+      const gui = new GUI();
 
-				gui.add( transitionParams, 'useTexture' ).onChange( function ( value ) {
+      gui.add( transitionParams, 'animate' );
+      gui.add( transitionParams, 'transition', 0, 1, 0.01 ).listen();
 
-					transition.useTexture( value );
+      gui.add( transitionParams, 'useTexture' ).onChange( function ( value ) {
 
-				} );
+        transition.useTexture( value );
 
-				gui.add( transitionParams, 'texture', { Perlin: 0, Squares: 1, Cells: 2, Distort: 3, Gradient: 4, Radial: 5 } ).onChange( function ( value ) {
+      } );
 
-					transition.setTexture( value );
+      gui.add( transitionParams, 'texture', { Perlin: 0, Squares: 1, Cells: 2, Distort: 3, Gradient: 4, Radial: 5 } ).onChange( function ( value ) {
 
-				} ).listen();
+        transition.setTexture( value );
 
-				gui.add( transitionParams, 'cycle' );
+      } ).listen();
 
-				gui.add( transitionParams, 'threshold', 0, 1, 0.01 ).onChange( function ( value ) {
+      gui.add( transitionParams, 'cycle' );
 
-					transition.setTextureThreshold( value );
+      gui.add( transitionParams, 'threshold', 0, 1, 0.01 ).onChange( function ( value ) {
 
-				} );
+        transition.setTextureThreshold( value );
 
-			}
+      } );
 
+    }
 
-			function render() {
 
-				transition.render( clock.getDelta() );
+    function render() {
 
-			}
+      transition.render( clock.getDelta() );
 
-			function generateInstancedMesh( geometry, material, count ) {
+    }
 
-				const mesh = new THREE.InstancedMesh( geometry, material, count );
+    function generateInstancedMesh( geometry, material, count ) {
 
-				const dummy = new THREE.Object3D();
-				const color = new THREE.Color();
+      const mesh = new THREE.InstancedMesh( geometry, material, count );
 
-				for ( let i = 0; i < count; i ++ ) {
+      const dummy = new THREE.Object3D();
+      const color = new THREE.Color();
 
-					dummy.position.x = Math.random() * 10000 - 5000;
-					dummy.position.y = Math.random() * 6000 - 3000;
-					dummy.position.z = Math.random() * 8000 - 4000;
+      for ( let i = 0; i < count; i ++ ) {
 
-					dummy.rotation.x = Math.random() * 2 * Math.PI;
-					dummy.rotation.y = Math.random() * 2 * Math.PI;
-					dummy.rotation.z = Math.random() * 2 * Math.PI;
+        dummy.position.x = Math.random() * 100 - 50;
+        dummy.position.y = Math.random() * 60 - 30;
+        dummy.position.z = Math.random() * 80 - 40;
 
-					dummy.scale.x = Math.random() * 200 + 100;
+        dummy.rotation.x = Math.random() * 2 * Math.PI;
+        dummy.rotation.y = Math.random() * 2 * Math.PI;
+        dummy.rotation.z = Math.random() * 2 * Math.PI;
 
-					if ( geometry.type === 'BoxGeometry' ) {
+        dummy.scale.x = Math.random() * 2 + 1;
 
-						dummy.scale.y = Math.random() * 200 + 100;
-						dummy.scale.z = Math.random() * 200 + 100;
+        if ( geometry.type === 'BoxGeometry' ) {
 
-					} else {
+          dummy.scale.y = Math.random() * 2 + 1;
+          dummy.scale.z = Math.random() * 2 + 1;
 
-						dummy.scale.y = dummy.scale.x;
-						dummy.scale.z = dummy.scale.x;
+        } else {
 
-					}
+          dummy.scale.y = dummy.scale.x;
+          dummy.scale.z = dummy.scale.x;
 
-					dummy.updateMatrix();
+        }
 
-					mesh.setMatrixAt( i, dummy.matrix );
-					mesh.setColorAt( i, color.setScalar( 0.1 + 0.9 * Math.random() ) );
+        dummy.updateMatrix();
 
-				}
+        mesh.setMatrixAt( i, dummy.matrix );
+        mesh.setColorAt( i, color.setScalar( 0.1 + 0.9 * Math.random() ) );
 
-				return mesh;
+      }
 
-			}
+      return mesh;
 
-			function FXScene( geometry, rotationSpeed, clearColor ) {
+    }
 
-				this.clearColor = clearColor;
+    function FXScene( geometry, rotationSpeed, clearColor ) {
 
-				const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 10000 );
-				camera.position.z = 2000;
+      this.clearColor = clearColor;
 
-				// Setup scene
-				const scene = new THREE.Scene();
-				scene.add( new THREE.AmbientLight( 0x555555 ) );
+      const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 100 );
+      camera.position.z = 20;
 
-				const light = new THREE.SpotLight( 0xffffff, 1.5 );
-				light.position.set( 0, 500, 2000 );
-				scene.add( light );
+      // Setup scene
+      const scene = new THREE.Scene();
+      scene.add( new THREE.AmbientLight( 0xaaaaaa, 3 ) );
 
-				this.rotationSpeed = rotationSpeed;
+      const light = new THREE.DirectionalLight( 0xffffff, 3 );
+      light.position.set( 0, 1, 4 );
+      scene.add( light );
 
-				const color = geometry.type === 'BoxGeometry' ? 0x0000ff : 0xff0000;
-				const material = new THREE.MeshPhongMaterial( { color: color, flatShading: true } );
-				const mesh = generateInstancedMesh( geometry, material, 500 );
-				scene.add( mesh );
+      this.rotationSpeed = rotationSpeed;
 
-				this.fbo = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight );
+      const color = geometry.type === 'BoxGeometry' ? 0x0000ff : 0xff0000;
+      const material = new THREE.MeshPhongMaterial( { color: color, flatShading: true } );
+      const mesh = generateInstancedMesh( geometry, material, 500 );
+      scene.add( mesh );
 
-				this.render = function ( delta, rtt ) {
+      this.fbo = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, { type: THREE.HalfFloatType } );
 
-					mesh.rotation.x += delta * this.rotationSpeed.x;
-					mesh.rotation.y += delta * this.rotationSpeed.y;
-					mesh.rotation.z += delta * this.rotationSpeed.z;
+      this.render = function ( delta, rtt ) {
 
-					renderer.setClearColor( this.clearColor );
+        mesh.rotation.x += delta * this.rotationSpeed.x;
+        mesh.rotation.y += delta * this.rotationSpeed.y;
+        mesh.rotation.z += delta * this.rotationSpeed.z;
 
-					if ( rtt ) {
+        renderer.setClearColor( this.clearColor );
 
-						renderer.setRenderTarget( this.fbo );
-						renderer.clear();
-						renderer.render( scene, camera );
+        if ( rtt ) {
 
-					} else {
+          renderer.setRenderTarget( this.fbo );
+          renderer.clear();
+          renderer.render( scene, camera );
 
-						renderer.setRenderTarget( null );
-						renderer.render( scene, camera );
+        } else {
 
-					}
+          renderer.setRenderTarget( null );
+          renderer.render( scene, camera );
 
-				};
+        }
 
-			}
+      };
 
-			function Transition( sceneA, sceneB ) {
+    }
 
-				const scene = new THREE.Scene();
+    function Transition( sceneA, sceneB ) {
 
-				const width = window.innerWidth;
-				const height = window.innerHeight;
+      const scene = new THREE.Scene();
 
-				const camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2, - 10, 10 );
+      const width = window.innerWidth;
+      const height = window.innerHeight;
 
-				const textures = [];
+      const camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2, - 10, 10 );
 
-				const loader = new THREE.TextureLoader( );
+      const textures = [];
 
-				for ( let i = 0; i < 6; i ++ ) {
+      const loader = new THREE.TextureLoader();
 
-					textures[ i ] = loader.load( 'textures/transition/transition' + ( i + 1 ) + '.png' );
+      for ( let i = 0; i < 6; i ++ ) {
 
-				}
+        textures[ i ] = loader.load( 'textures/transition/transition' + ( i + 1 ) + '.png' );
 
-				const material = new THREE.ShaderMaterial( {
+      }
 
-					uniforms: {
+      const material = new THREE.ShaderMaterial( {
 
-						tDiffuse1: {
-							value: null
-						},
-						tDiffuse2: {
-							value: null
-						},
-						mixRatio: {
-							value: 0.0
-						},
-						threshold: {
-							value: 0.1
-						},
-						useTexture: {
-							value: 1
-						},
-						tMixTexture: {
-							value: textures[ 0 ]
-						}
-					},
-					vertexShader: [
+        uniforms: {
 
-						'varying vec2 vUv;',
+          tDiffuse1: {
+            value: null
+          },
+          tDiffuse2: {
+            value: null
+          },
+          mixRatio: {
+            value: 0.0
+          },
+          threshold: {
+            value: 0.1
+          },
+          useTexture: {
+            value: 1
+          },
+          tMixTexture: {
+            value: textures[ 0 ]
+          }
+        },
+        vertexShader: [
 
-						'void main() {',
+          'varying vec2 vUv;',
 
-						'vUv = vec2( uv.x, uv.y );',
-						'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+          'void main() {',
 
-						'}'
+          'vUv = vec2( uv.x, uv.y );',
+          'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
 
-					].join( '\n' ),
-					fragmentShader: [
+          '}'
 
-						'uniform float mixRatio;',
+        ].join( '\n' ),
+        fragmentShader: [
 
-						'uniform sampler2D tDiffuse1;',
-						'uniform sampler2D tDiffuse2;',
-						'uniform sampler2D tMixTexture;',
+          'uniform float mixRatio;',
 
-						'uniform int useTexture;',
-						'uniform float threshold;',
+          'uniform sampler2D tDiffuse1;',
+          'uniform sampler2D tDiffuse2;',
+          'uniform sampler2D tMixTexture;',
 
-						'varying vec2 vUv;',
+          'uniform int useTexture;',
+          'uniform float threshold;',
 
-						'void main() {',
+          'varying vec2 vUv;',
 
-						'	vec4 texel1 = texture2D( tDiffuse1, vUv );',
-						'	vec4 texel2 = texture2D( tDiffuse2, vUv );',
+          'void main() {',
 
-						'	if (useTexture==1) {',
+          '	vec4 texel1 = texture2D( tDiffuse1, vUv );',
+          '	vec4 texel2 = texture2D( tDiffuse2, vUv );',
 
-						'		vec4 transitionTexel = texture2D( tMixTexture, vUv );',
-						'		float r = mixRatio * (1.0 + threshold * 2.0) - threshold;',
-						'		float mixf=clamp((transitionTexel.r - r)*(1.0/threshold), 0.0, 1.0);',
+          '	if (useTexture==1) {',
 
-						'		gl_FragColor = mix( texel1, texel2, mixf );',
+          '		vec4 transitionTexel = texture2D( tMixTexture, vUv );',
+          '		float r = mixRatio * (1.0 + threshold * 2.0) - threshold;',
+          '		float mixf=clamp((transitionTexel.r - r)*(1.0/threshold), 0.0, 1.0);',
 
-						'	} else {',
+          '		gl_FragColor = mix( texel1, texel2, mixf );',
 
-						'		gl_FragColor = mix( texel2, texel1, mixRatio );',
+          '	} else {',
 
-						'	}',
+          '		gl_FragColor = mix( texel2, texel1, mixRatio );',
 
-						'}'
+          '	}',
 
-					].join( '\n' )
+          '	#include <tonemapping_fragment>',
+          '	#include <colorspace_fragment>',
 
-				} );
+          '}'
 
-				const geometry = new THREE.PlaneGeometry( window.innerWidth, window.innerHeight );
-				const mesh = new THREE.Mesh( geometry, material );
-				scene.add( mesh );
+        ].join( '\n' )
 
-				material.uniforms.tDiffuse1.value = sceneA.fbo.texture;
-				material.uniforms.tDiffuse2.value = sceneB.fbo.texture;
+      } );
 
-				new TWEEN.Tween( transitionParams )
-					.to( { transition: 1 }, 1500 )
-					.repeat( Infinity )
-					.delay( 2000 )
-					.yoyo( true )
-					.start();
+      const geometry = new THREE.PlaneGeometry( window.innerWidth, window.innerHeight );
+      const mesh = new THREE.Mesh( geometry, material );
+      scene.add( mesh );
 
-				this.needsTextureChange = false;
+      material.uniforms.tDiffuse1.value = sceneA.fbo.texture;
+      material.uniforms.tDiffuse2.value = sceneB.fbo.texture;
 
-				this.setTextureThreshold = function ( value ) {
+      new TWEEN.Tween( transitionParams )
+        .to( { transition: 1 }, 1500 )
+        .repeat( Infinity )
+        .delay( 2000 )
+        .yoyo( true )
+        .start();
 
-					material.uniforms.threshold.value = value;
+      this.needsTextureChange = false;
 
-				};
+      this.setTextureThreshold = function ( value ) {
 
-				this.useTexture = function ( value ) {
+        material.uniforms.threshold.value = value;
 
-					material.uniforms.useTexture.value = value ? 1 : 0;
+      };
 
-				};
+      this.useTexture = function ( value ) {
 
-				this.setTexture = function ( i ) {
+        material.uniforms.useTexture.value = value ? 1 : 0;
 
-					material.uniforms.tMixTexture.value = textures[ i ];
+      };
 
-				};
+      this.setTexture = function ( i ) {
 
-				this.render = function ( delta ) {
+        material.uniforms.tMixTexture.value = textures[ i ];
 
-					// Transition animation
-					if ( transitionParams.animate ) {
+      };
 
-						TWEEN.update();
+      this.render = function ( delta ) {
 
-						// Change the current alpha texture after each transition
-						if ( transitionParams.cycle ) {
+        // Transition animation
+        if ( transitionParams.animate ) {
 
-							if ( transitionParams.transition == 0 || transitionParams.transition == 1 ) {
+          TWEEN.update();
 
-								if ( this.needsTextureChange ) {
+          // Change the current alpha texture after each transition
+          if ( transitionParams.cycle ) {
 
-									transitionParams.texture = ( transitionParams.texture + 1 ) % textures.length;
-									material.uniforms.tMixTexture.value = textures[ transitionParams.texture ];
-									this.needsTextureChange = false;
+            if ( transitionParams.transition == 0 || transitionParams.transition == 1 ) {
 
-								}
+              if ( this.needsTextureChange ) {
 
-							} else {
+                transitionParams.texture = ( transitionParams.texture + 1 ) % textures.length;
+                material.uniforms.tMixTexture.value = textures[ transitionParams.texture ];
+                this.needsTextureChange = false;
 
-								this.needsTextureChange = true;
+              }
 
-							}
+            } else {
 
-						} else {
+              this.needsTextureChange = true;
 
-							this.needsTextureChange = true;
+            }
 
-						}
+          } else {
 
-					}
+            this.needsTextureChange = true;
 
-					material.uniforms.mixRatio.value = transitionParams.transition;
+          }
 
-					// Prevent render both scenes when it's not necessary
-					if ( transitionParams.transition == 0 ) {
+        }
 
-						sceneB.render( delta, false );
+        material.uniforms.mixRatio.value = transitionParams.transition;
 
-					} else if ( transitionParams.transition == 1 ) {
+        // Prevent render both scenes when it's not necessary
+        if ( transitionParams.transition == 0 ) {
 
-						sceneA.render( delta, false );
+          sceneB.render( delta, false );
 
-					} else {
+        } else if ( transitionParams.transition == 1 ) {
 
-						// When 0<transition<1 render transition between two scenes
+          sceneA.render( delta, false );
 
-						sceneA.render( delta, true );
-						sceneB.render( delta, true );
+        } else {
 
-						renderer.setRenderTarget( null );
-						renderer.clear();
-						renderer.render( scene, camera );
+          // When 0<transition<1 render transition between two scenes
 
-					}
+          sceneA.render( delta, true );
+          sceneB.render( delta, true );
 
-				};
+          renderer.setRenderTarget( null );
+          renderer.clear();
+          renderer.render( scene, camera );
 
-			}
-}
+        }
+
+      };
+
+    }
+  }
 })

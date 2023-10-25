@@ -1,19 +1,35 @@
-// webgl_postprocessing/webgl_postprocessing_ssao.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import Stats from './jsm/libs/stats.module.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import Stats from 'three/addons/libs/stats.module.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-import { EffectComposer } from './jsm/postprocessing/EffectComposer.js';
-import { SSAOPass } from './jsm/postprocessing/SSAOPass.js';
-
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { SSAOPass } from 'three/addons/postprocessing/SSAOPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -24,133 +40,138 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-let container, stats;
-			let camera, scene, renderer;
-			let composer;
-			let group;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+    let container, stats;
+    let camera, scene, renderer;
+    let composer;
+    let group;
 
-			init();
-			animate();
+    init();
+    animate();
 
-			function init() {
+    function init() {
 
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
+      container = document.createElement( 'div' );
+      document.body.appendChild( container );
 
-				renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
+      renderer = new THREE.WebGLRenderer();
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      document.body.appendChild( renderer.domElement );
 
-				camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 100, 700 );
-				camera.position.z = 500;
+      camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 100, 700 );
+      camera.position.z = 500;
 
-				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xaaaaaa );
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color( 0xaaaaaa );
 
-				scene.add( new THREE.DirectionalLight() );
-				scene.add( new THREE.HemisphereLight() );
+      scene.add( new THREE.DirectionalLight( 0xffffff, 4 ) );
+      scene.add( new THREE.AmbientLight( 0xffffff ) );
 
-				group = new THREE.Group();
-				scene.add( group );
+      group = new THREE.Group();
+      scene.add( group );
 
-				const geometry = new THREE.BoxGeometry( 10, 10, 10 );
+      const geometry = new THREE.BoxGeometry( 10, 10, 10 );
 
-				for ( let i = 0; i < 100; i ++ ) {
+      for ( let i = 0; i < 100; i ++ ) {
 
-					const material = new THREE.MeshLambertMaterial( {
-						color: Math.random() * 0xffffff
-					} );
+        const material = new THREE.MeshLambertMaterial( {
+          color: Math.random() * 0xffffff
+        } );
 
-					const mesh = new THREE.Mesh( geometry, material );
-					mesh.position.x = Math.random() * 400 - 200;
-					mesh.position.y = Math.random() * 400 - 200;
-					mesh.position.z = Math.random() * 400 - 200;
-					mesh.rotation.x = Math.random();
-					mesh.rotation.y = Math.random();
-					mesh.rotation.z = Math.random();
+        const mesh = new THREE.Mesh( geometry, material );
+        mesh.position.x = Math.random() * 400 - 200;
+        mesh.position.y = Math.random() * 400 - 200;
+        mesh.position.z = Math.random() * 400 - 200;
+        mesh.rotation.x = Math.random();
+        mesh.rotation.y = Math.random();
+        mesh.rotation.z = Math.random();
 
-					mesh.scale.setScalar( Math.random() * 10 + 2 );
-					group.add( mesh );
+        mesh.scale.setScalar( Math.random() * 10 + 2 );
+        group.add( mesh );
 
-				}
+      }
 
-				stats = new Stats();
-				container.appendChild( stats.dom );
+      stats = new Stats();
+      container.appendChild( stats.dom );
 
-				const width = window.innerWidth;
-				const height = window.innerHeight;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
 
-				composer = new EffectComposer( renderer );
+      composer = new EffectComposer( renderer );
 
-				const ssaoPass = new SSAOPass( scene, camera, width, height );
-				ssaoPass.kernelRadius = 16;
-				composer.addPass( ssaoPass );
+      const renderPass = new RenderPass( scene, camera );
+      composer.addPass( renderPass );
 
-				// Init gui
-				const gui = new GUI();
+      const ssaoPass = new SSAOPass( scene, camera, width, height );
+      composer.addPass( ssaoPass );
 
-				gui.add( ssaoPass, 'output', {
-					'Default': SSAOPass.OUTPUT.Default,
-					'SSAO Only': SSAOPass.OUTPUT.SSAO,
-					'SSAO Only + Blur': SSAOPass.OUTPUT.Blur,
-					'Beauty': SSAOPass.OUTPUT.Beauty,
-					'Depth': SSAOPass.OUTPUT.Depth,
-					'Normal': SSAOPass.OUTPUT.Normal
-				} ).onChange( function ( value ) {
+      const outputPass = new OutputPass();
+      composer.addPass( outputPass );
 
-					ssaoPass.output = parseInt( value );
+      // Init gui
+      const gui = new GUI();
 
-				} );
-				gui.add( ssaoPass, 'kernelRadius' ).min( 0 ).max( 32 );
-				gui.add( ssaoPass, 'minDistance' ).min( 0.001 ).max( 0.02 );
-				gui.add( ssaoPass, 'maxDistance' ).min( 0.01 ).max( 0.3 );
+      gui.add( ssaoPass, 'output', {
+        'Default': SSAOPass.OUTPUT.Default,
+        'SSAO Only': SSAOPass.OUTPUT.SSAO,
+        'SSAO Only + Blur': SSAOPass.OUTPUT.Blur,
+        'Depth': SSAOPass.OUTPUT.Depth,
+        'Normal': SSAOPass.OUTPUT.Normal
+      } ).onChange( function ( value ) {
 
-				window.addEventListener( 'resize', onWindowResize );
+        ssaoPass.output = value;
 
-			}
+      } );
+      gui.add( ssaoPass, 'kernelRadius' ).min( 0 ).max( 32 );
+      gui.add( ssaoPass, 'minDistance' ).min( 0.001 ).max( 0.02 );
+      gui.add( ssaoPass, 'maxDistance' ).min( 0.01 ).max( 0.3 );
+      gui.add( ssaoPass, 'enabled' );
 
-			function onWindowResize() {
+      window.addEventListener( 'resize', onWindowResize );
 
-				const width = window.innerWidth;
-				const height = window.innerHeight;
+    }
 
-				camera.aspect = width / height;
-				camera.updateProjectionMatrix();
+    function onWindowResize() {
 
-				renderer.setSize( width, height );
-				composer.setSize( width, height );
+      const width = window.innerWidth;
+      const height = window.innerHeight;
 
-			}
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
 
-			function animate() {
+      renderer.setSize( width, height );
+      composer.setSize( width, height );
 
-				requestId = requestAnimationFrame(animate);
+    }
 
-				stats.begin();
-				render();
-				stats.end();
+    function animate() {
 
-			}
+      requestId = requestAnimationFrame( animate );
 
-			function render() {
+      stats.begin();
+      render();
+      stats.end();
 
-				const timer = performance.now();
-				group.rotation.x = timer * 0.0002;
-				group.rotation.y = timer * 0.0001;
+    }
 
-				composer.render();
+    function render() {
 
-			}
+      const timer = performance.now();
+      group.rotation.x = timer * 0.0002;
+      group.rotation.y = timer * 0.0001;
 
+      composer.render();
 
-}
+    }
+  }
 })

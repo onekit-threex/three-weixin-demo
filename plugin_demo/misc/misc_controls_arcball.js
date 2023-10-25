@@ -1,20 +1,32 @@
-// misc/misc_controls_arcball.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+import { GUI } from './three/addons/libs/lil-gui.module.min.js';
 
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import { ArcballControls } from 'three/addons/controls/ArcballControls.js';
 
-import { ArcballControls } from './jsm/controls/ArcballControls.js';
-
-import { OBJLoader } from './jsm/loaders/OBJLoader.js';
-import { RGBELoader } from './jsm/loaders/RGBELoader.js';
-
-
+import { OBJLoader } from './three/addons/loaders/OBJLoader.js';
+import { RGBELoader } from './three/addons/loaders/RGBELoader.js';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -25,29 +37,31 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onReady() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-const cameras = [ 'Orthographic', 'Perspective' ];
-const cameraType = { type: 'Perspective' };
+    const cameras = [ 'Orthographic', 'Perspective' ];
+    const cameraType = { type: 'Perspective' };
 
-const perspectiveDistance = 2.5;
-const orthographicDistance = 120;
-let camera, controls, scene, renderer, gui;
-let folderOptions, folderAnimations;
+    const perspectiveDistance = 2.5;
+    const orthographicDistance = 120;
+    let camera, controls, scene, renderer, gui;
+    let folderOptions, folderAnimations;
 
-const arcballGui = {
+    const arcballGui = {
 
-    gizmoVisible: true,
+      gizmoVisible: true,
 
-    setArcballControls: function () {
+      setArcballControls: function () {
 
         controls = new ArcballControls( camera, renderer.domElement, scene );
         controls.addEventListener( 'change', render );
@@ -56,9 +70,9 @@ const arcballGui = {
 
         this.populateGui();
 
-    },
+      },
 
-    populateGui: function () {
+      populateGui: function () {
 
         folderOptions.add( controls, 'enabled' ).name( 'Enable controls' );
         folderOptions.add( controls, 'enableGrid' ).name( 'Enable Grid' );
@@ -74,7 +88,7 @@ const arcballGui = {
         folderOptions.add( controls, 'maxZoom', 0, 50, 0.5 ).name( 'Max zoom' );
         folderOptions.add( arcballGui, 'gizmoVisible' ).name( 'Show gizmos' ).onChange( function () {
 
-            controls.setGizmosVisible( arcballGui.gizmoVisible );
+          controls.setGizmosVisible( arcballGui.gizmoVisible );
 
         } );
         folderOptions.add( controls, 'copyState' ).name( 'Copy state(ctrl+c)' );
@@ -84,140 +98,137 @@ const arcballGui = {
         folderAnimations.add( controls, 'dampingFactor', 0, 100, 1 ).name( 'Damping' );
         folderAnimations.add( controls, 'wMax', 0, 100, 1 ).name( 'Angular spd' );
 
-    }
+      }
 
-};
+    };
 
 
-init();
+    init();
 
-function init() {
+    function init() {
 
-    const container = document.createElement( 'div' );
-    document.body.appendChild( container );
+      const container = document.createElement( 'div' );
+      document.body.appendChild( container );
 
-    renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true, alpha: true } );
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
+      renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      renderer.toneMapping = THREE.ReinhardToneMapping;
+      renderer.toneMappingExposure = 3;
+      renderer.domElement.style.background = 'linear-gradient( 180deg, rgba( 0,0,0,1 ) 0%, rgba( 128,128,255,1 ) 100% )';
+      container.appendChild( renderer.domElement );
 
-    renderer.outputEncoding = THREE.sRGBEncoding;
-    renderer.toneMapping = THREE.ReinhardToneMapping;
-    renderer.toneMappingExposure = 3;
-    renderer.domElement.style.background = 'linear-gradient( 180deg, rgba( 0,0,0,1 ) 0%, rgba( 128,128,255,1 ) 100% )';
-    container.appendChild( renderer.domElement );
+      //
 
-    //
+      scene = new THREE.Scene();
 
-    scene = new THREE.Scene();
-    scene.add( new THREE.HemisphereLight( 0x443333, 0x222233, 4 ) );
+      camera = makePerspectiveCamera();
+      camera.position.set( 0, 0, perspectiveDistance );
 
-    camera = makePerspectiveCamera();
-    camera.position.set( 0, 0, perspectiveDistance );
+      const material = new THREE.MeshStandardMaterial();
 
-    const material = new THREE.MeshStandardMaterial();
-
-    new OBJLoader()
+      new OBJLoader()
         .setPath( 'models/obj/cerberus/' )
         .load( 'Cerberus.obj', function ( group ) {
 
-            const textureLoader = new THREE.TextureLoader( ).setPath( 'models/obj/cerberus/' );
+          const textureLoader = new THREE.TextureLoader().setPath( 'models/obj/cerberus/' );
 
-            material.roughness = 1;
-            material.metalness = 1;
+          material.roughness = 1;
+          material.metalness = 1;
 
-            const diffuseMap = textureLoader.load( 'Cerberus_A.jpg', render );
-            diffuseMap.encoding = THREE.sRGBEncoding;
-            material.map = diffuseMap;
+          const diffuseMap = textureLoader.load( 'Cerberus_A.jpg', render );
+          diffuseMap.colorSpace = THREE.SRGBColorSpace;
+          material.map = diffuseMap;
 
-            material.metalnessMap = material.roughnessMap = textureLoader.load( 'Cerberus_RM.jpg', render );
-            material.normalMap = textureLoader.load( 'Cerberus_N.jpg', render );
+          material.metalnessMap = material.roughnessMap = textureLoader.load( 'Cerberus_RM.jpg', render );
+          material.normalMap = textureLoader.load( 'Cerberus_N.jpg', render );
 
-            material.map.wrapS = THREE.RepeatWrapping;
-            material.roughnessMap.wrapS = THREE.RepeatWrapping;
-            material.metalnessMap.wrapS = THREE.RepeatWrapping;
-            material.normalMap.wrapS = THREE.RepeatWrapping;
-
-
-            group.traverse( function ( child ) {
-
-                if ( child.isMesh ) {
-
-                    child.material = material;
-
-                }
-
-            } );
-
-            group.rotation.y = Math.PI / 2;
-            group.position.x += 0.25;
-            scene.add( group );
-            render();
-
-            new RGBELoader()
-                .setPath( 'textures/equirectangular/' )
-                .load( 'venice_sunset_1k.hdr', function ( hdrEquirect ) {
-
-                    hdrEquirect.mapping = THREE.EquirectangularReflectionMapping;
-
-                    scene.environment = hdrEquirect;
-
-                    render();
-
-                } );
+          material.map.wrapS = THREE.RepeatWrapping;
+          material.roughnessMap.wrapS = THREE.RepeatWrapping;
+          material.metalnessMap.wrapS = THREE.RepeatWrapping;
+          material.normalMap.wrapS = THREE.RepeatWrapping;
 
 
-            window.addEventListener( 'keydown', onKeyDown );
-            window.addEventListener( 'resize', onWindowResize );
+          group.traverse( function ( child ) {
 
-            //
+            if ( child.isMesh ) {
 
-            gui = new GUI();
-            gui.add( cameraType, 'type', cameras ).name( 'Choose Camera' ).onChange( function () {
+              child.material = material;
 
-                setCamera( cameraType.type );
+            }
+
+          } );
+
+          group.rotation.y = Math.PI / 2;
+          group.position.x += 0.25;
+          scene.add( group );
+          render();
+
+          new RGBELoader()
+            .setPath( 'textures/equirectangular/' )
+            .load( 'venice_sunset_1k.hdr', function ( hdrEquirect ) {
+
+              hdrEquirect.mapping = THREE.EquirectangularReflectionMapping;
+
+              scene.environment = hdrEquirect;
+
+              render();
 
             } );
 
-            folderOptions = gui.addFolder( 'Arcball parameters' );
-            folderAnimations = folderOptions.addFolder( 'Animations' );
 
-            arcballGui.setArcballControls();
+          window.addEventListener( 'keydown', onKeyDown );
+          window.addEventListener( 'resize', onWindowResize );
 
-            render();
+          //
+
+          gui = new GUI();
+          gui.add( cameraType, 'type', cameras ).name( 'Choose Camera' ).onChange( function () {
+
+            setCamera( cameraType.type );
+
+          } );
+
+          folderOptions = gui.addFolder( 'Arcball parameters' );
+          folderAnimations = folderOptions.addFolder( 'Animations' );
+
+          arcballGui.setArcballControls();
+
+          render();
 
         } );
 
-}
+    }
 
-function makeOrthographicCamera() {
+    function makeOrthographicCamera() {
 
-    const halfFovV = THREE.MathUtils.DEG2RAD * 45 * 0.5;
-    const halfFovH = Math.atan( ( window.innerWidth / window.innerHeight ) * Math.tan( halfFovV ) );
+      const halfFovV = THREE.MathUtils.DEG2RAD * 45 * 0.5;
+      const halfFovH = Math.atan( ( window.innerWidth / window.innerHeight ) * Math.tan( halfFovV ) );
 
-    const halfW = perspectiveDistance * Math.tan( halfFovH );
-    const halfH = perspectiveDistance * Math.tan( halfFovV );
-    const near = 0.01;
-    const far = 2000;
-    const newCamera = new THREE.OrthographicCamera( - halfW, halfW, halfH, - halfH, near, far );
-    return newCamera;
+      const halfW = perspectiveDistance * Math.tan( halfFovH );
+      const halfH = perspectiveDistance * Math.tan( halfFovV );
+      const near = 0.01;
+      const far = 2000;
+      const newCamera = new THREE.OrthographicCamera( - halfW, halfW, halfH, - halfH, near, far );
+      return newCamera;
 
-}
+    }
 
-function makePerspectiveCamera() {
+    function makePerspectiveCamera() {
 
-    const fov = 45;
-    const aspect = window.innerWidth / window.innerHeight;
-    const near = 0.01;
-    const far = 2000;
-    const newCamera = new THREE.PerspectiveCamera( fov, aspect, near, far );
-    return newCamera;
+      const fov = 45;
+      const aspect = window.innerWidth / window.innerHeight;
+      const near = 0.01;
+      const far = 2000;
+      const newCamera = new THREE.PerspectiveCamera( fov, aspect, near, far );
+      return newCamera;
 
-}
+    }
 
 
-function onWindowResize() {
+    function onWindowResize() {
 
-    if ( camera.type == 'OrthographicCamera' ) {
+      if ( camera.type == 'OrthographicCamera' ) {
 
         const halfFovV = THREE.MathUtils.DEG2RAD * 45 * 0.5;
         const halfFovH = Math.atan( ( window.innerWidth / window.innerHeight ) * Math.tan( halfFovV ) );
@@ -229,67 +240,67 @@ function onWindowResize() {
         camera.top = halfH;
         camera.bottom = - halfH;
 
-    } else if ( camera.type == 'PerspectiveCamera' ) {
+      } else if ( camera.type == 'PerspectiveCamera' ) {
 
         camera.aspect = window.innerWidth / window.innerHeight;
 
-    }
+      }
 
-    camera.updateProjectionMatrix();
+      camera.updateProjectionMatrix();
 
-    renderer.setSize( window.innerWidth, window.innerHeight );
+      renderer.setSize( window.innerWidth, window.innerHeight );
 
-    render();
-
-}
-
-function render() {
-
-    renderer.render( scene, camera );
-
-}
-
-function onKeyDown( event ) {
-
-    if ( event.key === 'c' ) {
-
-        if ( event.ctrlKey || event.metaKey ) {
-
-            controls.copyState();
-
-        }
-
-    } else if ( event.key === 'v' ) {
-
-        if ( event.ctrlKey || event.metaKey ) {
-
-            controls.pasteState();
-
-        }
+      render();
 
     }
 
-}
+    function render() {
 
-function setCamera( type ) {
+      renderer.render( scene, camera );
 
-    if ( type == 'Orthographic' ) {
+    }
+
+    function onKeyDown( event ) {
+
+      if ( event.key === 'c' ) {
+
+        if ( event.ctrlKey || event.metaKey ) {
+
+          controls.copyState();
+
+        }
+
+      } else if ( event.key === 'v' ) {
+
+        if ( event.ctrlKey || event.metaKey ) {
+
+          controls.pasteState();
+
+        }
+
+      }
+
+    }
+
+    function setCamera( type ) {
+
+      if ( type == 'Orthographic' ) {
 
         camera = makeOrthographicCamera();
         camera.position.set( 0, 0, orthographicDistance );
 
 
-    } else if ( type == 'Perspective' ) {
+      } else if ( type == 'Perspective' ) {
 
         camera = makePerspectiveCamera();
         camera.position.set( 0, 0, perspectiveDistance );
 
+      }
+
+      controls.setCamera( camera );
+
+      render();
+
     }
-
-    controls.setCamera( camera );
-
-    render();
-
-}
-}
+  }
 })

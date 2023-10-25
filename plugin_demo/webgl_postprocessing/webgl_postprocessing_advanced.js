@@ -1,34 +1,46 @@
-// webgl_postprocessing/webgl_postprocessing_advanced.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+import Stats from 'three/addons/libs/stats.module.js';
 
-import * as THREE from '../three/Three.js';
-import Stats from './jsm/libs/stats.module.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { BloomPass } from 'three/addons/postprocessing/BloomPass.js';
+import { FilmPass } from 'three/addons/postprocessing/FilmPass.js';
+import { DotScreenPass } from 'three/addons/postprocessing/DotScreenPass.js';
+import { MaskPass, ClearMaskPass } from 'three/addons/postprocessing/MaskPass.js';
+import { TexturePass } from 'three/addons/postprocessing/TexturePass.js';
 
-import { EffectComposer } from './jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from './jsm/postprocessing/RenderPass.js';
-import { ShaderPass } from './jsm/postprocessing/ShaderPass.js';
-import { BloomPass } from './jsm/postprocessing/BloomPass.js';
-import { FilmPass } from './jsm/postprocessing/FilmPass.js';
-import { DotScreenPass } from './jsm/postprocessing/DotScreenPass.js';
-import { MaskPass, ClearMaskPass } from './jsm/postprocessing/MaskPass.js';
-import { TexturePass } from './jsm/postprocessing/TexturePass.js';
+import { BleachBypassShader } from 'three/addons/shaders/BleachBypassShader.js';
+import { ColorifyShader } from 'three/addons/shaders/ColorifyShader.js';
+import { HorizontalBlurShader } from 'three/addons/shaders/HorizontalBlurShader.js';
+import { VerticalBlurShader } from 'three/addons/shaders/VerticalBlurShader.js';
+import { SepiaShader } from 'three/addons/shaders/SepiaShader.js';
+import { VignetteShader } from 'three/addons/shaders/VignetteShader.js';
+import { GammaCorrectionShader } from 'three/addons/shaders/GammaCorrectionShader.js';
 
-import { BleachBypassShader } from './jsm/shaders/BleachBypassShader.js';
-import { ColorifyShader } from './jsm/shaders/ColorifyShader.js';
-import { HorizontalBlurShader } from './jsm/shaders/HorizontalBlurShader.js';
-import { VerticalBlurShader } from './jsm/shaders/VerticalBlurShader.js';
-import { SepiaShader } from './jsm/shaders/SepiaShader.js';
-import { VignetteShader } from './jsm/shaders/VignetteShader.js';
-import { GammaCorrectionShader } from './jsm/shaders/GammaCorrectionShader.js';
-
-import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -39,37 +51,38 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
+  let container, stats;
 
-let container, stats;
+  let composerScene, composer1, composer2, composer3, composer4;
 
-let composerScene, composer1, composer2, composer3, composer4;
+  let cameraOrtho, cameraPerspective, sceneModel, sceneBG, renderer, mesh, directionalLight;
 
-let cameraOrtho, cameraPerspective, sceneModel, sceneBG, renderer, mesh, directionalLight;
+  const width = window.innerWidth || 2;
+  const height = window.innerHeight || 2;
 
-const width = window.innerWidth || 2;
-const height = window.innerHeight || 2;
+  let halfWidth = width / 2;
+  let halfHeight = height / 2;
 
-let halfWidth = width / 2;
-let halfHeight = height / 2;
+  let quadBG, quadMask, renderScene;
 
-let quadBG, quadMask, renderScene;
+  const delta = 0.01;
 
-const delta = 0.01;
+  init();
+  animate();
 
-init();
-animate();
-
-function init() {
+  function init() {
 
     container = document.getElementById( 'container' );
 
@@ -88,25 +101,25 @@ function init() {
 
     //
 
-    directionalLight = new THREE.DirectionalLight( 0xffffff );
+    directionalLight = new THREE.DirectionalLight( 0xffffff, 3 );
     directionalLight.position.set( 0, - 0.1, 1 ).normalize();
     sceneModel.add( directionalLight );
 
     const loader = new GLTFLoader();
     loader.load( 'models/gltf/LeePerrySmith/LeePerrySmith.glb', function ( gltf ) {
 
-        createMesh( gltf.scene.children[ 0 ].geometry, sceneModel, 100 );
+      createMesh( gltf.scene.children[ 0 ].geometry, sceneModel, 100 );
 
     } );
 
     //
 
-    const diffuseMap = new THREE.TextureLoader( ).load( 'textures/cube/SwedishRoyalCastle/pz.jpg' );
-    diffuseMap.encoding = THREE.sRGBEncoding;
+    const diffuseMap = new THREE.TextureLoader().load( 'textures/cube/SwedishRoyalCastle/pz.jpg' );
+    diffuseMap.colorSpace = THREE.SRGBColorSpace;
 
     const materialColor = new THREE.MeshBasicMaterial( {
-        map: diffuseMap,
-        depthTest: false
+      map: diffuseMap,
+      depthTest: false
     } );
 
     quadBG = new THREE.Mesh( new THREE.PlaneGeometry( 1, 1 ), materialColor );
@@ -125,7 +138,7 @@ function init() {
 
     //
 
-    renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
+    renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( width, height );
     renderer.autoClear = false;
@@ -158,8 +171,8 @@ function init() {
     effectVignette.uniforms[ 'darkness' ].value = 1.6;
 
     const effectBloom = new BloomPass( 0.5 );
-    const effectFilm = new FilmPass( 0.35, 0.025, 648, false );
-    const effectFilmBW = new FilmPass( 0.35, 0.5, 2048, true );
+    const effectFilm = new FilmPass( 0.35 );
+    const effectFilmBW = new FilmPass( 0.35, true );
     const effectDotScreen = new DotScreenPass( new THREE.Vector2( 0, 0 ), 0.5, 0.8 );
 
     const effectHBlur = new ShaderPass( HorizontalBlurShader );
@@ -181,7 +194,7 @@ function init() {
     //
 
     const rtParameters = {
-        stencilBuffer: true
+      stencilBuffer: true
     };
 
     const rtWidth = width / 2;
@@ -256,9 +269,9 @@ function init() {
 
     window.addEventListener( 'resize', onWindowResize );
 
-}
+  }
 
-function onWindowResize() {
+  function onWindowResize() {
 
     halfWidth = window.innerWidth / 2;
     halfHeight = window.innerHeight / 2;
@@ -287,21 +300,21 @@ function onWindowResize() {
     quadBG.scale.set( window.innerWidth, window.innerHeight, 1 );
     quadMask.scale.set( window.innerWidth / 2, window.innerHeight / 2, 1 );
 
-}
+  }
 
-function createMesh( geometry, scene, scale ) {
+  function createMesh( geometry, scene, scale ) {
 
-    const diffuseMap = new THREE.TextureLoader( ).load( 'models/gltf/LeePerrySmith/Map-COL.jpg' );
-    diffuseMap.encoding = THREE.sRGBEncoding;
+    const diffuseMap = new THREE.TextureLoader().load( 'models/gltf/LeePerrySmith/Map-COL.jpg' );
+    diffuseMap.colorSpace = THREE.SRGBColorSpace;
 
     const mat2 = new THREE.MeshPhongMaterial( {
 
-        color: 0x999999,
-        specular: 0x080808,
-        shininess: 20,
-        map: diffuseMap,
-        normalMap: new THREE.TextureLoader( ).load( 'models/gltf/LeePerrySmith/Infinite-Level_02_Tangent_SmoothUV.jpg' ),
-        normalScale: new THREE.Vector2( 0.75, 0.75 )
+      color: 0xcbcbcb,
+      specular: 0x080808,
+      shininess: 20,
+      map: diffuseMap,
+      normalMap: new THREE.TextureLoader().load( 'models/gltf/LeePerrySmith/Infinite-Level_02_Tangent_SmoothUV.jpg' ),
+      normalScale: new THREE.Vector2( 0.75, 0.75 )
 
     } );
 
@@ -311,21 +324,21 @@ function createMesh( geometry, scene, scale ) {
 
     scene.add( mesh );
 
-}
+  }
 
-//
+  //
 
-function animate() {
+  function animate() {
 
-    requestId = requestAnimationFrame(animate);
+    requestId = requestAnimationFrame( animate );
 
     stats.begin();
     render();
     stats.end();
 
-}
+  }
 
-function render() {
+  function render() {
 
     const time = Date.now() * 0.0004;
 
@@ -346,7 +359,6 @@ function render() {
     renderer.setViewport( halfWidth, halfHeight, halfWidth, halfHeight );
     composer4.render( delta );
 
-}
-
-}
+  }
+  }
 })

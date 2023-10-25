@@ -1,16 +1,28 @@
-// webgl_advanced/webgl_buffergeometry_uint.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import Stats from './jsm/libs/stats.module.js';
-
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-
+  import Stats from 'three/addons/libs/stats.module.js';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -21,199 +33,200 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-let container, stats;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-let camera, scene, renderer;
+			let container, stats;
 
-let mesh;
+			let camera, scene, renderer;
 
-init();
-animate();
+			let mesh;
 
-function init() {
+			init();
+			animate();
 
-    container = document.getElementById( 'container' );
+			function init() {
 
-    //
+				container = document.getElementById( 'container' );
 
-    camera = new THREE.PerspectiveCamera( 27, window.innerWidth / window.innerHeight, 1, 3500 );
-    camera.position.z = 2750;
+				//
 
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color( 0x050505 );
-    scene.fog = new THREE.Fog( 0x050505, 2000, 3500 );
+				camera = new THREE.PerspectiveCamera( 27, window.innerWidth / window.innerHeight, 1, 3500 );
+				camera.position.z = 2750;
 
-    //
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x050505 );
+				scene.fog = new THREE.Fog( 0x050505, 2000, 3500 );
 
-    scene.add( new THREE.AmbientLight( 0x444444 ) );
+				//
 
-    const light1 = new THREE.DirectionalLight( 0xffffff, 0.5 );
-    light1.position.set( 1, 1, 1 );
-    scene.add( light1 );
+				scene.add( new THREE.AmbientLight( 0xcccccc ) );
 
-    const light2 = new THREE.DirectionalLight( 0xffffff, 1.5 );
-    light2.position.set( 0, - 1, 0 );
-    scene.add( light2 );
+				const light1 = new THREE.DirectionalLight( 0xffffff, 1.5 );
+				light1.position.set( 1, 1, 1 );
+				scene.add( light1 );
 
-    //
+				const light2 = new THREE.DirectionalLight( 0xffffff, 4.5 );
+				light2.position.set( 0, - 1, 0 );
+				scene.add( light2 );
 
-    const triangles = 500000;
+				//
 
-    const geometry = new THREE.BufferGeometry();
+				const triangles = 500000;
 
-    const positions = [];
-    const normals = [];
-    const colors = [];
+				const geometry = new THREE.BufferGeometry();
 
-    const color = new THREE.Color();
+				const positions = [];
+				const normals = [];
+				const colors = [];
 
-    const n = 800, n2 = n / 2;	// triangles spread in the cube
-    const d = 12, d2 = d / 2;	// individual triangle size
+				const color = new THREE.Color();
 
-    const pA = new THREE.Vector3();
-    const pB = new THREE.Vector3();
-    const pC = new THREE.Vector3();
+				const n = 800, n2 = n / 2;	// triangles spread in the cube
+				const d = 12, d2 = d / 2;	// individual triangle size
 
-    const cb = new THREE.Vector3();
-    const ab = new THREE.Vector3();
+				const pA = new THREE.Vector3();
+				const pB = new THREE.Vector3();
+				const pC = new THREE.Vector3();
 
-    for ( let i = 0; i < triangles; i ++ ) {
+				const cb = new THREE.Vector3();
+				const ab = new THREE.Vector3();
 
-        // positions
+				for ( let i = 0; i < triangles; i ++ ) {
 
-        const x = Math.random() * n - n2;
-        const y = Math.random() * n - n2;
-        const z = Math.random() * n - n2;
+					// positions
 
-        const ax = x + Math.random() * d - d2;
-        const ay = y + Math.random() * d - d2;
-        const az = z + Math.random() * d - d2;
+					const x = Math.random() * n - n2;
+					const y = Math.random() * n - n2;
+					const z = Math.random() * n - n2;
 
-        const bx = x + Math.random() * d - d2;
-        const by = y + Math.random() * d - d2;
-        const bz = z + Math.random() * d - d2;
+					const ax = x + Math.random() * d - d2;
+					const ay = y + Math.random() * d - d2;
+					const az = z + Math.random() * d - d2;
 
-        const cx = x + Math.random() * d - d2;
-        const cy = y + Math.random() * d - d2;
-        const cz = z + Math.random() * d - d2;
+					const bx = x + Math.random() * d - d2;
+					const by = y + Math.random() * d - d2;
+					const bz = z + Math.random() * d - d2;
 
-        positions.push( ax, ay, az );
-        positions.push( bx, by, bz );
-        positions.push( cx, cy, cz );
+					const cx = x + Math.random() * d - d2;
+					const cy = y + Math.random() * d - d2;
+					const cz = z + Math.random() * d - d2;
 
-        // flat face normals
+					positions.push( ax, ay, az );
+					positions.push( bx, by, bz );
+					positions.push( cx, cy, cz );
 
-        pA.set( ax, ay, az );
-        pB.set( bx, by, bz );
-        pC.set( cx, cy, cz );
+					// flat face normals
 
-        cb.subVectors( pC, pB );
-        ab.subVectors( pA, pB );
-        cb.cross( ab );
+					pA.set( ax, ay, az );
+					pB.set( bx, by, bz );
+					pC.set( cx, cy, cz );
 
-        cb.normalize();
+					cb.subVectors( pC, pB );
+					ab.subVectors( pA, pB );
+					cb.cross( ab );
 
-        const nx = cb.x;
-        const ny = cb.y;
-        const nz = cb.z;
+					cb.normalize();
 
-        normals.push( nx * 32767, ny * 32767, nz * 32767 );
-        normals.push( nx * 32767, ny * 32767, nz * 32767 );
-        normals.push( nx * 32767, ny * 32767, nz * 32767 );
+					const nx = cb.x;
+					const ny = cb.y;
+					const nz = cb.z;
 
-        // colors
+					normals.push( nx * 32767, ny * 32767, nz * 32767 );
+					normals.push( nx * 32767, ny * 32767, nz * 32767 );
+					normals.push( nx * 32767, ny * 32767, nz * 32767 );
 
-        const vx = ( x / n ) + 0.5;
-        const vy = ( y / n ) + 0.5;
-        const vz = ( z / n ) + 0.5;
+					// colors
 
-        color.setRGB( vx, vy, vz );
+					const vx = ( x / n ) + 0.5;
+					const vy = ( y / n ) + 0.5;
+					const vz = ( z / n ) + 0.5;
 
-        colors.push( color.r * 255, color.g * 255, color.b * 255 );
-        colors.push( color.r * 255, color.g * 255, color.b * 255 );
-        colors.push( color.r * 255, color.g * 255, color.b * 255 );
+					color.setRGB( vx, vy, vz );
 
-    }
+					colors.push( color.r * 255, color.g * 255, color.b * 255 );
+					colors.push( color.r * 255, color.g * 255, color.b * 255 );
+					colors.push( color.r * 255, color.g * 255, color.b * 255 );
 
-    const positionAttribute = new THREE.Float32BufferAttribute( positions, 3 );
-    const normalAttribute = new THREE.Int16BufferAttribute( normals, 3 );
-    const colorAttribute = new THREE.Uint8BufferAttribute( colors, 3 );
+				}
 
-    normalAttribute.normalized = true; // this will map the buffer values to 0.0f - +1.0f in the shader
-    colorAttribute.normalized = true;
+				const positionAttribute = new THREE.Float32BufferAttribute( positions, 3 );
+				const normalAttribute = new THREE.Int16BufferAttribute( normals, 3 );
+				const colorAttribute = new THREE.Uint8BufferAttribute( colors, 3 );
 
-    geometry.setAttribute( 'position', positionAttribute );
-    geometry.setAttribute( 'normal', normalAttribute );
-    geometry.setAttribute( 'color', colorAttribute );
+				normalAttribute.normalized = true; // this will map the buffer values to 0.0f - +1.0f in the shader
+				colorAttribute.normalized = true;
 
-    geometry.computeBoundingSphere();
+				geometry.setAttribute( 'position', positionAttribute );
+				geometry.setAttribute( 'normal', normalAttribute );
+				geometry.setAttribute( 'color', colorAttribute );
 
-    const material = new THREE.MeshPhongMaterial( {
-        color: 0xaaaaaa, specular: 0xffffff, shininess: 250,
-        side: THREE.DoubleSide, vertexColors: true
-    } );
+				geometry.computeBoundingSphere();
 
-    mesh = new THREE.Mesh( geometry, material );
-    scene.add( mesh );
+				const material = new THREE.MeshPhongMaterial( {
+					color: 0xd5d5d5, specular: 0xffffff, shininess: 250,
+					side: THREE.DoubleSide, vertexColors: true
+				} );
 
-    //
+				mesh = new THREE.Mesh( geometry, material );
+				scene.add( mesh );
 
-    renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    renderer.outputEncoding = THREE.sRGBEncoding;
+				//
 
-    container.appendChild( renderer.domElement );
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
 
-    //
+				//
 
-    stats = new Stats();
-    container.appendChild( stats.dom );
+				stats = new Stats();
+				container.appendChild( stats.dom );
 
-    //
+				//
 
-    window.addEventListener( 'resize', onWindowResize );
+				window.addEventListener( 'resize', onWindowResize );
 
-}
+			}
 
-function onWindowResize() {
+			function onWindowResize() {
 
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
 
-    renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setSize( window.innerWidth, window.innerHeight );
 
-}
+			}
 
-//
+			//
 
-function animate() {
+			function animate() {
 
-    requestId = requestAnimationFrame(animate);
+				requestId = requestAnimationFrame( animate );
 
-    render();
-    stats.update();
+				render();
+				stats.update();
 
-}
+			}
 
-function render() {
+			function render() {
 
-    const time = Date.now() * 0.001;
+				const time = Date.now() * 0.001;
 
-    mesh.rotation.x = time * 0.25;
-    mesh.rotation.y = time * 0.5;
+				mesh.rotation.x = time * 0.25;
+				mesh.rotation.y = time * 0.5;
 
-    renderer.render( scene, camera );
+				renderer.render( scene, camera );
 
-}
-}
+			}
+  }
 })

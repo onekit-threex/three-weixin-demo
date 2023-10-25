@@ -1,35 +1,45 @@
-// physics/physics_oimo_instancing.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
-import { OimoPhysics } from './jsm/physics/OimoPhysics.js';
-import Stats from './jsm/libs/stats.module.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-
+import {
+	document,
+	window,
+	requestAnimationFrame
+} from 'dhtml-weixin';
+import * as THREE from './three/Three.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+import { OimoPhysics } from 'three/addons/physics/OimoPhysics.js';
+import Stats from 'three/addons/libs/stats.module.js';
 var requestId
 Page({
-	onUnload() {
-		cancelAnimationFrame(requestId, this.canvas)
+
+	   
+  onUnload() {
+    cancelAnimationFrame(requestId, this.canvas)
 this.worker && this.worker.terminate()
-		setTimeout(() => {
-			if (this.renderer instanceof THREE.WebGLRenderer) {
-				this.renderer.dispose()
-				this.renderer.forceContextLoss()
-				this.renderer.context = null
-				this.renderer.domElement = null
-				this.renderer = null
-			}
-		}, 0)
-	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
+setTimeout(() => {
+ if (this.renderer instanceof THREE.WebGLRenderer) {
+   this.renderer.dispose()
+   this.renderer.forceContextLoss()
+   this.renderer.context = null
+   this.renderer.domElement = null
+   this.renderer = null
+ }
+}, 0)
+   
+},
+    webgl_touch(e) {
+   const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+   //window.dispatchEvent(web_e)
+   //document.dispatchEvent(web_e)
+   this.canvas.dispatchEvent(web_e)
+},
+onLoad() {
+ document.createElementAsync("canvas", "webgl2").then(canvas => {
+   this.canvas = canvas
+   this.body_load(canvas).then()
+ })
+},
+async  body_load(canvas3d){
+    var that = this
 
 let camera, scene, renderer, stats;
 			let physics, position;
@@ -130,7 +140,7 @@ let camera, scene, renderer, stats;
 
 				//
 
-				const controls = new OrbitControls( camera, renderer.domElement );
+				const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
 				controls.target.y = 0.5;
 				controls.update();
 
@@ -161,5 +171,5 @@ let camera, scene, renderer, stats;
 				stats.update();
 
 			}
-}
+  }
 })

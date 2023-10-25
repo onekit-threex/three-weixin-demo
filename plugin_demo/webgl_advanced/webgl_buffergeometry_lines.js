@@ -1,14 +1,28 @@
-// webgl_advanced/webgl_buffergeometry_lines.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import Stats from './jsm/libs/stats.module.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
+import Stats from 'three/addons/libs/stats.module.js';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -19,148 +33,151 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-let container, stats, clock;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-			let camera, scene, renderer;
+    let container, stats, clock;
 
-			let line;
+    let camera, scene, renderer;
 
-			const segments = 10000;
-			const r = 800;
-			let t = 0;
+    let line;
 
-			init();
-			animate();
+    const segments = 10000;
+    const r = 800;
+    let t = 0;
 
-			function init() {
+    init();
+    animate();
 
-				container = document.getElementById( 'container' );
+    function init() {
 
-				//
+      container = document.getElementById( 'container' );
 
-				camera = new THREE.PerspectiveCamera( 27, window.innerWidth / window.innerHeight, 1, 4000 );
-				camera.position.z = 2750;
+      //
 
-				scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera( 27, window.innerWidth / window.innerHeight, 1, 4000 );
+      camera.position.z = 2750;
 
-				clock = new THREE.Clock();
+      scene = new THREE.Scene();
 
-				const geometry = new THREE.BufferGeometry();
-				const material = new THREE.LineBasicMaterial( { vertexColors: true } );
+      clock = new THREE.Clock();
 
-				const positions = [];
-				const colors = [];
+      const geometry = new THREE.BufferGeometry();
+      const material = new THREE.LineBasicMaterial( { vertexColors: true } );
 
-				for ( let i = 0; i < segments; i ++ ) {
+      const positions = [];
+      const colors = [];
 
-					const x = Math.random() * r - r / 2;
-					const y = Math.random() * r - r / 2;
-					const z = Math.random() * r - r / 2;
+      for ( let i = 0; i < segments; i ++ ) {
 
-					// positions
+        const x = Math.random() * r - r / 2;
+        const y = Math.random() * r - r / 2;
+        const z = Math.random() * r - r / 2;
 
-					positions.push( x, y, z );
+        // positions
 
-					// colors
+        positions.push( x, y, z );
 
-					colors.push( ( x / r ) + 0.5 );
-					colors.push( ( y / r ) + 0.5 );
-					colors.push( ( z / r ) + 0.5 );
+        // colors
 
-				}
+        colors.push( ( x / r ) + 0.5 );
+        colors.push( ( y / r ) + 0.5 );
+        colors.push( ( z / r ) + 0.5 );
 
-				geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
-				geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
-				generateMorphTargets( geometry );
+      }
 
-				geometry.computeBoundingSphere();
+      geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
+      geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
+      generateMorphTargets( geometry );
 
-				line = new THREE.Line( geometry, material );
-				scene.add( line );
+      geometry.computeBoundingSphere();
 
-				//
+      line = new THREE.Line( geometry, material );
+      scene.add( line );
 
-				renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.outputEncoding = THREE.sRGBEncoding;
+      //
 
-				container.appendChild( renderer.domElement );
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
 
-				//
+      container.appendChild( renderer.domElement );
 
-				stats = new Stats();
-				container.appendChild( stats.dom );
+      //
 
-				//
+      stats = new Stats();
+      container.appendChild( stats.dom );
 
-				window.addEventListener( 'resize', onWindowResize );
+      //
 
-			}
+      window.addEventListener( 'resize', onWindowResize );
 
-			function onWindowResize() {
+    }
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+    function onWindowResize() {
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
 
-			}
+      renderer.setSize( window.innerWidth, window.innerHeight );
 
-			//
+    }
 
-			function animate() {
+    //
 
-				requestId = requestAnimationFrame(animate);
+    function animate() {
 
-				render();
-				stats.update();
+      requestId = requestAnimationFrame( animate );
 
-			}
+      render();
+      stats.update();
 
-			function render() {
+    }
 
-				const delta = clock.getDelta();
-				const time = clock.getElapsedTime();
+    function render() {
 
-				line.rotation.x = time * 0.25;
-				line.rotation.y = time * 0.5;
+      const delta = clock.getDelta();
+      const time = clock.getElapsedTime();
 
-				t += delta * 0.5;
-				line.morphTargetInfluences[ 0 ] = Math.abs( Math.sin( t ) );
+      line.rotation.x = time * 0.25;
+      line.rotation.y = time * 0.5;
 
-				renderer.render( scene, camera );
+      t += delta * 0.5;
+      line.morphTargetInfluences[ 0 ] = Math.abs( Math.sin( t ) );
 
-			}
+      renderer.render( scene, camera );
 
-			function generateMorphTargets( geometry ) {
+    }
 
-				const data = [];
+    function generateMorphTargets( geometry ) {
 
-				for ( let i = 0; i < segments; i ++ ) {
+      const data = [];
 
-					const x = Math.random() * r - r / 2;
-					const y = Math.random() * r - r / 2;
-					const z = Math.random() * r - r / 2;
+      for ( let i = 0; i < segments; i ++ ) {
 
-					data.push( x, y, z );
+        const x = Math.random() * r - r / 2;
+        const y = Math.random() * r - r / 2;
+        const z = Math.random() * r - r / 2;
 
-				}
+        data.push( x, y, z );
 
-				const morphTarget = new THREE.Float32BufferAttribute( data, 3 );
-				morphTarget.name = 'target1';
+      }
 
-				geometry.morphAttributes.position = [ morphTarget ];
+      const morphTarget = new THREE.Float32BufferAttribute( data, 3 );
+      morphTarget.name = 'target1';
 
-			}
-}
+      geometry.morphAttributes.position = [ morphTarget ];
+
+    }
+
+  }
 })

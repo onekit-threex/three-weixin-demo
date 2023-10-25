@@ -1,20 +1,35 @@
-// webgl_nodes/webgl_nodes_materials_instance_uniform.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import { MeshStandardNodeMaterial, Node, NodeUpdateType, uniform, cubeTexture, add, mul } from './jsm/nodes/Nodes.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+import { MeshStandardNodeMaterial, Node, NodeUpdateType, nodeObject, uniform, cubeTexture } from './three/addons/nodes/Nodes.js';
 
-import Stats from './jsm/libs/stats.module.js';
+import Stats from 'three/addons/libs/stats.module.js';
 
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
 
-import { nodeFrame } from './jsm/renderers/webgl/nodes/WebGLNodes.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import { nodeFrame } from 'three/addons/renderers/webgl-legacy/nodes/WebGLNodes.js';
 
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -25,66 +40,68 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-class InstanceUniformNode extends Node {
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+  class InstanceUniformNode extends Node {
 
     constructor() {
 
-        super( 'vec3' );
+      super( 'vec3' );
 
-        this.updateType = NodeUpdateType.Object;
+      this.updateType = NodeUpdateType.OBJECT;
 
-        this.uniformNode = uniform( new THREE.Color() );
+      this.uniformNode = uniform( new THREE.Color() );
 
     }
 
     update( frame ) {
 
-        this.uniformNode.value.copy( frame.object.color );
+      this.uniformNode.value.copy( frame.object.color );
 
     }
 
     generate( builder, output ) {
 
-        return this.uniformNode.build( builder, output );
+      return this.uniformNode.build( builder, output );
 
     }
 
-}
+  }
 
-let stats;
+  let stats;
 
-let camera, scene, renderer;
-let controls;
-let pointLight;
+  let camera, scene, renderer;
+  let controls;
+  let pointLight;
 
-const objects = [];
+  const objects = [];
 
-init();
-animate();
+  init();
+  animate();
 
-function init() {
+  function init() {
 
     const container = document.createElement( 'div' );
     document.body.appendChild( container );
 
-    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 4000 );
-    camera.position.set( 0, 200, 1200 );
+    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 400 );
+    camera.position.set( 0, 20, 120 );
 
     scene = new THREE.Scene();
 
     // Grid
 
-    const helper = new THREE.GridHelper( 1000, 40, 0x303030, 0x303030 );
-    helper.position.y = - 75;
+    const helper = new THREE.GridHelper( 100, 40, 0x303030, 0x303030 );
+    helper.position.y = - 7.5;
     scene.add( helper );
 
     // CubeMap
@@ -92,37 +109,37 @@ function init() {
     const path = 'textures/cube/SwedishRoyalCastle/';
     const format = '.jpg';
     const urls = [
-        path + 'px' + format, path + 'nx' + format,
-        path + 'py' + format, path + 'ny' + format,
-        path + 'pz' + format, path + 'nz' + format
+      path + 'px' + format, path + 'nx' + format,
+      path + 'py' + format, path + 'ny' + format,
+      path + 'pz' + format, path + 'nz' + format
     ];
 
     const cubeMap = new THREE.CubeTextureLoader().load( urls );
 
     // Material
 
-    const instanceUniform = new InstanceUniformNode();
+    const instanceUniform = nodeObject( new InstanceUniformNode() );
     const cubeTextureNode = cubeTexture( cubeMap );
 
     const material = new MeshStandardNodeMaterial();
-    material.colorNode = add( instanceUniform, cubeTextureNode );
-    material.emissiveNode = mul( instanceUniform, cubeTextureNode );
+    material.colorNode = instanceUniform.add( cubeTextureNode );
+    material.emissiveNode = instanceUniform.mul( cubeTextureNode );
 
     // Spheres geometry
 
-    const geometry = new THREE.SphereGeometry( 70, 32, 16 );
+    const geometry = new THREE.SphereGeometry( 7, 32, 16 );
 
     for ( let i = 0, l = 12; i < l; i ++ ) {
 
-        addMesh( geometry, material );
+      addMesh( geometry, material );
 
     }
 
     // Lights
 
-    scene.add( new THREE.AmbientLight( 0x111111 ) );
+    scene.add( new THREE.AmbientLight( 0x444444 ) );
 
-    const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.125 );
+    const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.4 );
 
     directionalLight.position.x = Math.random() - 0.5;
     directionalLight.position.y = Math.random() - 0.5;
@@ -131,23 +148,23 @@ function init() {
 
     scene.add( directionalLight );
 
-    pointLight = new THREE.PointLight( 0xffffff, 1 );
+    pointLight = new THREE.PointLight( 0xffffff, 1000 );
     scene.add( pointLight );
 
-    pointLight.add( new THREE.Mesh( new THREE.SphereGeometry( 4, 8, 8 ), new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
+    pointLight.add( new THREE.Mesh( new THREE.SphereGeometry( 0.4, 8, 8 ), new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
 
     //
 
-    renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
     container.appendChild( renderer.domElement );
 
     //
 
-    controls = new OrbitControls( camera, renderer.domElement );
-    controls.minDistance = 400;
-    controls.maxDistance = 2000;
+    controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+    controls.minDistance = 40;
+    controls.maxDistance = 200;
 
     //
 
@@ -158,16 +175,16 @@ function init() {
 
     window.addEventListener( 'resize', onWindowResize );
 
-}
+  }
 
-function addMesh( geometry, material ) {
+  function addMesh( geometry, material ) {
 
     const mesh = new THREE.Mesh( geometry, material );
 
     mesh.color = new THREE.Color( Math.random() * 0xffffff );
 
-    mesh.position.x = ( objects.length % 4 ) * 200 - 300;
-    mesh.position.z = Math.floor( objects.length / 4 ) * 200 - 200;
+    mesh.position.x = ( objects.length % 4 ) * 20 - 30;
+    mesh.position.z = Math.floor( objects.length / 4 ) * 20 - 20;
 
     mesh.rotation.x = Math.random() * 200 - 100;
     mesh.rotation.y = Math.random() * 200 - 100;
@@ -177,50 +194,49 @@ function addMesh( geometry, material ) {
 
     scene.add( mesh );
 
-}
+  }
 
-function onWindowResize() {
+  function onWindowResize() {
 
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 
     renderer.setSize( window.innerWidth, window.innerHeight );
 
-}
+  }
 
-//
+  //
 
-function animate() {
+  function animate() {
 
-    requestId = requestAnimationFrame(animate);
+    requestId = requestAnimationFrame( animate );
 
     nodeFrame.update();
 
     render();
     stats.update();
 
-}
+  }
 
-function render() {
+  function render() {
 
     const timer = 0.0001 * Date.now();
 
     for ( let i = 0, l = objects.length; i < l; i ++ ) {
 
-        const object = objects[ i ];
+      const object = objects[ i ];
 
-        object.rotation.x += 0.01;
-        object.rotation.y += 0.005;
+      object.rotation.x += 0.01;
+      object.rotation.y += 0.005;
 
     }
 
-    pointLight.position.x = Math.sin( timer * 7 ) * 300;
-    pointLight.position.y = Math.cos( timer * 5 ) * 400;
-    pointLight.position.z = Math.cos( timer * 3 ) * 300;
+    pointLight.position.x = Math.sin( timer * 7 ) * 30;
+    pointLight.position.y = Math.cos( timer * 5 ) * 40;
+    pointLight.position.z = Math.cos( timer * 3 ) * 30;
 
     renderer.render( scene, camera );
 
-}
-
-}
+  }
+  }
 })

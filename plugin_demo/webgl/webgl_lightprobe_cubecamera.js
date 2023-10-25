@@ -1,16 +1,31 @@
-// webgl/webgl_lightprobe_cubecamera.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { OrbitControls } from './jsm/controls/OrbitControls0.js';
-import { LightProbeHelper } from './jsm/helpers/LightProbeHelper.js';
-import { LightProbeGenerator } from './jsm/lights/LightProbeGenerator.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+import { LightProbeHelper } from 'three/addons/helpers/LightProbeHelper.js';
+import { LightProbeGenerator } from 'three/addons/lights/LightProbeGenerator.js';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -20,107 +35,103 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        
-			let renderer, scene, camera, cubeCamera;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {		
 
-			let lightProbe;
+  let renderer, scene, camera, cubeCamera;
 
-			init();
+  let lightProbe;
 
-			function init() {
+  init();
 
-				// renderer
-				renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
-				renderer.outputEncoding = THREE.sRGBEncoding;
+  function init() {
 
-				// scene
-				scene = new THREE.Scene();
+    // renderer
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
 
-				// camera
-				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 1000 );
-				camera.position.set( 0, 0, 30 );
+    // scene
+    scene = new THREE.Scene();
 
-				const cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 256 );
+    // camera
+    camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 1000 );
+    camera.position.set( 0, 0, 30 );
 
-				cubeCamera = new THREE.CubeCamera( 1, 1000, cubeRenderTarget );
+    const cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 256 );
 
-				// controls
-				const controls = new OrbitControls( camera, renderer.domElement );
-				controls.addEventListener( 'change', render );
-				controls.minDistance = 10;
-				controls.maxDistance = 50;
-				controls.enablePan = false;
+    cubeCamera = new THREE.CubeCamera( 1, 1000, cubeRenderTarget );
 
-				// probe
-				lightProbe = new THREE.LightProbe();
-				scene.add( lightProbe );
+    // controls
+    const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+    controls.addEventListener( 'change', render );
+    controls.minDistance = 10;
+    controls.maxDistance = 50;
+    controls.enablePan = false;
 
-				// envmap
-				const genCubeUrls = function ( prefix, postfix ) {
+    // probe
+    lightProbe = new THREE.LightProbe();
+    scene.add( lightProbe );
 
-					return [
-						prefix + 'px' + postfix, prefix + 'nx' + postfix,
-						prefix + 'py' + postfix, prefix + 'ny' + postfix,
-						prefix + 'pz' + postfix, prefix + 'nz' + postfix
-					];
+    // envmap
+    const genCubeUrls = function ( prefix, postfix ) {
 
-				};
+      return [
+        prefix + 'px' + postfix, prefix + 'nx' + postfix,
+        prefix + 'py' + postfix, prefix + 'ny' + postfix,
+        prefix + 'pz' + postfix, prefix + 'nz' + postfix
+      ];
 
-				const urls = genCubeUrls( 'textures/cube/pisa/', '.png' );
+    };
 
-				new THREE.CubeTextureLoader().load( urls, function ( cubeTexture ) {
+    const urls = genCubeUrls( 'textures/cube/pisa/', '.png' );
 
-					cubeTexture.encoding = THREE.sRGBEncoding;
+    new THREE.CubeTextureLoader().load( urls, function ( cubeTexture ) {
 
-					scene.background = cubeTexture;
+      scene.background = cubeTexture;
 
-					cubeCamera.update( renderer, scene );
+      cubeCamera.update( renderer, scene );
 
-					lightProbe.copy( LightProbeGenerator.fromCubeRenderTarget( renderer, cubeRenderTarget ) );
+      lightProbe.copy( LightProbeGenerator.fromCubeRenderTarget( renderer, cubeRenderTarget ) );
 
-					scene.add( new LightProbeHelper( lightProbe, 5 ) );
+      scene.add( new LightProbeHelper( lightProbe, 5 ) );
 
-					render();
+      render();
 
-				} );
+    } );
 
-				// listener
-				window.addEventListener( 'resize', onWindowResize );
+    // listener
+    window.addEventListener( 'resize', onWindowResize );
 
-			}
+  }
 
-			function onWindowResize() {
+  function onWindowResize() {
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setSize( window.innerWidth, window.innerHeight );
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
 
-				render();
+    render();
 
-			}
+  }
 
-			function render() {
+  function render() {
 
-				renderer.render( scene, camera );
+    renderer.render( scene, camera );
 
-			}
-    }
+  }
+
+  }
 })

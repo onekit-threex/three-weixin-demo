@@ -1,17 +1,17 @@
 // games/games_fps.js
 import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import * as THREE from './three/Three.js';
 
-import Stats from './jsm/libs/stats.module.js';
+import Stats from './three/addons/libs/stats.module.js';
 
-import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
+import { GLTFLoader } from './three/addons/loaders/GLTFLoader.js';
 
-import { Octree } from './jsm/math/Octree.js';
-import { OctreeHelper } from './jsm/helpers/OctreeHelper.js';
+import { Octree } from './three/addons/math/Octree.js';
+import { OctreeHelper } from './three/addons/helpers/OctreeHelper.js';
 
-import { Capsule } from './jsm/math/Capsule.js';
+import { Capsule } from './three/addons/math/Capsule.js';
 
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import { GUI } from './three/addons/libs/lil-gui.module.min.js';
 var requestId
 Page({
     webgl_touch(e) {
@@ -19,8 +19,13 @@ Page({
         window.dispatchEvent(web_e)
        this.canvas.dispatchEvent(web_e)
     },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
+    onReady() {
+      document.createElementAsync("canvas", "webgl2").then(canvas => {
+        this.canvas = canvas
+        this.body_load(canvas).then()
+      })
+    },
+  async body_load(canvas3d){
 var that = this
 
 const clock = new THREE.Clock();

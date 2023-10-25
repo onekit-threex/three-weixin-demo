@@ -1,25 +1,33 @@
+var WA 
+if(typeof WXWebAssembly=="object"){
+  WA = WXWebAssembly
+} else if( typeof  WebAssembly=="object"){
+  WA = WebAssembly
+}else{
+  WA = {}
+}
 module.exports = {
-  compile: WXWebAssembly.compile,
+  compile: WA.compile,
 
-  compileStreaming: WXWebAssembly.compileStreaming,
+  compileStreaming: WA.compileStreaming,
 
-  instantiate: WXWebAssembly.instantiate,
+  instantiate: WA.instantiate,
 
-  instantiateStreaming: WXWebAssembly.compileStreaming,
+  instantiateStreaming: WA.compileStreaming,
 
-  validate: WXWebAssembly.validate || function() { return true },
+  validate: WA.validate || function() { return true },
 
-  Module: WXWebAssembly.Module,
+  Module: WA.Module,
 
-  Global: WXWebAssembly.Global,
+  Global: WA.Global,
 
-  Instance: WXWebAssembly.Instance,
+  Instance: WA.Instance,
 
-  Memory: WXWebAssembly.Memory,
+  Memory: WA.Memory,
 
-  Table: WXWebAssembly.Table,
+  Table: WA.Table,
 
-  Tag: WXWebAssembly.Tag,
+  Tag: WA.Tag,
 
   CompileError: Error,
 

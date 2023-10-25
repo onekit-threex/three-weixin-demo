@@ -1,15 +1,29 @@
-// webgl/webgl_loader_3ds.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { TrackballControls } from './jsm/controls/TrackballControls.js';
-import { TDSLoader } from './jsm/loaders/TDSLoader.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
+import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
+import { TDSLoader } from 'three/addons/loaders/TDSLoader.js';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -19,91 +33,89 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        let container, controls;
-        let camera, scene, renderer;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {	
 
-        init();
-        animate();
+  let container, controls;
+  let camera, scene, renderer;
 
-        function init() {
+  init();
+  animate();
 
-            container = document.createElement( 'div' );
-            document.body.appendChild( container );
+  function init() {
 
-            camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 10 );
-            camera.position.z = 2;
+    container = document.createElement( 'div' );
+    document.body.appendChild( container );
 
-            scene = new THREE.Scene();
-            scene.add( new THREE.HemisphereLight() );
+    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 10 );
+    camera.position.z = 2;
 
-            const directionalLight = new THREE.DirectionalLight( 0xffeedd );
-            directionalLight.position.set( 0, 0, 2 );
-            scene.add( directionalLight );
+    scene = new THREE.Scene();
+    scene.add( new THREE.AmbientLight( 0xffffff, 3 ) );
 
-            //3ds files dont store normal maps
-            const normal = new THREE.TextureLoader( ).load( 'models/3ds/portalgun/textures/normal.jpg' );
+    const directionalLight = new THREE.DirectionalLight( 0xffeedd, 3 );
+    directionalLight.position.set( 0, 0, 2 );
+    scene.add( directionalLight );
 
-            const loader = new TDSLoader( );
-            loader.setResourcePath( 'models/3ds/portalgun/textures/' );
-            loader.load( 'models/3ds/portalgun/portalgun.3ds', function ( object ) {
+    //3ds files dont store normal maps
+    const normal = new THREE.TextureLoader().load( 'models/3ds/portalgun/textures/normal.jpg' );
 
-                object.traverse( function ( child ) {
+    const loader = new TDSLoader( );
+    loader.setResourcePath( 'models/3ds/portalgun/textures/' );
+    loader.load( 'models/3ds/portalgun/portalgun.3ds', function ( object ) {
 
-                    if ( child.isMesh ) {
+      object.traverse( function ( child ) {
 
-                        child.material.specular.setScalar( 0.1 );
-                        child.material.normalMap = normal;
+        if ( child.isMesh ) {
 
-                    }
-
-                } );
-
-                scene.add( object );
-
-            } );
-
-            renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-            renderer.setPixelRatio( window.devicePixelRatio );
-            renderer.setSize( window.innerWidth, window.innerHeight );
-            renderer.outputEncoding = THREE.sRGBEncoding;
-            container.appendChild( renderer.domElement );
-
-            controls = new TrackballControls( camera, renderer.domElement );
-
-            window.addEventListener( 'resize', resize );
+          child.material.specular.setScalar( 0.1 );
+          child.material.normalMap = normal;
 
         }
 
-        function resize() {
+      } );
 
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+      scene.add( object );
 
-            renderer.setSize( window.innerWidth, window.innerHeight );
+    } );
 
-        }
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    container.appendChild( renderer.domElement );
 
-        function animate() {
+    controls = new TrackballControls( camera, renderer.domElement );
 
-            controls.update();
-            renderer.render( scene, camera );
+    window.addEventListener( 'resize', resize );
 
-            requestId = requestAnimationFrame(animate);
+  }
 
-        }
-    }
+  function resize() {
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+  }
+
+  function animate() {
+
+    controls.update();
+    renderer.render( scene, camera );
+
+    requestId = requestAnimationFrame( animate );
+
+  }
+  }
 })

@@ -1,0 +1,14 @@
+<view class="lil-gui {{show?':':'closed'}}" style="background:#222;padding-bottom:30rpx;color:#fff;height:100%;overflow-y:scroll;width:750rpx;{{!root?'border-top:1rpx solid #888;':''}}">
+  <text class="title" style="display:block;" bindtap="title_tap">{{title}}</text>
+  <view style="background:#222;padding-top:10rpx" wx:if="{{show}}">
+    <view wx:for="{{children}}" wx:key="index" style="margin-top:5rpx;">
+      <gui root="{{false}}" wx:if="{{item.type=='GUI'}}" show="{{item.show}}" bindchange="gui_change" title="{{item.title}}" children="{{item.children}}" />
+      <gui-boolean  wx:elif="{{item.type=='boolean'}}" disabled="{{item.disabled}}" bindchange="gui_change" name="{{item.name}}" value="{{item.value}}" />
+      <gui-color    wx:elif="{{item.type=='color'}}" disabled="{{item.disabled}}" bindchange="gui_change" name="{{item.name}}" value="{{item.value}}" />
+      <gui-function wx:elif="{{item.type=='function'}}" disabled="{{item.disabled}}" bindchange="gui_change" name="{{item.name}}" value="{{item.value}}" />
+      <gui-number   wx:elif="{{item.type=='number'}}" disabled="{{item.disabled}}" bindchange="gui_change" name="{{item.name}}" value="{{item.value}}" min="{{item.min}}" max="{{item.max}}" step="{{item.step}}" />
+      <gui-option   wx:elif="{{item.type=='option'}}" disabled="{{item.disabled}}" bindchange="gui_change" name="{{item.name}}" value="{{item.value}}" range="{{item.range}}" />
+      <gui-string   wx:elif="{{item.type=='string'}}" disabled="{{item.disabled}}" bindchange="gui_change" name="{{item.name}}" value="{{item.value}}" />
+    </view>
+  </view>
+</view>

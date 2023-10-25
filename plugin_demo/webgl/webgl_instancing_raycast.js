@@ -1,17 +1,31 @@
-// webgl/webgl_instancing_raycast.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import Stats from './jsm/libs/stats.module.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
-
+import Stats from 'three/addons/libs/stats.module.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -21,156 +35,154 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        
-			let camera, scene, renderer, controls, stats;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-			let mesh;
-			const amount = parseInt( window.location.search.slice( 1 ) ) || 10;
-			const count = Math.pow( amount, 3 );
+  let camera, scene, renderer, controls, stats;
 
-			const raycaster = new THREE.Raycaster();
-			const mouse = new THREE.Vector2( 1, 1 );
+  let mesh;
+  const amount = parseInt( window.location.search.slice( 1 ) ) || 10;
+  const count = Math.pow( amount, 3 );
 
-			const color = new THREE.Color();
-			const white = new THREE.Color().setHex( 0xffffff );
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2( 1, 1 );
 
-			init();
-			animate();
+  const color = new THREE.Color();
+  const white = new THREE.Color().setHex( 0xffffff );
 
-			function init() {
+  init();
+  animate();
 
-				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 100 );
-				camera.position.set( amount, amount, amount );
-				camera.lookAt( 0, 0, 0 );
+  function init() {
 
-				scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 100 );
+    camera.position.set( amount, amount, amount );
+    camera.lookAt( 0, 0, 0 );
 
-				const light = new THREE.HemisphereLight( 0xffffff, 0x888888 );
-				light.position.set( 0, 1, 0 );
-				scene.add( light );
+    scene = new THREE.Scene();
 
-				const geometry = new THREE.IcosahedronGeometry( 0.5, 3 );
-				const material = new THREE.MeshPhongMaterial( { color: 0xffffff } );
+    const light = new THREE.HemisphereLight( 0xffffff, 0x888888, 3 );
+    light.position.set( 0, 1, 0 );
+    scene.add( light );
 
-				mesh = new THREE.InstancedMesh( geometry, material, count );
+    const geometry = new THREE.IcosahedronGeometry( 0.5, 3 );
+    const material = new THREE.MeshPhongMaterial( { color: 0xffffff } );
 
-				let i = 0;
-				const offset = ( amount - 1 ) / 2;
+    mesh = new THREE.InstancedMesh( geometry, material, count );
 
-				const matrix = new THREE.Matrix4();
+    let i = 0;
+    const offset = ( amount - 1 ) / 2;
 
-				for ( let x = 0; x < amount; x ++ ) {
+    const matrix = new THREE.Matrix4();
 
-					for ( let y = 0; y < amount; y ++ ) {
+    for ( let x = 0; x < amount; x ++ ) {
 
-						for ( let z = 0; z < amount; z ++ ) {
+      for ( let y = 0; y < amount; y ++ ) {
 
-							matrix.setPosition( offset - x, offset - y, offset - z );
+        for ( let z = 0; z < amount; z ++ ) {
 
-							mesh.setMatrixAt( i, matrix );
-							mesh.setColorAt( i, color );
+          matrix.setPosition( offset - x, offset - y, offset - z );
 
-							i ++;
+          mesh.setMatrixAt( i, matrix );
+          mesh.setColorAt( i, color );
 
-						}
+          i ++;
 
-					}
+        }
 
-				}
+      }
 
-				scene.add( mesh );
-
-				//
-
-				const gui = new GUI();
-				gui.add( mesh, 'count', 0, count );
-
-				renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
-
-				controls = new OrbitControls( camera, renderer.domElement );
-				controls.enableDamping = true;
-				controls.enableZoom = false;
-				controls.enablePan = false;
-
-				stats = new Stats();
-				document.body.appendChild( stats.dom );
-
-				window.addEventListener( 'resize', onWindowResize );
-				document.addEventListener( 'mousemove', onMouseMove );
-
-			}
-
-			function onWindowResize() {
-
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-			}
-
-			function onMouseMove( event ) {
-
-				event.preventDefault();
-
-				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-
-			}
-
-			function animate() {
-
-				requestId = requestAnimationFrame(animate);
-
-				controls.update();
-
-				raycaster.setFromCamera( mouse, camera );
-
-				const intersection = raycaster.intersectObject( mesh );
-
-				if ( intersection.length > 0 ) {
-
-					const instanceId = intersection[ 0 ].instanceId;
-
-					mesh.getColorAt( instanceId, color );
-
-					if ( color.equals( white ) ) {
-
-						mesh.setColorAt( instanceId, color.setHex( Math.random() * 0xffffff ) );
-
-						mesh.instanceColor.needsUpdate = true;
-
-					}
-
-				}
-
-				render();
-
-				////stats.update();
-
-			}
-
-			function render() {
-
-				renderer.render( scene, camera );
-
-			}
     }
+
+    scene.add( mesh );
+
+    //
+
+    const gui = new GUI();
+    gui.add( mesh, 'count', 0, count );
+
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
+
+    controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+    controls.enableDamping = true;
+    controls.enableZoom = false;
+    controls.enablePan = false;
+
+    stats = new Stats();
+    document.body.appendChild( stats.dom );
+
+    window.addEventListener( 'resize', onWindowResize );
+    document.addEventListener( 'mousemove', onMouseMove );
+
+  }
+
+  function onWindowResize() {
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+  }
+
+  function onMouseMove( event ) {
+
+    event.preventDefault();
+
+    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+  }
+
+  function animate() {
+
+    requestId = requestAnimationFrame( animate );
+
+    controls.update();
+
+    raycaster.setFromCamera( mouse, camera );
+
+    const intersection = raycaster.intersectObject( mesh );
+
+    if ( intersection.length > 0 ) {
+
+      const instanceId = intersection[ 0 ].instanceId;
+
+      mesh.getColorAt( instanceId, color );
+
+      if ( color.equals( white ) ) {
+
+        mesh.setColorAt( instanceId, color.setHex( Math.random() * 0xffffff ) );
+
+        mesh.instanceColor.needsUpdate = true;
+
+      }
+
+    }
+
+    render();
+
+    stats.update();
+
+  }
+
+  function render() {
+
+    renderer.render( scene, camera );
+
+  }
+  }
 })

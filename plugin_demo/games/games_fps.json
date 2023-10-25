@@ -1,3 +1,6 @@
 {
-    "usingComponents": {}
+  "pageOrientation": "landscape",
+  "usingComponents": {
+    "game-pad":"/three/threex/game-pad/game-pad"
+}
 }

@@ -1,13 +1,28 @@
-// webgl/webgl_loader_texture_tiff.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { TIFFLoader } from './jsm/loaders/TIFFLoader.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';	
+import { TIFFLoader } from './three/addons/loaders/TIFFLoader.js';
+
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -17,112 +32,113 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+  let renderer, scene, camera;
 
-        
-			let renderer, scene, camera;
+  init();
 
-			init();
+  function init() {
 
-			function init() {
+    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.01, 10 );
+    camera.position.set( 0, 0, 4 );
 
-				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.01, 10 );
-				camera.position.set( 0, 0, 4 );
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
 
-				renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
+    scene = new THREE.Scene();
 
-				scene = new THREE.Scene();
+    const loader = new TIFFLoader();
 
-				const loader = new TIFFLoader();
+    const geometry = new THREE.PlaneGeometry();
 
-				const geometry = new THREE.PlaneGeometry();
+    // uncompressed
 
-				// uncompressed
+    loader.load( 'textures/tiff/crate_uncompressed.tif', function ( texture ) {
 
-				loader.load( 'textures/tiff/crate_uncompressed.tif', function ( texture ) {
+      texture.colorSpace = THREE.SRGBColorSpace;
 
-					const material = new THREE.MeshBasicMaterial( { map: texture } );
+      const material = new THREE.MeshBasicMaterial( { map: texture } );
 
-					const mesh = new THREE.Mesh( geometry, material );
-					mesh.position.set( - 1.5, 0, 0 );
+      const mesh = new THREE.Mesh( geometry, material );
+      mesh.position.set( - 1.5, 0, 0 );
 
-					scene.add( mesh );
+      scene.add( mesh );
 
-					render();
+      render();
 
-				} );
+    } );
 
-				// LZW
+    // LZW
 
-				loader.load( 'textures/tiff/crate_lzw.tif', function ( texture ) {
+    loader.load( 'textures/tiff/crate_lzw.tif', function ( texture ) {
 
-					const material = new THREE.MeshBasicMaterial( { map: texture } );
+      texture.colorSpace = THREE.SRGBColorSpace;
 
-					const mesh = new THREE.Mesh( geometry, material );
-					mesh.position.set( 0, 0, 0 );
+      const material = new THREE.MeshBasicMaterial( { map: texture } );
 
-					scene.add( mesh );
+      const mesh = new THREE.Mesh( geometry, material );
+      mesh.position.set( 0, 0, 0 );
 
-					render();
+      scene.add( mesh );
 
-				} );
+      render();
 
-				// JPEG
+    } );
 
-				loader.load( 'textures/tiff/crate_jpeg.tif', function ( texture ) {
+    // JPEG
 
-					const material = new THREE.MeshBasicMaterial( { map: texture } );
+    loader.load( 'textures/tiff/crate_jpeg.tif', function ( texture ) {
 
-					const mesh = new THREE.Mesh( geometry, material );
-					mesh.position.set( 1.5, 0, 0 );
+      texture.colorSpace = THREE.SRGBColorSpace;
 
-					scene.add( mesh );
+      const material = new THREE.MeshBasicMaterial( { map: texture } );
 
-					render();
+      const mesh = new THREE.Mesh( geometry, material );
+      mesh.position.set( 1.5, 0, 0 );
 
-				} );
+      scene.add( mesh );
 
-				//
+      render();
 
-				window.addEventListener( 'resize', onWindowResize );
+    } );
 
-			}
+    //
 
-			function onWindowResize() {
+    window.addEventListener( 'resize', onWindowResize );
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+  }
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+  function onWindowResize() {
 
-				render();
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
 
-			}
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+    render();
+
+  }
 
 
-			//
+  //
 
-			function render() {
+  function render() {
 
-				renderer.render( scene, camera );
+    renderer.render( scene, camera );
 
-			}
-
-    }
+  }
+  }
 })

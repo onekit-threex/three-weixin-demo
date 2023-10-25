@@ -1,15 +1,30 @@
-// webgl/webgl_lines_dashed.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import Stats from './jsm/libs/stats.module.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import * as GeometryUtils from './jsm/utils/GeometryUtils.js';
+import Stats from 'three/addons/libs/stats.module.js';
+
+import * as GeometryUtils from 'three/addons/utils/GeometryUtils.js';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -19,164 +34,161 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        let renderer, scene, camera, stats;
-			const objects = [];
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-			const WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
+    let renderer, scene, camera, stats;
+    const objects = [];
 
-			init();
-			animate();
+    const WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
 
-			function init() {
+    init();
+    animate();
 
-				camera = new THREE.PerspectiveCamera( 60, WIDTH / HEIGHT, 1, 200 );
-				camera.position.z = 150;
+    function init() {
 
-				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0x111111 );
-				scene.fog = new THREE.Fog( 0x111111, 150, 200 );
+      camera = new THREE.PerspectiveCamera( 60, WIDTH / HEIGHT, 1, 200 );
+      camera.position.z = 150;
 
-				const subdivisions = 6;
-				const recursion = 1;
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color( 0x111111 );
+      scene.fog = new THREE.Fog( 0x111111, 150, 200 );
 
-				const points = GeometryUtils.hilbert3D( new THREE.Vector3( 0, 0, 0 ), 25.0, recursion, 0, 1, 2, 3, 4, 5, 6, 7 );
-				const spline = new THREE.CatmullRomCurve3( points );
+      const subdivisions = 6;
+      const recursion = 1;
 
-				const samples = spline.getPoints( points.length * subdivisions );
-				const geometrySpline = new THREE.BufferGeometry().setFromPoints( samples );
+      const points = GeometryUtils.hilbert3D( new THREE.Vector3( 0, 0, 0 ), 25.0, recursion, 0, 1, 2, 3, 4, 5, 6, 7 );
+      const spline = new THREE.CatmullRomCurve3( points );
 
-				const line = new THREE.Line( geometrySpline, new THREE.LineDashedMaterial( { color: 0xffffff, dashSize: 1, gapSize: 0.5 } ) );
-				line.computeLineDistances();
+      const samples = spline.getPoints( points.length * subdivisions );
+      const geometrySpline = new THREE.BufferGeometry().setFromPoints( samples );
 
-				objects.push( line );
-				scene.add( line );
+      const line = new THREE.Line( geometrySpline, new THREE.LineDashedMaterial( { color: 0xffffff, dashSize: 1, gapSize: 0.5 } ) );
+      line.computeLineDistances();
 
-				const geometryBox = box( 50, 50, 50 );
+      objects.push( line );
+      scene.add( line );
 
-				const lineSegments = new THREE.LineSegments( geometryBox, new THREE.LineDashedMaterial( { color: 0xffaa00, dashSize: 3, gapSize: 1 } ) );
-				lineSegments.computeLineDistances();
+      const geometryBox = box( 50, 50, 50 );
 
-				objects.push( lineSegments );
-				scene.add( lineSegments );
+      const lineSegments = new THREE.LineSegments( geometryBox, new THREE.LineDashedMaterial( { color: 0xffaa00, dashSize: 3, gapSize: 1 } ) );
+      lineSegments.computeLineDistances();
 
-				renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( WIDTH, HEIGHT );
+      objects.push( lineSegments );
+      scene.add( lineSegments );
 
-				const container = document.getElementById( 'container' );
-				container.appendChild( renderer.domElement );
+      renderer = new THREE.WebGLRenderer( { antialias: true } );
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( WIDTH, HEIGHT );
+      document.body.appendChild( renderer.domElement );
 
-				stats = new Stats();
-				container.appendChild( stats.dom );
+      stats = new Stats();
+      document.body.appendChild( stats.dom );
 
-				//
+      //
 
-				window.addEventListener( 'resize', onWindowResize );
+      window.addEventListener( 'resize', onWindowResize );
 
-			}
-
-			function box( width, height, depth ) {
-
-				width = width * 0.5,
-				height = height * 0.5,
-				depth = depth * 0.5;
-
-				const geometry = new THREE.BufferGeometry();
-				const position = [];
-
-				position.push(
-					- width, - height, - depth,
-					- width, height, - depth,
-
-					- width, height, - depth,
-					width, height, - depth,
-
-					width, height, - depth,
-					width, - height, - depth,
-
-					width, - height, - depth,
-					- width, - height, - depth,
-
-					- width, - height, depth,
-					- width, height, depth,
-
-					- width, height, depth,
-					width, height, depth,
-
-					width, height, depth,
-					width, - height, depth,
-
-					width, - height, depth,
-					- width, - height, depth,
-
-					- width, - height, - depth,
-					- width, - height, depth,
-
-					- width, height, - depth,
-					- width, height, depth,
-
-					width, height, - depth,
-					width, height, depth,
-
-					width, - height, - depth,
-					width, - height, depth
-				 );
-
-				geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( position, 3 ) );
-
-				return geometry;
-
-			}
-
-			function onWindowResize() {
-
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-			}
-
-			function animate() {
-
-				requestId = requestAnimationFrame(animate);
-
-				render();
-				//stats.update();
-
-			}
-
-			function render() {
-
-				const time = Date.now() * 0.001;
-
-				scene.traverse( function ( object ) {
-
-					if ( object.isLine ) {
-
-						object.rotation.x = 0.25 * time;
-						object.rotation.y = 0.25 * time;
-
-					}
-
-				} );
-
-				renderer.render( scene, camera );
-
-			}
     }
+
+    function box( width, height, depth ) {
+
+      width = width * 0.5,
+      height = height * 0.5,
+      depth = depth * 0.5;
+
+      const geometry = new THREE.BufferGeometry();
+      const position = [];
+
+      position.push(
+        - width, - height, - depth,
+        - width, height, - depth,
+
+        - width, height, - depth,
+        width, height, - depth,
+
+        width, height, - depth,
+        width, - height, - depth,
+
+        width, - height, - depth,
+        - width, - height, - depth,
+
+        - width, - height, depth,
+        - width, height, depth,
+
+        - width, height, depth,
+        width, height, depth,
+
+        width, height, depth,
+        width, - height, depth,
+
+        width, - height, depth,
+        - width, - height, depth,
+
+        - width, - height, - depth,
+        - width, - height, depth,
+
+        - width, height, - depth,
+        - width, height, depth,
+
+        width, height, - depth,
+        width, height, depth,
+
+        width, - height, - depth,
+        width, - height, depth
+       );
+
+      geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( position, 3 ) );
+
+      return geometry;
+
+    }
+
+    function onWindowResize() {
+
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize( window.innerWidth, window.innerHeight );
+
+    }
+
+    function animate() {
+
+      requestId = requestAnimationFrame( animate );
+
+      render();
+      stats.update();
+
+    }
+
+    function render() {
+
+      const time = Date.now() * 0.001;
+
+      scene.traverse( function ( object ) {
+
+        if ( object.isLine ) {
+
+          object.rotation.x = 0.25 * time;
+          object.rotation.y = 0.25 * time;
+
+        }
+
+      } );
+
+      renderer.render( scene, camera );
+
+    }
+  }
 })

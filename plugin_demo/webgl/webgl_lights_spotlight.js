@@ -1,15 +1,32 @@
-// webgl/webgl_lights_spotlights.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { GUI } from './jsm/libs/lil-gui.module.min.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -19,193 +36,230 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-        let renderer, scene, camera;
+  let renderer, scene, camera;
 
-			let spotLight, lightHelper, shadowCameraHelper;
+  let spotLight, lightHelper;
 
-			let gui;
+  init();
 
-			function init() {
+  function init() {
 
-				renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
 
-				renderer.shadowMap.enabled = true;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-				renderer.outputEncoding = THREE.sRGBEncoding;
 
-				scene = new THREE.Scene();
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1;
 
-				camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 1000 );
-				camera.position.set( 160, 40, 10 );
+    renderer.setAnimationLoop( render );
 
-				const controls = new OrbitControls( camera, renderer.domElement );
-				controls.addEventListener( 'change', render );
-				controls.minDistance = 20;
-				controls.maxDistance = 500;
-				controls.enablePan = false;
+    scene = new THREE.Scene();
 
-				const ambient = new THREE.AmbientLight( 0xffffff, 0.1 );
-				scene.add( ambient );
+    camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 100 );
+    camera.position.set( 7, 4, 1 );
 
-				spotLight = new THREE.SpotLight( 0xffffff, 1 );
-				spotLight.position.set( 15, 40, 35 );
-				spotLight.angle = Math.PI / 4;
-				spotLight.penumbra = 0.1;
-				spotLight.decay = 2;
-				spotLight.distance = 200;
+    const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+    controls.minDistance = 2;
+    controls.maxDistance = 10;
+    controls.maxPolarAngle = Math.PI / 2;
+    controls.target.set( 0, 1, 0 );
+    controls.update();
 
-				spotLight.castShadow = true;
-				spotLight.shadow.mapSize.width = 512;
-				spotLight.shadow.mapSize.height = 512;
-				spotLight.shadow.camera.near = 10;
-				spotLight.shadow.camera.far = 200;
-				spotLight.shadow.focus = 1;
-				scene.add( spotLight );
+    const ambient = new THREE.HemisphereLight( 0xffffff, 0x8d8d8d, 0.15 );
+    scene.add( ambient );
 
-				lightHelper = new THREE.SpotLightHelper( spotLight );
-				scene.add( lightHelper );
+    const loader = new THREE.TextureLoader().setPath( 'textures/' );
+    const filenames = [ 'disturb.jpg', 'colors.png', 'uv_grid_opengl.jpg' ];
 
-				shadowCameraHelper = new THREE.CameraHelper( spotLight.shadow.camera );
-				scene.add( shadowCameraHelper );
+    const textures = { none: null };
 
-				//
+    for ( let i = 0; i < filenames.length; i ++ ) {
 
-				let material = new THREE.MeshPhongMaterial( { color: 0x808080, dithering: true } );
+      const filename = filenames[ i ];
 
-				let geometry = new THREE.PlaneGeometry( 2000, 2000 );
+      const texture = loader.load( filename );
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.colorSpace = THREE.SRGBColorSpace;
 
-				let mesh = new THREE.Mesh( geometry, material );
-				mesh.position.set( 0, - 1, 0 );
-				mesh.rotation.x = - Math.PI * 0.5;
-				mesh.receiveShadow = true;
-				scene.add( mesh );
+      textures[ filename ] = texture;
 
-				//
-
-				material = new THREE.MeshPhongMaterial( { color: 0x4080ff, dithering: true } );
-
-				geometry = new THREE.CylinderGeometry( 5, 5, 2, 32, 1, false );
-
-				mesh = new THREE.Mesh( geometry, material );
-				mesh.position.set( 0, 5, 0 );
-				mesh.castShadow = true;
-				scene.add( mesh );
-
-				render();
-
-				window.addEventListener( 'resize', onWindowResize );
-
-			}
-
-			function onWindowResize() {
-
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-			}
-
-			function render() {
-			//	lightHelper.update();
-
-			//	shadowCameraHelper.update();
-
-				renderer.render( scene, camera );
-
-			}
-
-			function buildGui() {
-
-				gui = new GUI();
-
-				const params = {
-					'light color': spotLight.color.getHex(),
-					intensity: spotLight.intensity,
-					distance: spotLight.distance,
-					angle: spotLight.angle,
-					penumbra: spotLight.penumbra,
-					decay: spotLight.decay,
-					focus: spotLight.shadow.focus
-				};
-
-				gui.addColor( params, 'light color' ).onChange( function ( val ) {
-
-					spotLight.color.setHex( val );
-					render();
-
-				} );
-
-				gui.add( params, 'intensity', 0, 2 ).onChange( function ( val ) {
-
-					spotLight.intensity = val;
-					render();
-
-				} );
-
-
-				gui.add( params, 'distance', 50, 200 ).onChange( function ( val ) {
-
-					spotLight.distance = val;
-					render();
-
-				} );
-
-				gui.add( params, 'angle', 0, Math.PI / 3 ).onChange( function ( val ) {
-
-					spotLight.angle = val;
-					render();
-
-				} );
-
-				gui.add( params, 'penumbra', 0, 1 ).onChange( function ( val ) {
-
-					spotLight.penumbra = val;
-					render();
-
-				} );
-
-				gui.add( params, 'decay', 1, 2 ).onChange( function ( val ) {
-
-					spotLight.decay = val;
-					render();
-
-				} );
-
-				gui.add( params, 'focus', 0, 1 ).onChange( function ( val ) {
-
-					spotLight.shadow.focus = val;
-					render();
-
-				} );
-
-				gui.open();
-
-			}
-
-			init();
-
-			buildGui();
-
-			render();
     }
+
+    spotLight = new THREE.SpotLight( 0xffffff, 100 );
+    spotLight.position.set( 2.5, 5, 2.5 );
+    spotLight.angle = Math.PI / 6;
+    spotLight.penumbra = 1;
+    spotLight.decay = 2;
+    spotLight.distance = 0;
+    spotLight.map = textures[ 'disturb.jpg' ];
+
+    spotLight.castShadow = true;
+    spotLight.shadow.mapSize.width = 1024;
+    spotLight.shadow.mapSize.height = 1024;
+    spotLight.shadow.camera.near = 1;
+    spotLight.shadow.camera.far = 10;
+    spotLight.shadow.focus = 1;
+    scene.add( spotLight );
+
+    lightHelper = new THREE.SpotLightHelper( spotLight );
+    scene.add( lightHelper );
+
+    //
+
+    const geometry = new THREE.PlaneGeometry( 200, 200 );
+    const material = new THREE.MeshLambertMaterial( { color: 0xbcbcbc } );
+
+    const mesh = new THREE.Mesh( geometry, material );
+    mesh.position.set( 0, - 1, 0 );
+    mesh.rotation.x = - Math.PI / 2;
+    mesh.receiveShadow = true;
+    scene.add( mesh );
+
+    //
+
+    new PLYLoader().load( 'models/ply/binary/Lucy100k.ply', function ( geometry ) {
+
+      geometry.scale( 0.0024, 0.0024, 0.0024 );
+      geometry.computeVertexNormals();
+
+      const material = new THREE.MeshLambertMaterial();
+
+      const mesh = new THREE.Mesh( geometry, material );
+      mesh.rotation.y = - Math.PI / 2;
+      mesh.position.y = 0.8;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      scene.add( mesh );
+
+    } );
+
+    window.addEventListener( 'resize', onWindowResize );
+
+    // GUI
+
+    const gui = new GUI();
+
+    const params = {
+      map: textures[ 'disturb.jpg' ],
+      color: spotLight.color.getHex(),
+      intensity: spotLight.intensity,
+      distance: spotLight.distance,
+      angle: spotLight.angle,
+      penumbra: spotLight.penumbra,
+      decay: spotLight.decay,
+      focus: spotLight.shadow.focus,
+      shadows: true
+    };
+
+    gui.add( params, 'map', textures ).onChange( function ( val ) {
+
+      spotLight.map = val;
+
+    } );
+
+    gui.addColor( params, 'color' ).onChange( function ( val ) {
+
+      spotLight.color.setHex( val );
+
+    } );
+
+    gui.add( params, 'intensity', 0, 500 ).onChange( function ( val ) {
+
+      spotLight.intensity = val;
+
+    } );
+
+
+    gui.add( params, 'distance', 50, 200 ).onChange( function ( val ) {
+
+      spotLight.distance = val;
+
+    } );
+
+    gui.add( params, 'angle', 0, Math.PI / 3 ).onChange( function ( val ) {
+
+      spotLight.angle = val;
+
+    } );
+
+    gui.add( params, 'penumbra', 0, 1 ).onChange( function ( val ) {
+
+      spotLight.penumbra = val;
+
+    } );
+
+    gui.add( params, 'decay', 1, 2 ).onChange( function ( val ) {
+
+      spotLight.decay = val;
+
+    } );
+
+    gui.add( params, 'focus', 0, 1 ).onChange( function ( val ) {
+
+      spotLight.shadow.focus = val;
+
+    } );
+
+
+    gui.add( params, 'shadows' ).onChange( function ( val ) {
+
+      renderer.shadowMap.enabled = val;
+
+      scene.traverse( function ( child ) {
+
+        if ( child.material ) {
+
+          child.material.needsUpdate = true;
+
+        }
+
+      } );
+
+    } );
+
+    gui.open();
+
+  }
+
+  function onWindowResize() {
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+  }
+
+  function render() {
+
+    const time = performance.now() / 3000;
+
+    spotLight.position.x = Math.cos( time ) * 2.5;
+    spotLight.position.z = Math.sin( time ) * 2.5;
+
+    lightHelper.update();
+
+    renderer.render( scene, camera );
+
+  }
+  }
 })

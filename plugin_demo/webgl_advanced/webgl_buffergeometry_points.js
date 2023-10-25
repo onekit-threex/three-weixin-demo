@@ -1,15 +1,28 @@
-// webgl_advanced/webgl_buffergeometry_points.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import Stats from './jsm/libs/stats.module.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-
+import Stats from 'three/addons/libs/stats.module.js';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -20,51 +33,54 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-let container, stats;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-let camera, scene, renderer;
+    let container, stats;
 
-let points;
+    let camera, scene, renderer;
 
-init();
-animate();
+    let points;
 
-function init() {
+    init();
+    animate();
 
-    container = document.getElementById( 'container' );
+    function init() {
 
-    //
+      container = document.getElementById( 'container' );
 
-    camera = new THREE.PerspectiveCamera( 27, window.innerWidth / window.innerHeight, 5, 3500 );
-    camera.position.z = 2750;
+      //
 
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color( 0x050505 );
-    scene.fog = new THREE.Fog( 0x050505, 2000, 3500 );
+      camera = new THREE.PerspectiveCamera( 27, window.innerWidth / window.innerHeight, 5, 3500 );
+      camera.position.z = 2750;
 
-    //
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color( 0x050505 );
+      scene.fog = new THREE.Fog( 0x050505, 2000, 3500 );
 
-    const particles = 500000;
+      //
 
-    const geometry = new THREE.BufferGeometry();
+      const particles = 500000;
 
-    const positions = [];
-    const colors = [];
+      const geometry = new THREE.BufferGeometry();
 
-    const color = new THREE.Color();
+      const positions = [];
+      const colors = [];
 
-    const n = 1000, n2 = n / 2; // particles spread in the cube
+      const color = new THREE.Color();
 
-    for ( let i = 0; i < particles; i ++ ) {
+      const n = 1000, n2 = n / 2; // particles spread in the cube
+
+      for ( let i = 0; i < particles; i ++ ) {
 
         // positions
 
@@ -80,72 +96,73 @@ function init() {
         const vy = ( y / n ) + 0.5;
         const vz = ( z / n ) + 0.5;
 
-        color.setRGB( vx, vy, vz );
+        color.setRGB( vx, vy, vz, THREE.SRGBColorSpace );
 
         colors.push( color.r, color.g, color.b );
 
+      }
+
+      geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
+      geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
+
+      geometry.computeBoundingSphere();
+
+      //
+
+      const material = new THREE.PointsMaterial( { size: 15, vertexColors: true } );
+
+      points = new THREE.Points( geometry, material );
+      scene.add( points );
+
+      //
+
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+
+      container.appendChild( renderer.domElement );
+
+      //
+
+      stats = new Stats();
+      container.appendChild( stats.dom );
+
+      //
+
+      window.addEventListener( 'resize', onWindowResize );
+
     }
 
-    geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
-    geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
+    function onWindowResize() {
 
-    geometry.computeBoundingSphere();
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
 
-    //
+      renderer.setSize( window.innerWidth, window.innerHeight );
 
-    const material = new THREE.PointsMaterial( { size: 15, vertexColors: true } );
-
-    points = new THREE.Points( geometry, material );
-    scene.add( points );
+    }
 
     //
 
-    renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
+    function animate() {
 
-    container.appendChild( renderer.domElement );
+      requestId = requestAnimationFrame( animate );
 
-    //
+      render();
+      stats.update();
 
-    stats = new Stats();
-    container.appendChild( stats.dom );
+    }
 
-    //
+    function render() {
 
-    window.addEventListener( 'resize', onWindowResize );
+      const time = Date.now() * 0.001;
 
-}
+      points.rotation.x = time * 0.25;
+      points.rotation.y = time * 0.5;
 
-function onWindowResize() {
+      renderer.render( scene, camera );
 
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+    }
 
-    renderer.setSize( window.innerWidth, window.innerHeight );
-
-}
-
-//
-
-function animate() {
-
-    requestId = requestAnimationFrame(animate);
-
-    render();
-    stats.update();
-
-}
-
-function render() {
-
-    const time = Date.now() * 0.001;
-
-    points.rotation.x = time * 0.25;
-    points.rotation.y = time * 0.5;
-
-    renderer.render( scene, camera );
-
-}
-}
+  }
 })

@@ -1,7 +1,2 @@
-<canvas id="canvas_webgl" type="webgl"  
-    disable-scroll="true"
-    bindtouchstart="webgl_touch"
-    bindtouchmove="webgl_touch"
-    bindtouchend="webgl_touch"
-    bindtouchcancel="webgl_touch">
-    </canvas>
+<canvas id="canvas_webgl2" type="webgl2" bindtouchstart="webgl_touch" bindtouchmove="webgl_touch" bindtouchend="webgl_touch" bindtouchcancel="webgl_touch"></canvas>
+<gui id="gui" style="position:absolute; bottom:0;left:0;max-height:500rpx;overflow-y:scroll;"/>

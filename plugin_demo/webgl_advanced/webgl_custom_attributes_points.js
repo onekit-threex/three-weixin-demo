@@ -1,48 +1,63 @@
-// webgl_advanced/webgl_custom_attributes_points.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import Stats from './jsm/libs/stats.module.js';
-const onekit = {
-"vertexshader":`
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-    attribute float size;
-    attribute vec3 customColor;
+import Stats from 'three/addons/libs/stats.module.js';
+const vertexshader = `
 
-    varying vec3 vColor;
+attribute float size;
+attribute vec3 customColor;
 
-    void main() {
+varying vec3 vColor;
 
-        vColor = customColor;
+void main() {
 
-        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+  vColor = customColor;
 
-        gl_PointSize = size * ( 300.0 / -mvPosition.z );
+  vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
 
-        gl_Position = projectionMatrix * mvPosition;
+  gl_PointSize = size * ( 300.0 / -mvPosition.z );
 
-    }
-`,"fragmentshader":`
-
-    uniform vec3 color;
-    uniform sampler2D pointTexture;
-
-    varying vec3 vColor;
-
-    void main() {
-
-        gl_FragColor = vec4( color * vColor, 1.0 );
-        gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord );
-
-    }
-`
+  gl_Position = projectionMatrix * mvPosition;
 
 }
+`
+
+const fragmentshader=  `
+
+uniform vec3 color;
+uniform sampler2D pointTexture;
+
+varying vec3 vColor;
+
+void main() {
+
+  gl_FragColor = vec4( color * vColor, 1.0 );
+  gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord );
+
+}
+`
 
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -53,148 +68,151 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-let renderer, scene, camera, stats;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+    
 
-let sphere;
+			let renderer, scene, camera, stats;
 
-const WIDTH = window.innerWidth;
-const HEIGHT = window.innerHeight;
+			let sphere;
 
-init();
-animate();
+			const WIDTH = window.innerWidth;
+			const HEIGHT = window.innerHeight;
 
-function init() {
+			init();
+			animate();
 
-    camera = new THREE.PerspectiveCamera( 40, WIDTH / HEIGHT, 1, 10000 );
-    camera.position.z = 300;
+			function init() {
 
-    scene = new THREE.Scene();
+				camera = new THREE.PerspectiveCamera( 40, WIDTH / HEIGHT, 1, 10000 );
+				camera.position.z = 300;
 
-    const amount = 100000;
-    const radius = 200;
+				scene = new THREE.Scene();
 
-    const positions = new Float32Array( amount * 3 );
-    const colors = new Float32Array( amount * 3 );
-    const sizes = new Float32Array( amount );
+				const amount = 100000;
+				const radius = 200;
 
-    const vertex = new THREE.Vector3();
-    const color = new THREE.Color( 0xffffff );
+				const positions = new Float32Array( amount * 3 );
+				const colors = new Float32Array( amount * 3 );
+				const sizes = new Float32Array( amount );
 
-    for ( let i = 0; i < amount; i ++ ) {
+				const vertex = new THREE.Vector3();
+				const color = new THREE.Color( 0xffffff );
 
-        vertex.x = ( Math.random() * 2 - 1 ) * radius;
-        vertex.y = ( Math.random() * 2 - 1 ) * radius;
-        vertex.z = ( Math.random() * 2 - 1 ) * radius;
-        vertex.toArray( positions, i * 3 );
+				for ( let i = 0; i < amount; i ++ ) {
 
-        if ( vertex.x < 0 ) {
+					vertex.x = ( Math.random() * 2 - 1 ) * radius;
+					vertex.y = ( Math.random() * 2 - 1 ) * radius;
+					vertex.z = ( Math.random() * 2 - 1 ) * radius;
+					vertex.toArray( positions, i * 3 );
 
-            color.setHSL( 0.5 + 0.1 * ( i / amount ), 0.7, 0.5 );
+					if ( vertex.x < 0 ) {
 
-        } else {
+						color.setHSL( 0.5 + 0.1 * ( i / amount ), 0.7, 0.5 );
 
-            color.setHSL( 0.0 + 0.1 * ( i / amount ), 0.9, 0.5 );
+					} else {
 
-        }
+						color.setHSL( 0.0 + 0.1 * ( i / amount ), 0.9, 0.5 );
 
-        color.toArray( colors, i * 3 );
+					}
 
-        sizes[ i ] = 10;
+					color.toArray( colors, i * 3 );
 
-    }
+					sizes[ i ] = 10;
 
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
-    geometry.setAttribute( 'customColor', new THREE.BufferAttribute( colors, 3 ) );
-    geometry.setAttribute( 'size', new THREE.BufferAttribute( sizes, 1 ) );
+				}
 
-    //
+				const geometry = new THREE.BufferGeometry();
+				geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+				geometry.setAttribute( 'customColor', new THREE.BufferAttribute( colors, 3 ) );
+				geometry.setAttribute( 'size', new THREE.BufferAttribute( sizes, 1 ) );
 
-    const material = new THREE.ShaderMaterial( {
+				//
 
-        uniforms: {
-            color: { value: new THREE.Color( 0xffffff ) },
-            pointTexture: { value: new THREE.TextureLoader( ).load( 'textures/sprites/spark1.png' ) }
-        },
-        vertexShader:onekit['vertexshader' ],
-        fragmentShader: onekit['fragmentshader' ],
+				const material = new THREE.ShaderMaterial( {
 
-        blending: THREE.AdditiveBlending,
-        depthTest: false,
-        transparent: true
+					uniforms: {
+						color: { value: new THREE.Color( 0xffffff ) },
+						pointTexture: { value: new THREE.TextureLoader().load( 'textures/sprites/spark1.png' ) }
+					},
+					vertexShader:vertexshader,
+					fragmentShader:fragmentshader,
 
-    } );
+					blending: THREE.AdditiveBlending,
+					depthTest: false,
+					transparent: true
 
-    //
+				} );
 
-    sphere = new THREE.Points( geometry, material );
-    scene.add( sphere );
+				//
 
-    //
+				sphere = new THREE.Points( geometry, material );
+				scene.add( sphere );
 
-    renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( WIDTH, HEIGHT );
+				//
 
-    const container = document.getElementById( 'container' );
-    container.appendChild( renderer.domElement );
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( WIDTH, HEIGHT );
 
-    stats = new Stats();
-    container.appendChild( stats.dom );
+				const container = document.getElementById( 'container' );
+				container.appendChild( renderer.domElement );
 
-    //
+				stats = new Stats();
+				container.appendChild( stats.dom );
 
-    window.addEventListener( 'resize', onWindowResize );
+				//
 
-}
+				window.addEventListener( 'resize', onWindowResize );
 
-function onWindowResize() {
+			}
 
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+			function onWindowResize() {
 
-    renderer.setSize( window.innerWidth, window.innerHeight );
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
 
-}
+				renderer.setSize( window.innerWidth, window.innerHeight );
 
-function animate() {
+			}
 
-    requestId = requestAnimationFrame(animate);
+			function animate() {
 
-    render();
-    stats.update();
+				requestId = requestAnimationFrame( animate );
 
-}
+				render();
+				stats.update();
 
-function render() {
+			}
 
-    const time = Date.now() * 0.005;
+			function render() {
 
-    sphere.rotation.z = 0.01 * time;
+				const time = Date.now() * 0.005;
 
-    const geometry = sphere.geometry;
-    const attributes = geometry.attributes;
+				sphere.rotation.z = 0.01 * time;
 
-    for ( let i = 0; i < attributes.size.array.length; i ++ ) {
+				const geometry = sphere.geometry;
+				const attributes = geometry.attributes;
 
-        attributes.size.array[ i ] = 14 + 13 * Math.sin( 0.1 * i + time );
+				for ( let i = 0; i < attributes.size.array.length; i ++ ) {
 
-    }
+					attributes.size.array[ i ] = 14 + 13 * Math.sin( 0.1 * i + time );
 
-    attributes.size.needsUpdate = true;
+				}
 
-    renderer.render( scene, camera );
+				attributes.size.needsUpdate = true;
 
-}
+				renderer.render( scene, camera );
 
-}
+			}
+  }
 })

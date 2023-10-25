@@ -9,9 +9,9 @@ import Page from "./core/Page"
 export default class HTMLImageElement extends EventTarget {
 	constructor(canvas2d) {
 		super();
-		const canvas = wx.createOffscreenCanvas({type:"2d"})//core.Page.current.canvas.wx_element;
-		this.wx_element = canvas.createImage();
-		this.wx_element.onload = () => {
+		const canvas = wx.createOffscreenCanvas({type:"2d"})//core.Page.current.canvas.mini_element;
+		this.mini_element = canvas.createImage();
+		this.mini_element.onload = () => {
 			if (this.onload) {
 				this.onload.call(this);
 			}
@@ -21,7 +21,7 @@ export default class HTMLImageElement extends EventTarget {
 				});
 			}
 		};
-		this.wx_element.onerror = (e) => {
+		this.mini_element.onerror = (e) => {
 			if (this.onerror) {
 				this.onerror.call(this, e);
 			}
@@ -34,16 +34,16 @@ export default class HTMLImageElement extends EventTarget {
 		this.onekit_image = this;
 	}
 	get width() {
-		return this.wx_element.width;
+		return this.mini_element.width;
 	}
 	get height() {
-		return this.wx_element.height;
+		return this.mini_element.height;
 	}
 	get data() {
-		return this.wx_element.data;
+		return this.mini_element.data;
 	}
 	get complete() {
-		return this.wx_element.complete;
+		return this.mini_element.complete;
 	}
 	set crossOrigin(crossOrigin) {
 		this._crossOrigin = crossOrigin;
@@ -67,12 +67,12 @@ export default class HTMLImageElement extends EventTarget {
 			try {
 				const arrayBuffer = core.Page.current.DataURL[url].array[0]
 				const base64 = "data:image/png;base64," + core.Base64.arrayBufferToBase64(arrayBuffer)
-				this.wx_element.src = base64
+				this.mini_element.src = base64
 			} catch (ex) {
 				console.error(ex);
 			}
 		} else {
-			this.wx_element.src = src;
+			this.mini_element.src = src;
 		}
 	}
 

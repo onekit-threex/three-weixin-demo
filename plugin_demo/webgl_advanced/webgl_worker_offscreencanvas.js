@@ -1,57 +1,80 @@
-// webgl_advanced/webgl_worker_offscreencanvas.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-
-import initJank from './jsm/offscreen/jank.js';
-import init from './jsm/offscreen/scene.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+import initJank from 'three/addons/offscreen/jank.js';
+import init from 'three/addons/offscreen/scene.js';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
-	//	cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
-			if (this.renderer instanceof THREE.WebGL1Renderer) {
+			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
 				this.renderer.forceContextLoss()
 				this.renderer.context = null
 				this.renderer.domElement = null
 				this.renderer = null
 			}
-		}, 200)
+		}, 0)
 	},
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-const canvas1 = await document.getElementByIdAsync( 'canvas1' );
-const canvas2 = await document.getElementByIdAsync( 'canvas2' );
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-const width = canvas1.clientWidth;
-const height = canvas1.clientHeight;
-const pixelRatio = window.devicePixelRatio;
+  // onscreen
 
-init( canvas3d, width, height, pixelRatio, './' );
-initJank();
+  const canvas1 = canvas3d //await document.getElementById( 'canvas1' );
+  const canvas2 = canvas3d //await document.getElementById( 'canvas2' );
 
-// offscreen
+  const width = canvas1.clientWidth;
+  const height = canvas1.clientHeight;
+  const pixelRatio = window.devicePixelRatio;
 
-if ( 'transferControlToOffscreen' in canvas2 ) {
+  init( canvas1, width, height, pixelRatio, './' );
+  initJank();
 
-  const offscreen = canvas2.transferControlToOffscreen();
-  const worker = new Worker( 'jsm/offscreen/offscreen.js', { type: 'module' } );
-  worker.postMessage( {
-    drawingSurface: offscreen,
-    width: canvas2.clientWidth,
-    height: canvas2.clientHeight,
-    pixelRatio: window.devicePixelRatio,
-    path: '../../'
-  }, [ offscreen ] );
+  // offscreen
 
-} else {
+  if ( 'transferControlToOffscreen' in canvas2 ) {
 
-  document.getElementById( 'message' ).style.display = 'block';
+    const offscreen = canvas2.transferControlToOffscreen();
+    const worker = new Worker( 'jsm/offscreen/offscreen.js', { type: 'module' } );
+    worker.postMessage( {
+      drawingSurface: offscreen,
+      width: canvas2.clientWidth,
+      height: canvas2.clientHeight,
+      pixelRatio: window.devicePixelRatio,
+      path: '../../'
+    }, [ offscreen ] );
 
-}
-}
+  } else {
+
+    document.getElementById( 'message' ).style.display = 'block';
+
+  }
+  }
 })

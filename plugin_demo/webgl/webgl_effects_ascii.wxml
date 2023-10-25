@@ -1,8 +1,2 @@
-<canvas id="canvas_webgl" type="webgl"  
-    disable-scroll="true"
-    bindtouchstart="webgl_touch"
-    bindtouchmove="webgl_touch"
-    bindtouchend="webgl_touch"
-    bindtouchcancel="webgl_touch" style="display: none;">
-    </canvas>
+<canvas style="display: none;" id="canvas_webgl2" type="webgl2" bindtouchstart="webgl_touch" bindtouchmove="webgl_touch" bindtouchend="webgl_touch" bindtouchcancel="webgl_touch"></canvas>
 <view style="height:100%;text-align:center">{{oAscii_innerHTML}}</view>

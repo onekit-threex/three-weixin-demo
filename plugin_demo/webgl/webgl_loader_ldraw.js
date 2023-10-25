@@ -1,19 +1,36 @@
-// webgl/webgl_loader_ldraw.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { GUI } from './jsm/libs/lil-gui.module.min.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
-import { RoomEnvironment } from './jsm/environments/RoomEnvironment.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-import { LDrawLoader } from './jsm/loaders/LDrawLoader.js';
-import { LDrawUtils } from './jsm/utils/LDrawUtils.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+import { LDrawLoader } from 'three/addons/loaders/LDrawLoader.js';
+import { LDrawUtils } from 'three/addons/utils/LDrawUtils.js';
+
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -23,351 +40,348 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {	
+  let container, progressBarDiv;
 
-        
-			let container, progressBarDiv;
+  let camera, scene, renderer, controls, gui, guiData;
 
-			let camera, scene, renderer, controls, gui, guiData;
+  let model;
 
-			let model;
+  const ldrawPath = 'models/ldraw/officialLibrary/';
 
-			const ldrawPath = 'models/ldraw/officialLibrary/';
+  const modelFileList = {
+    'Car': 'models/car.ldr_Packed.mpd',
+    'Lunar Vehicle': 'models/1621-1-LunarMPVVehicle.mpd_Packed.mpd',
+    'Radar Truck': 'models/889-1-RadarTruck.mpd_Packed.mpd',
+    'Trailer': 'models/4838-1-MiniVehicles.mpd_Packed.mpd',
+    'Bulldozer': 'models/4915-1-MiniConstruction.mpd_Packed.mpd',
+    'Helicopter': 'models/4918-1-MiniFlyers.mpd_Packed.mpd',
+    'Plane': 'models/5935-1-IslandHopper.mpd_Packed.mpd',
+    'Lighthouse': 'models/30023-1-Lighthouse.ldr_Packed.mpd',
+    'X-Wing mini': 'models/30051-1-X-wingFighter-Mini.mpd_Packed.mpd',
+    'AT-ST mini': 'models/30054-1-AT-ST-Mini.mpd_Packed.mpd',
+    'AT-AT mini': 'models/4489-1-AT-AT-Mini.mpd_Packed.mpd',
+    'Shuttle': 'models/4494-1-Imperial Shuttle-Mini.mpd_Packed.mpd',
+    'TIE Interceptor': 'models/6965-1-TIEIntercep_4h4MXk5.mpd_Packed.mpd',
+    'Star fighter': 'models/6966-1-JediStarfighter-Mini.mpd_Packed.mpd',
+    'X-Wing': 'models/7140-1-X-wingFighter.mpd_Packed.mpd',
+    'AT-ST': 'models/10174-1-ImperialAT-ST-UCS.mpd_Packed.mpd'
+  };
 
-			const modelFileList = {
-				'Car': 'models/car.ldr_Packed.mpd',
-				'Lunar Vehicle': 'models/1621-1-LunarMPVVehicle.mpd_Packed.mpd',
-				'Radar Truck': 'models/889-1-RadarTruck.mpd_Packed.mpd',
-				'Trailer': 'models/4838-1-MiniVehicles.mpd_Packed.mpd',
-				'Bulldozer': 'models/4915-1-MiniConstruction.mpd_Packed.mpd',
-				'Helicopter': 'models/4918-1-MiniFlyers.mpd_Packed.mpd',
-				'Plane': 'models/5935-1-IslandHopper.mpd_Packed.mpd',
-				'Lighthouse': 'models/30023-1-Lighthouse.ldr_Packed.mpd',
-				'X-Wing mini': 'models/30051-1-X-wingFighter-Mini.mpd_Packed.mpd',
-				'AT-ST mini': 'models/30054-1-AT-ST-Mini.mpd_Packed.mpd',
-				'AT-AT mini': 'models/4489-1-AT-AT-Mini.mpd_Packed.mpd',
-				'Shuttle': 'models/4494-1-Imperial Shuttle-Mini.mpd_Packed.mpd',
-				'TIE Interceptor': 'models/6965-1-TIEIntercep_4h4MXk5.mpd_Packed.mpd',
-				'Star fighter': 'models/6966-1-JediStarfighter-Mini.mpd_Packed.mpd',
-				'X-Wing': 'models/7140-1-X-wingFighter.mpd_Packed.mpd',
-				'AT-ST': 'models/10174-1-ImperialAT-ST-UCS.mpd_Packed.mpd'
-			};
+  init();
+  animate();
 
-			init();
-			animate();
 
+  function init() {
 
-			function init() {
+    container = document.createElement( 'div' );
+    document.body.appendChild( container );
 
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
+    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+    camera.position.set( 150, 200, 250 );
 
-				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
-				camera.position.set( 150, 200, 250 );
+    //
 
-				//
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    container.appendChild( renderer.domElement );
 
-				renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.outputEncoding = THREE.sRGBEncoding;
-				renderer.toneMapping = THREE.ACESFilmicToneMapping;
-				container.appendChild( renderer.domElement );
+    // scene
 
-				// scene
+    const pmremGenerator = new THREE.PMREMGenerator( renderer );
 
-				const pmremGenerator = new THREE.PMREMGenerator( renderer );
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color( 0xdeebed );
+    scene.environment = pmremGenerator.fromScene( new RoomEnvironment( renderer ) ).texture;
 
-				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xdeebed );
-				scene.environment = pmremGenerator.fromScene( new RoomEnvironment() ).texture;
+    controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+    controls.enableDamping = true;
 
-				controls = new OrbitControls( camera, renderer.domElement );
+    //
 
-				//
+    guiData = {
+      modelFileName: modelFileList[ 'Car' ],
+      displayLines: true,
+      conditionalLines: true,
+      smoothNormals: true,
+      buildingStep: 0,
+      noBuildingSteps: 'No steps.',
+      flatColors: false,
+      mergeModel: false
+    };
 
-				guiData = {
-					modelFileName: modelFileList[ 'Car' ],
-					displayLines: true,
-					conditionalLines: true,
-					smoothNormals: true,
-					constructionStep: 0,
-					noConstructionSteps: 'No steps.',
-					flatColors: false,
-					mergeModel: false
-				};
+    window.addEventListener( 'resize', onWindowResize );
 
-				window.addEventListener( 'resize', onWindowResize );
+    progressBarDiv = document.createElement( 'div' );
+    progressBarDiv.innerText = 'Loading...';
+    progressBarDiv.style.fontSize = '3em';
+    progressBarDiv.style.color = '#888';
+    progressBarDiv.style.display = 'block';
+    progressBarDiv.style.position = 'absolute';
+    progressBarDiv.style.top = '50%';
+    progressBarDiv.style.width = '100%';
+    progressBarDiv.style.textAlign = 'center';
 
-				progressBarDiv = document.createElement( 'div' );
-				progressBarDiv.innerText = 'Loading...';
-				progressBarDiv.style.fontSize = '3em';
-				progressBarDiv.style.color = '#888';
-				progressBarDiv.style.display = 'block';
-				progressBarDiv.style.position = 'absolute';
-				progressBarDiv.style.top = '50%';
-				progressBarDiv.style.width = '100%';
-				progressBarDiv.style.textAlign = 'center';
 
+    // load materials and then the model
 
-				// load materials and then the model
+    reloadObject( true );
 
-				reloadObject( true );
+  }
 
-			}
+  function updateObjectsVisibility() {
 
-			function updateObjectsVisibility() {
+    model.traverse( c => {
 
-				model.traverse( c => {
+      if ( c.isLineSegments ) {
 
-					if ( c.isLineSegments ) {
+        if ( c.isConditionalLine ) {
 
-						if ( c.isConditionalLine ) {
+          c.visible = guiData.conditionalLines;
 
-							c.visible = guiData.conditionalLines;
+        } else {
 
-						} else {
+          c.visible = guiData.displayLines;
 
-							c.visible = guiData.displayLines;
+        }
 
-						}
+      } else if ( c.isGroup ) {
 
-					} else if ( c.isGroup ) {
+        // Hide objects with building step > gui setting
+        c.visible = c.userData.buildingStep <= guiData.buildingStep;
 
-						// Hide objects with construction step > gui setting
-						c.visible = c.userData.constructionStep <= guiData.constructionStep;
+      }
 
-					}
+    } );
 
-				} );
+  }
 
-			}
+  function reloadObject( resetCamera ) {
 
-			function reloadObject( resetCamera ) {
+    if ( model ) {
 
-				if ( model ) {
-
-					scene.remove( model );
-
-				}
-
-				model = null;
-
-				updateProgressBar( 0 );
-				showProgressBar();
-
-				// only smooth when not rendering with flat colors to improve processing time
-				const lDrawLoader = new LDrawLoader();
-				lDrawLoader.smoothNormals = guiData.smoothNormals && ! guiData.flatColors;
-				lDrawLoader
-					.setPath( ldrawPath )
-					.load( guiData.modelFileName, function ( group2 ) {
-
-						if ( model ) {
-
-							scene.remove( model );
-
-						}
-
-						model = group2;
-
-						// demonstrate how to use convert to flat colors to better mimic the lego instructions look
-						if ( guiData.flatColors ) {
-
-							function convertMaterial( material ) {
-
-								const newMaterial = new THREE.MeshBasicMaterial();
-								newMaterial.color.copy( material.color );
-								newMaterial.polygonOffset = material.polygonOffset;
-								newMaterial.polygonOffsetUnits = material.polygonOffsetUnits;
-								newMaterial.polygonOffsetFactor = material.polygonOffsetFactor;
-								newMaterial.opacity = material.opacity;
-								newMaterial.transparent = material.transparent;
-								newMaterial.depthWrite = material.depthWrite;
-								newMaterial.toneMapping = false;
-
-								return newMaterial;
-
-							}
-
-							model.traverse( c => {
-
-								if ( c.isMesh ) {
-
-									if ( Array.isArray( c.material ) ) {
-
-										c.material = c.material.map( convertMaterial );
-
-									} else {
-
-										c.material = convertMaterial( c.material );
-
-									}
-
-								}
-
-							} );
-
-						}
-
-						// Merge model geometries by material
-						if ( guiData.mergeModel ) model = LDrawUtils.mergeObject( model );
-
-						// Convert from LDraw coordinates: rotate 180 degrees around OX
-						model.rotation.x = Math.PI;
-
-						scene.add( model );
-
-						guiData.constructionStep = model.userData.numConstructionSteps - 1;
-
-						updateObjectsVisibility();
-
-						// Adjust camera and light
-
-						const bbox = new THREE.Box3().setFromObject( model );
-						const size = bbox.getSize( new THREE.Vector3() );
-						const radius = Math.max( size.x, Math.max( size.y, size.z ) ) * 0.5;
-
-						if ( resetCamera ) {
-
-							controls.target0.copy( bbox.getCenter( new THREE.Vector3() ) );
-							controls.position0.set( - 2.3, 1, 2 ).multiplyScalar( radius ).add( controls.target0 );
-							controls.reset();
-
-						}
-
-						createGUI();
-
-						hideProgressBar();
-
-					}, onProgress, onError );
-
-			}
-
-			function onWindowResize() {
-
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-			}
-
-			function createGUI() {
-
-				if ( gui ) {
-
-					gui.destroy();
-
-				}
-
-				gui = new GUI();
-
-				gui.add( guiData, 'modelFileName', modelFileList ).name( 'Model' ).onFinishChange( function () {
-
-					reloadObject( true );
-
-				} );
-
-				gui.add( guiData, 'flatColors' ).name( 'Flat Colors' ).onChange( function () {
-
-					reloadObject( false );
-
-				} );
-
-				gui.add( guiData, 'mergeModel' ).name( 'Merge model' ).onChange( function () {
-
-					reloadObject( false );
-
-				} );
-
-				if ( model.userData.numConstructionSteps > 1 ) {
-
-					gui.add( guiData, 'constructionStep', 0, model.userData.numConstructionSteps - 1 ).step( 1 ).name( 'Construction step' ).onChange( updateObjectsVisibility );
-
-				} else {
-
-					gui.add( guiData, 'noConstructionSteps' ).name( 'Construction step' ).onChange( updateObjectsVisibility );
-
-				}
-
-				gui.add( guiData, 'smoothNormals' ).name( 'Smooth Normals' ).onChange( function changeNormals() {
-
-					reloadObject( false );
-
-				} );
-
-				gui.add( guiData, 'displayLines' ).name( 'Display Lines' ).onChange( updateObjectsVisibility );
-				gui.add( guiData, 'conditionalLines' ).name( 'Conditional Lines' ).onChange( updateObjectsVisibility );
-
-			}
-
-			//
-
-			function animate() {
-
-				requestId = requestAnimationFrame(animate);
-				render();
-
-			}
-
-			function render() {
-
-				renderer.render( scene, camera );
-
-			}
-
-			function onProgress( xhr ) {
-
-				if ( xhr.lengthComputable ) {
-
-					updateProgressBar( xhr.loaded / xhr.total );
-
-					console.log( Math.round( xhr.loaded / xhr.total * 100, 2 ) + '% downloaded' );
-
-				}
-
-			}
-
-			function onError( error ) {
-
-				const message = 'Error loading model';
-				progressBarDiv.innerText = message;
-				console.log( message );
-				console.error( error );
-
-			}
-
-			function showProgressBar() {
-
-				document.body.appendChild( progressBarDiv );
-
-			}
-
-			function hideProgressBar() {
-
-				document.body.removeChild( progressBarDiv );
-
-			}
-
-			function updateProgressBar( fraction ) {
-
-				progressBarDiv.innerText = 'Loading... ' + Math.round( fraction * 100, 2 ) + '%';
-
-			}
+      scene.remove( model );
 
     }
+
+    model = null;
+
+    updateProgressBar( 0 );
+    showProgressBar();
+
+    // only smooth when not rendering with flat colors to improve processing time
+    const lDrawLoader = new LDrawLoader();
+    lDrawLoader.smoothNormals = guiData.smoothNormals && ! guiData.flatColors;
+    lDrawLoader
+      .setPath( ldrawPath )
+      .load( guiData.modelFileName, function ( group2 ) {
+
+        if ( model ) {
+
+          scene.remove( model );
+
+        }
+
+        model = group2;
+
+        // demonstrate how to use convert to flat colors to better mimic the lego instructions look
+        if ( guiData.flatColors ) {
+
+          function convertMaterial( material ) {
+
+            const newMaterial = new THREE.MeshBasicMaterial();
+            newMaterial.color.copy( material.color );
+            newMaterial.polygonOffset = material.polygonOffset;
+            newMaterial.polygonOffsetUnits = material.polygonOffsetUnits;
+            newMaterial.polygonOffsetFactor = material.polygonOffsetFactor;
+            newMaterial.opacity = material.opacity;
+            newMaterial.transparent = material.transparent;
+            newMaterial.depthWrite = material.depthWrite;
+            newMaterial.toneMapping = false;
+
+            return newMaterial;
+
+          }
+
+          model.traverse( c => {
+
+            if ( c.isMesh ) {
+
+              if ( Array.isArray( c.material ) ) {
+
+                c.material = c.material.map( convertMaterial );
+
+              } else {
+
+                c.material = convertMaterial( c.material );
+
+              }
+
+            }
+
+          } );
+
+        }
+
+        // Merge model geometries by material
+        if ( guiData.mergeModel ) model = LDrawUtils.mergeObject( model );
+
+        // Convert from LDraw coordinates: rotate 180 degrees around OX
+        model.rotation.x = Math.PI;
+
+        scene.add( model );
+
+        guiData.buildingStep = model.userData.numBuildingSteps - 1;
+
+        updateObjectsVisibility();
+
+        // Adjust camera and light
+
+        const bbox = new THREE.Box3().setFromObject( model );
+        const size = bbox.getSize( new THREE.Vector3() );
+        const radius = Math.max( size.x, Math.max( size.y, size.z ) ) * 0.5;
+
+        if ( resetCamera ) {
+
+          controls.target0.copy( bbox.getCenter( new THREE.Vector3() ) );
+          controls.position0.set( - 2.3, 1, 2 ).multiplyScalar( radius ).add( controls.target0 );
+          controls.reset();
+
+        }
+
+        createGUI();
+
+        hideProgressBar();
+
+      }, onProgress, onError );
+
+  }
+
+  function onWindowResize() {
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+  }
+
+  function createGUI() {
+
+    if ( gui ) {
+
+      gui.destroy();
+
+    }
+
+    gui = new GUI();
+
+    gui.add( guiData, 'modelFileName', modelFileList ).name( 'Model' ).onFinishChange( function () {
+
+      reloadObject( true );
+
+    } );
+
+    gui.add( guiData, 'flatColors' ).name( 'Flat Colors' ).onChange( function () {
+
+      reloadObject( false );
+
+    } );
+
+    gui.add( guiData, 'mergeModel' ).name( 'Merge model' ).onChange( function () {
+
+      reloadObject( false );
+
+    } );
+
+    if ( model.userData.numBuildingSteps > 1 ) {
+
+      gui.add( guiData, 'buildingStep', 0, model.userData.numBuildingSteps - 1 ).step( 1 ).name( 'Building step' ).onChange( updateObjectsVisibility );
+
+    } else {
+
+      gui.add( guiData, 'noBuildingSteps' ).name( 'Building step' ).onChange( updateObjectsVisibility );
+
+    }
+
+    gui.add( guiData, 'smoothNormals' ).name( 'Smooth Normals' ).onChange( function changeNormals() {
+
+      reloadObject( false );
+
+    } );
+
+    gui.add( guiData, 'displayLines' ).name( 'Display Lines' ).onChange( updateObjectsVisibility );
+    gui.add( guiData, 'conditionalLines' ).name( 'Conditional Lines' ).onChange( updateObjectsVisibility );
+
+  }
+
+  //
+
+  function animate() {
+
+    requestId = requestAnimationFrame( animate );
+    controls.update();
+    render();
+
+  }
+
+  function render() {
+
+    renderer.render( scene, camera );
+
+  }
+
+  function onProgress( xhr ) {
+
+    if ( xhr.lengthComputable ) {
+
+      updateProgressBar( xhr.loaded / xhr.total );
+
+      console.log( Math.round( xhr.loaded / xhr.total * 100, 2 ) + '% downloaded' );
+
+    }
+
+  }
+
+  function onError( error ) {
+
+    const message = 'Error loading model';
+    progressBarDiv.innerText = message;
+    console.log( message );
+    console.error( error );
+
+  }
+
+  function showProgressBar() {
+
+    document.body.appendChild( progressBarDiv );
+
+  }
+
+  function hideProgressBar() {
+
+    document.body.removeChild( progressBarDiv );
+
+  }
+
+  function updateProgressBar( fraction ) {
+
+    progressBarDiv.innerText = 'Loading... ' + Math.round( fraction * 100, 2 ) + '%';
+
+  }
+
+  }
 })

@@ -1,13 +1,30 @@
-// webgl/webgl_panorama_cube.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { OrbitControls } from './jsm/controls/OrbitControls0.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -17,21 +34,20 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-		onLoad() {
-			document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-	},
-	async run(canvas3d){
-	this.canvas = canvas3d
-    var canvas
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {	
+  var canvas
+    var that = this
         
 			let camera, controls;
 			let renderer;
@@ -54,7 +70,7 @@ var that = this
 				camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 0.1, 100 );
 				camera.position.z = 0.01;
 
-				controls = new OrbitControls( camera, renderer.domElement );
+				controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
 				controls.enableZoom = false;
 				controls.enablePan = false;
 				controls.enableDamping = true;
@@ -89,7 +105,7 @@ var that = this
 				}
 
 				new THREE.ImageLoader( )
-					.load( atlasImgUrl, ( image ) => {
+					.load( atlasImgUrl,async ( image ) => {
 
 						let  context;
 						const tileWidth = image.height;
@@ -101,7 +117,7 @@ var that = this
 							canvas.height = tileWidth;
                             canvas.width = tileWidth;
 							context.drawImage( image.image, tileWidth * i, 0, tileWidth, tileWidth, 0, 0, tileWidth, tileWidth );
-							textures[ i ].image = canvas;
+							textures[ i ].image = await core.Canvas.fix(canvas3d,canvas);
 							textures[ i ].needsUpdate = true;
 
 						}
@@ -130,5 +146,5 @@ var that = this
 				renderer.render( scene, camera );
 
 			}
-    }
+  }
 })

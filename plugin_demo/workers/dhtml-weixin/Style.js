@@ -27,7 +27,7 @@ export default class Style {
         if(!this.element){
             return
         }
-		if(!this.element.wx_key){
+		if(!this.element.mini_key){
 			return
 		}
 		/*
@@ -39,11 +39,11 @@ export default class Style {
 		  return string;
 		}
 		const data = {};
-		data[`${this.element.wx_key}_style`] = dict2string(this.styles);*/
+		data[`${this.element.mini_key}_style`] = dict2string(this.styles);*/
 
 		const data = {};
 		this.value += `${String.fromHump(key)}:${value};`;
-		data[`${this.element.wx_key}_style`] = this.value
+		data[`${this.element.mini_key}_style`] = this.value
 		//
 		if (!this.page) {
 			const pages = getCurrentPages();

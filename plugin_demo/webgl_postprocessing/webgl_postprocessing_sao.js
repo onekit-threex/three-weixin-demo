@@ -1,19 +1,35 @@
-// webgl_postprocessing/webgl_postprocessing_sao.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import Stats from './jsm/libs/stats.module.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import Stats from 'three/addons/libs/stats.module.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-import { EffectComposer } from './jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from './jsm/postprocessing/RenderPass.js';
-import { SAOPass } from './jsm/postprocessing/SAOPass.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { SAOPass } from 'three/addons/postprocessing/SAOPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -24,36 +40,35 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {	
+  let container, stats;
+  let camera, scene, renderer;
+  let composer, renderPass, saoPass;
+  let group;
 
-let container, stats;
-let camera, scene, renderer;
-let composer, renderPass, saoPass;
-let group;
+  init();
+  animate();
 
-init();
-animate();
-
-function init() {
+  function init() {
 
     container = document.createElement( 'div' );
     document.body.appendChild( container );
 
-    const width = window.innerWidth || 1;
-    const height = window.innerHeight || 1;
-    const devicePixelRatio = window.devicePixelRatio || 1;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
-    renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-    renderer.setClearColor( 0x000000 );
-    renderer.setPixelRatio( devicePixelRatio );
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( width, height );
     document.body.appendChild( renderer.domElement );
 
@@ -65,46 +80,46 @@ function init() {
     group = new THREE.Object3D();
     scene.add( group );
 
-    const light = new THREE.PointLight( 0xddffdd, 0.8 );
-    light.position.z = 70;
-    light.position.y = - 70;
-    light.position.x = - 70;
+    const light = new THREE.PointLight( 0xefffef, 500 );
+    light.position.z = 10;
+    light.position.y = - 10;
+    light.position.x = - 10;
     scene.add( light );
 
-    const light2 = new THREE.PointLight( 0xffdddd, 0.8 );
-    light2.position.z = 70;
-    light2.position.x = - 70;
-    light2.position.y = 70;
+    const light2 = new THREE.PointLight( 0xffefef, 500 );
+    light2.position.z = 10;
+    light2.position.x = - 10;
+    light2.position.y = 10;
     scene.add( light2 );
 
-    const light3 = new THREE.PointLight( 0xddddff, 0.8 );
-    light3.position.z = 70;
-    light3.position.x = 70;
-    light3.position.y = - 70;
+    const light3 = new THREE.PointLight( 0xefefff, 500 );
+    light3.position.z = 10;
+    light3.position.x = 10;
+    light3.position.y = - 10;
     scene.add( light3 );
 
-    const light4 = new THREE.AmbientLight( 0xffffff, 0.05 );
+    const light4 = new THREE.AmbientLight( 0xffffff, 0.2 );
     scene.add( light4 );
 
     const geometry = new THREE.SphereGeometry( 3, 48, 24 );
 
     for ( let i = 0; i < 120; i ++ ) {
 
-        const material = new THREE.MeshStandardMaterial();
-        material.roughness = 0.5 * Math.random() + 0.25;
-        material.metalness = 0;
-        material.color.setHSL( Math.random(), 1.0, 0.3 );
+      const material = new THREE.MeshStandardMaterial();
+      material.roughness = 0.5 * Math.random() + 0.25;
+      material.metalness = 0;
+      material.color.setHSL( Math.random(), 1.0, 0.3 );
 
-        const mesh = new THREE.Mesh( geometry, material );
-        mesh.position.x = Math.random() * 4 - 2;
-        mesh.position.y = Math.random() * 4 - 2;
-        mesh.position.z = Math.random() * 4 - 2;
-        mesh.rotation.x = Math.random();
-        mesh.rotation.y = Math.random();
-        mesh.rotation.z = Math.random();
+      const mesh = new THREE.Mesh( geometry, material );
+      mesh.position.x = Math.random() * 4 - 2;
+      mesh.position.y = Math.random() * 4 - 2;
+      mesh.position.z = Math.random() * 4 - 2;
+      mesh.rotation.x = Math.random();
+      mesh.rotation.y = Math.random();
+      mesh.rotation.z = Math.random();
 
-        mesh.scale.x = mesh.scale.y = mesh.scale.z = Math.random() * 0.2 + 0.05;
-        group.add( mesh );
+      mesh.scale.x = mesh.scale.y = mesh.scale.z = Math.random() * 0.2 + 0.05;
+      group.add( mesh );
 
     }
 
@@ -114,20 +129,20 @@ function init() {
     composer = new EffectComposer( renderer );
     renderPass = new RenderPass( scene, camera );
     composer.addPass( renderPass );
-    saoPass = new SAOPass( scene, camera, false, true );
+    saoPass = new SAOPass( scene, camera );
     composer.addPass( saoPass );
+    const outputPass = new OutputPass();
+    composer.addPass( outputPass );
 
     // Init gui
     const gui = new GUI();
     gui.add( saoPass.params, 'output', {
-        'Beauty': SAOPass.OUTPUT.Beauty,
-        'Beauty+SAO': SAOPass.OUTPUT.Default,
-        'SAO': SAOPass.OUTPUT.SAO,
-        'Depth': SAOPass.OUTPUT.Depth,
-        'Normal': SAOPass.OUTPUT.Normal
+      'Default': SAOPass.OUTPUT.Default,
+      'SAO Only': SAOPass.OUTPUT.SAO,
+      'Normal': SAOPass.OUTPUT.Normal
     } ).onChange( function ( value ) {
 
-        saoPass.params.output = parseInt( value );
+      saoPass.params.output = value;
 
     } );
     gui.add( saoPass.params, 'saoBias', - 1, 1 );
@@ -139,12 +154,13 @@ function init() {
     gui.add( saoPass.params, 'saoBlurRadius', 0, 200 );
     gui.add( saoPass.params, 'saoBlurStdDev', 0.5, 150 );
     gui.add( saoPass.params, 'saoBlurDepthCutoff', 0.0, 0.1 );
+    gui.add( saoPass, 'enabled' );
 
     window.addEventListener( 'resize', onWindowResize );
 
-}
+  }
 
-function onWindowResize() {
+  function onWindowResize() {
 
     const width = window.innerWidth || 1;
     const height = window.innerHeight || 1;
@@ -156,19 +172,19 @@ function onWindowResize() {
     composer.setSize( width, height );
 
 
-}
+  }
 
-function animate() {
+  function animate() {
 
-    requestId = requestAnimationFrame(animate);
+    requestId = requestAnimationFrame( animate );
 
     stats.begin();
     render();
     stats.end();
 
-}
+  }
 
-function render() {
+  function render() {
 
     const timer = performance.now();
     group.rotation.x = timer * 0.0002;
@@ -176,6 +192,6 @@ function render() {
 
     composer.render();
 
-}
-}
+  }
+  }
 })

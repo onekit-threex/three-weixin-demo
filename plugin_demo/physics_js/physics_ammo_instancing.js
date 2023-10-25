@@ -4,19 +4,26 @@ import {
 	window,
 	requestAnimationFrame,
 	cancelAnimationFrame,
-	Event0,
+	Event,
 	core
 } from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import * as THREE from './three/Three.js';
 import {
 	OrbitControls
-} from './jsm/controls/OrbitControls0.js';
+} from './three/addons/controls/OrbitControls.js';
+import Stats from './three/addons/libs/stats.module.js';
 import {
 	AmmoPhysics
-} from './jsm/physics/AmmoPhysics.js';
+} from './three/addons/physics/AmmoPhysics.js';
 
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
 this.worker && this.worker.terminate()
@@ -30,146 +37,143 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-		var that = this
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+    var Ammo = require("./three/ammo/index.js")
+    let camera, scene, renderer, stats;
+    let physics, position;
 
-		let camera, scene, renderer;
-		let physics, position;
+    let boxes, spheres;
 
-		let boxes, spheres;
+    init();
 
-	await	init();
+    async function init() {
 
-		async function init() {
+      physics = await AmmoPhysics();
+      position = new THREE.Vector3();
 
-			physics = await AmmoPhysics();
-			position = new THREE.Vector3();
+      //
 
-			//
+      camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 100 );
+      camera.position.set( - 1, 1.5, 2 );
+      camera.lookAt( 0, 0.5, 0 );
 
-			camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-			camera.position.set(-1, 1.5, 2);
-			camera.lookAt(0, 0.5, 0);
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color( 0x666666 );
 
-			scene = new THREE.Scene();
-			scene.background = new THREE.Color(0x666666);
+      const hemiLight = new THREE.HemisphereLight();
+      scene.add( hemiLight );
 
-			const hemiLight = new THREE.HemisphereLight();
-			hemiLight.intensity = 0.35;
-			scene.add(hemiLight);
+      const dirLight = new THREE.DirectionalLight( 0xffffff, 3 );
+      dirLight.position.set( 5, 5, 5 );
+      dirLight.castShadow = true;
+      dirLight.shadow.camera.zoom = 2;
+      scene.add( dirLight );
 
-			const dirLight = new THREE.DirectionalLight();
-			dirLight.position.set(5, 5, 5);
-			dirLight.castShadow = true;
-			dirLight.shadow.camera.zoom = 2;
-			scene.add(dirLight);
+      const floor = new THREE.Mesh(
+        new THREE.BoxGeometry( 10, 5, 10 ),
+        new THREE.ShadowMaterial( { color: 0x444444 } )
+      );
+      floor.position.y = - 2.5;
+      floor.receiveShadow = true;
+      scene.add( floor );
+      physics.addMesh( floor );
 
-			const floor = new THREE.Mesh(
-				new THREE.BoxGeometry(10, 5, 10),
-				new THREE.ShadowMaterial({
-					color: 0x111111
-				})
-			);
-			floor.position.y = -2.5;
-			floor.receiveShadow = true;
-			scene.add(floor);
-			physics.addMesh(floor);
+      //
 
-			//
+      const material = new THREE.MeshLambertMaterial();
 
-			const material = new THREE.MeshLambertMaterial();
+      const matrix = new THREE.Matrix4();
+      const color = new THREE.Color();
 
-			const matrix = new THREE.Matrix4();
-			const color = new THREE.Color();
+      // Boxes
 
-			// Boxes
+      const geometryBox = new THREE.BoxGeometry( 0.075, 0.075, 0.075 );
+      boxes = new THREE.InstancedMesh( geometryBox, material, 400 );
+      boxes.instanceMatrix.setUsage( THREE.DynamicDrawUsage ); // will be updated every frame
+      boxes.castShadow = true;
+      boxes.receiveShadow = true;
+      scene.add( boxes );
 
-			const geometryBox = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-			boxes = new THREE.InstancedMesh(geometryBox, material, 100);
-			boxes.instanceMatrix.setUsage(THREE.DynamicDrawUsage); // will be updated every frame
-			boxes.castShadow = true;
-			boxes.receiveShadow = true;
-			scene.add(boxes);
+      for ( let i = 0; i < boxes.count; i ++ ) {
 
-			for (let i = 0; i < boxes.count; i++) {
+        matrix.setPosition( Math.random() - 0.5, Math.random() * 2, Math.random() - 0.5 );
+        boxes.setMatrixAt( i, matrix );
+        boxes.setColorAt( i, color.setHex( 0xffffff * Math.random() ) );
 
-				matrix.setPosition(Math.random() - 0.5, Math.random() * 2, Math.random() - 0.5);
-				boxes.setMatrixAt(i, matrix);
-				boxes.setColorAt(i, color.setHex(0xffffff * Math.random()));
+      }
 
-			}
+      physics.addMesh( boxes, 1 );
 
-			physics.addMesh(boxes, 1);
+      // Spheres
 
-			// Spheres
+      const geometrySphere = new THREE.IcosahedronGeometry( 0.05, 4 );
+      spheres = new THREE.InstancedMesh( geometrySphere, material, 400 );
+      spheres.instanceMatrix.setUsage( THREE.DynamicDrawUsage ); // will be updated every frame
+      spheres.castShadow = true;
+      spheres.receiveShadow = true;
+      scene.add( spheres );
 
-			const geometrySphere = new THREE.IcosahedronGeometry(0.075, 3);
-			spheres = new THREE.InstancedMesh(geometrySphere, material, 100);
-			spheres.instanceMatrix.setUsage(THREE.DynamicDrawUsage); // will be updated every frame
-			spheres.castShadow = true;
-			spheres.receiveShadow = true;
-			scene.add(spheres);
+      for ( let i = 0; i < spheres.count; i ++ ) {
 
-			for (let i = 0; i < spheres.count; i++) {
+        matrix.setPosition( Math.random() - 0.5, Math.random() * 2, Math.random() - 0.5 );
+        spheres.setMatrixAt( i, matrix );
+        spheres.setColorAt( i, color.setHex( 0xffffff * Math.random() ) );
 
-				matrix.setPosition(Math.random() - 0.5, Math.random() * 2, Math.random() - 0.5);
-				spheres.setMatrixAt(i, matrix);
-				spheres.setColorAt(i, color.setHex(0xffffff * Math.random()));
+      }
 
-			}
+      physics.addMesh( spheres, 1 );
 
-			physics.addMesh(spheres, 1);
+      //
 
-			//
+      renderer = new THREE.WebGLRenderer( { antialias: true } );
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      renderer.shadowMap.enabled = true;
+      document.body.appendChild( renderer.domElement );
 
-			renderer =that.renderer = new THREE.WebGLRenderer({
-                canvas:canvas3d,
-				antialias: true
-			});
-			renderer.setPixelRatio(window.devicePixelRatio);
-			renderer.setSize(window.innerWidth, window.innerHeight);
-			renderer.shadowMap.enabled = true;
-			renderer.outputEncoding = THREE.sRGBEncoding;
-			document.body.appendChild(renderer.domElement);
+      stats = new Stats();
+      document.body.appendChild( stats.dom );
 
+      //
 
-			//
+      const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+      controls.target.y = 0.5;
+      controls.update();
 
-			const controls = new OrbitControls(camera, renderer.domElement);
-			controls.target.y = 0.5;
-			controls.update();
+      animate();
 
-			animate();
+      setInterval( () => {
 
-			setInterval(() => {
+        let index = Math.floor( Math.random() * boxes.count );
 
-				let index = Math.floor(Math.random() * boxes.count);
+        position.set( 0, Math.random() + 1, 0 );
+        physics.setMeshPosition( boxes, position, index );
 
-				position.set(0, Math.random() + 1, 0);
-				physics.setMeshPosition(boxes, position, index);
+        //
 
-				//
+        index = Math.floor( Math.random() * spheres.count );
 
-				index = Math.floor(Math.random() * spheres.count);
+        position.set( 0, Math.random() + 1, 0 );
+        physics.setMeshPosition( spheres, position, index );
 
-				position.set(0, Math.random() + 1, 0);
-				physics.setMeshPosition(spheres, position, index);
+      }, 1000 / 60 );
 
-			}, 1000 / 60);
+    }
 
-		}
+    function animate() {
 
-		function animate() {
+      requestAnimationFrame( animate );
 
-			requestId = requestAnimationFrame(animate);
+      renderer.render( scene, camera );
 
-			renderer.render(scene, camera);
+      stats.update();
 
-
-		}
+    }
 	}
 })

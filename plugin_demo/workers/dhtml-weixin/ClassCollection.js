@@ -5,7 +5,7 @@ export default class ClassCollection {
     this.classes = []
   }
   add(className) {
-   // this.element.wx_key = className
+   // this.element.mini_key = className
   }
 
   remove() {

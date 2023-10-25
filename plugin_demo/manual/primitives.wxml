@@ -1,5 +1,0 @@
-
-	<navigator style="border:1px solid gray;margin:5rpx;padding:20rpx;" url="./primitives/{{item.name}}" wx:for="{{items}}" wx:key="index">
-		<view>{{item.title}}</view>
-		<view>{{item.name}}</view>
-	</navigator>

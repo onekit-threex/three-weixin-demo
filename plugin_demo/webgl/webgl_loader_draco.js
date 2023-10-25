@@ -1,13 +1,28 @@
-// webgl/webgl_loader_draco.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import { DRACOLoader } from './jsm/loaders/DRACOLoader.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+
+import { DRACOLoader } from './three/addons/loaders/DRACOLoader.js';
 var requestId
 Page({
-    onUnload() {
-
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -17,29 +32,25 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-
-        
-		let camera, scene, renderer;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+  	let camera, scene, renderer;
 
 		const container = document.querySelector( '#container' );
 
 		// Configure and create Draco decoder.
-		const dracoLoader =  this.dracoLoader = new DRACOLoader();
-		dracoLoader.setDecoderPath( 'js/libs/draco/' );
+		const dracoLoader = new DRACOLoader();
+		dracoLoader.setDecoderPath( 'jsm/libs/draco/' );
 		dracoLoader.setDecoderConfig( { type: 'js' } );
 
 		init();
@@ -57,7 +68,7 @@ var that = this
 			// Ground
 			const plane = new THREE.Mesh(
 				new THREE.PlaneGeometry( 8, 8 ),
-				new THREE.MeshPhongMaterial( { color: 0x999999, specular: 0x101010 } )
+				new THREE.MeshPhongMaterial( { color: 0xcbcbcb, specular: 0x101010 } )
 			);
 			plane.rotation.x = - Math.PI / 2;
 			plane.position.y = 0.03;
@@ -65,10 +76,11 @@ var that = this
 			scene.add( plane );
 
 			// Lights
-			const hemiLight = new THREE.HemisphereLight( 0x443333, 0x111122 );
+			const hemiLight = new THREE.HemisphereLight( 0x8d7c7c, 0x494966, 3 );
 			scene.add( hemiLight );
 
 			const spotLight = new THREE.SpotLight();
+			spotLight.intensity = 7;
 			spotLight.angle = Math.PI / 16;
 			spotLight.penumbra = 0.5;
 			spotLight.castShadow = true;
@@ -79,7 +91,7 @@ var that = this
 
 				geometry.computeVertexNormals();
 
-				const material = new THREE.MeshStandardMaterial( { color: 0x606060 } );
+				const material = new THREE.MeshStandardMaterial( { color: 0xa5a5a5 } );
 				const mesh = new THREE.Mesh( geometry, material );
 				mesh.castShadow = true;
 				mesh.receiveShadow = true;
@@ -91,10 +103,9 @@ var that = this
 			} );
 
 			// renderer
-			renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
+			renderer = new THREE.WebGLRenderer( { antialias: true } );
 			renderer.setPixelRatio( window.devicePixelRatio );
 			renderer.setSize( window.innerWidth, window.innerHeight );
-			renderer.outputEncoding = THREE.sRGBEncoding;
 			renderer.shadowMap.enabled = true;
 			container.appendChild( renderer.domElement );
 
@@ -114,7 +125,7 @@ var that = this
 		function animate() {
 
 			render();
-			requestAnimationFrame(animate);
+			requestAnimationFrame( animate );
 
 		}
 
@@ -129,5 +140,5 @@ var that = this
 			renderer.render( scene, camera );
 
 		}
-    }
+  }
 })

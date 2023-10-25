@@ -1,15 +1,31 @@
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import Stats from './jsm/libs/stats.module.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import Stats from 'three/addons/libs/stats.module.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-import { CinematicCamera } from './jsm/cameras/CinematicCamera.js';
+import { CinematicCamera } from 'three/addons/cameras/CinematicCamera.js';
 var requestId
 Page({
-    onUnload() {
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -20,219 +36,215 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-   
-        let camera, scene, raycaster, renderer, stats;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-        const mouse = new THREE.Vector2();
-        let INTERSECTED;
-        const radius = 100;
-        let theta = 0;
+    let camera, scene, raycaster, renderer, stats;
 
-        init();
-        animate();
+    const mouse = new THREE.Vector2();
+    let INTERSECTED;
+    const radius = 100;
+    let theta = 0;
 
-        function init() {
+    init();
+    animate();
 
-            camera = new CinematicCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
-            camera.setLens( 5 );
-            camera.position.set( 2, 1, 500 );
+    function init() {
 
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color( 0xf0f0f0 );
+      camera = new CinematicCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
+      camera.setLens( 5 );
+      camera.position.set( 2, 1, 500 );
 
-            scene.add( new THREE.AmbientLight( 0xffffff, 0.3 ) );
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color( 0xf0f0f0 );
 
-            const light = new THREE.DirectionalLight( 0xffffff, 0.35 );
-            light.position.set( 1, 1, 1 ).normalize();
-            scene.add( light );
+      scene.add( new THREE.AmbientLight( 0xffffff ) );
 
-            const geometry = new THREE.BoxGeometry( 20, 20, 20 );
+      const light = new THREE.DirectionalLight( 0xffffff );
+      light.position.set( 1, 1, 1 ).normalize();
+      scene.add( light );
 
-            for ( let i = 0; i < 1500; i ++ ) {
+      const geometry = new THREE.BoxGeometry( 20, 20, 20 );
 
-                const object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
+      for ( let i = 0; i < 1500; i ++ ) {
 
-                object.position.x = Math.random() * 800 - 400;
-                object.position.y = Math.random() * 800 - 400;
-                object.position.z = Math.random() * 800 - 400;
+        const object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
 
-                scene.add( object );
+        object.position.x = Math.random() * 800 - 400;
+        object.position.y = Math.random() * 800 - 400;
+        object.position.z = Math.random() * 800 - 400;
 
-            }
+        scene.add( object );
 
-            raycaster = new THREE.Raycaster();
+      }
 
-            renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-            renderer.setPixelRatio( window.devicePixelRatio );
-            renderer.setSize( window.innerWidth, window.innerHeight );
-            document.body.appendChild( renderer.domElement );
+      raycaster = new THREE.Raycaster();
 
-            stats = new Stats();
-            document.body.appendChild( stats.dom );
+      renderer = new THREE.WebGLRenderer( { antialias: true } );
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      document.body.appendChild( renderer.domElement );
 
-            document.addEventListener( 'mousemove', onDocumentMouseMove );
+      stats = new Stats();
+      document.body.appendChild( stats.dom );
 
-            window.addEventListener( 'resize', onWindowResize );
+      document.addEventListener( 'mousemove', onDocumentMouseMove );
 
-            const effectController = {
+      window.addEventListener( 'resize', onWindowResize );
 
-                focalLength: 15,
-                // jsDepthCalculation: true,
-                // shaderFocus: false,
-                //
-                fstop: 2.8,
-                // maxblur: 1.0,
-                //
-                showFocus: false,
-                focalDepth: 3,
-                // manualdof: false,
-                // vignetting: false,
-                // depthblur: false,
-                //
-                // threshold: 0.5,
-                // gain: 2.0,
-                // bias: 0.5,
-                // fringe: 0.7,
-                //
-                // focalLength: 35,
-                // noise: true,
-                // pentagon: false,
-                //
-                // dithering: 0.0001
+      const effectController = {
 
-            };
+        focalLength: 15,
+        // jsDepthCalculation: true,
+        // shaderFocus: false,
+        //
+        fstop: 2.8,
+        // maxblur: 1.0,
+        //
+        showFocus: false,
+        focalDepth: 3,
+        // manualdof: false,
+        // vignetting: false,
+        // depthblur: false,
+        //
+        // threshold: 0.5,
+        // gain: 2.0,
+        // bias: 0.5,
+        // fringe: 0.7,
+        //
+        // focalLength: 35,
+        // noise: true,
+        // pentagon: false,
+        //
+        // dithering: 0.0001
 
-            const matChanger = function ( ) {
+      };
 
-                for ( const e in effectController ) {
+      const matChanger = function ( ) {
 
-                    if ( e in camera.postprocessing.bokeh_uniforms ) {
+        for ( const e in effectController ) {
 
-                        camera.postprocessing.bokeh_uniforms[ e ].value = effectController[ e ];
+          if ( e in camera.postprocessing.bokeh_uniforms ) {
 
-                    }
+            camera.postprocessing.bokeh_uniforms[ e ].value = effectController[ e ];
 
-                }
-
-                camera.postprocessing.bokeh_uniforms[ 'znear' ].value = camera.near;
-                camera.postprocessing.bokeh_uniforms[ 'zfar' ].value = camera.far;
-                camera.setLens( effectController.focalLength, camera.frameHeight, effectController.fstop, camera.coc );
-                effectController[ 'focalDepth' ] = camera.postprocessing.bokeh_uniforms[ 'focalDepth' ].value;
-
-            };
-
-            //
-
-            const gui = new GUI();
-
-            gui.add( effectController, 'focalLength', 1, 135, 0.01 ).onChange( matChanger );
-            gui.add( effectController, 'fstop', 1.8, 22, 0.01 ).onChange( matChanger );
-            gui.add( effectController, 'focalDepth', 0.1, 100, 0.001 ).onChange( matChanger );
-            gui.add( effectController, 'showFocus', true ).onChange( matChanger );
-
-            matChanger();
-
-            window.addEventListener( 'resize', onWindowResize );
+          }
 
         }
 
-        function onWindowResize() {
+        camera.postprocessing.bokeh_uniforms[ 'znear' ].value = camera.near;
+        camera.postprocessing.bokeh_uniforms[ 'zfar' ].value = camera.far;
+        camera.setLens( effectController.focalLength, camera.frameHeight, effectController.fstop, camera.coc );
+        effectController[ 'focalDepth' ] = camera.postprocessing.bokeh_uniforms[ 'focalDepth' ].value;
 
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+      };
 
-            renderer.setSize( window.innerWidth, window.innerHeight );
+      //
 
-        }
+      const gui = new GUI();
 
-        function onDocumentMouseMove( event ) {
+      gui.add( effectController, 'focalLength', 1, 135, 0.01 ).onChange( matChanger );
+      gui.add( effectController, 'fstop', 1.8, 22, 0.01 ).onChange( matChanger );
+      gui.add( effectController, 'focalDepth', 0.1, 100, 0.001 ).onChange( matChanger );
+      gui.add( effectController, 'showFocus', true ).onChange( matChanger );
 
-            event.preventDefault();
-
-            mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-            mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-
-        }
-
-        function animate() {
-
-            requestId = requestAnimationFrame( animate, renderer.domElement );
-
-            render();
-         //   //stats.update();
-
-        }
-
-
-        function render() {
-
-            theta += 0.1;
-
-            camera.position.x = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
-            camera.position.y = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
-            camera.position.z = radius * Math.cos( THREE.MathUtils.degToRad( theta ) );
-            camera.lookAt( scene.position );
-
-            camera.updateMatrixWorld();
-
-            // find intersections
-
-            raycaster.setFromCamera( mouse, camera );
-
-            const intersects = raycaster.intersectObjects( scene.children, false );
-
-            if ( intersects.length > 0 ) {
-
-                const targetDistance = intersects[ 0 ].distance;
-
-                camera.focusAt( targetDistance ); // using Cinematic camera focusAt method
-
-                if ( INTERSECTED != intersects[ 0 ].object ) {
-
-                    if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
-
-                    INTERSECTED = intersects[ 0 ].object;
-                    INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-                    INTERSECTED.material.emissive.setHex( 0xff0000 );
-
-                }
-
-            } else {
-
-                if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
-
-                INTERSECTED = null;
-
-            }
-
-            //
-
-            if ( camera.postprocessing.enabled ) {
-
-                camera.renderCinematic( scene, renderer );
-
-            } else {
-
-                scene.overrideMaterial = null;
-
-                renderer.clear();
-                renderer.render( scene, camera );
-
-            }
-
-        }
+      matChanger();
 
     }
+
+    function onWindowResize() {
+
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize( window.innerWidth, window.innerHeight );
+
+    }
+
+    function onDocumentMouseMove( event ) {
+
+      event.preventDefault();
+
+      mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+      mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+    }
+
+    function animate() {
+
+      requestId = requestAnimationFrame( animate, renderer.domElement );
+
+      render();
+      stats.update();
+
+    }
+
+
+    function render() {
+
+      theta += 0.1;
+
+      camera.position.x = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
+      camera.position.y = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
+      camera.position.z = radius * Math.cos( THREE.MathUtils.degToRad( theta ) );
+      camera.lookAt( scene.position );
+
+      camera.updateMatrixWorld();
+
+      // find intersections
+
+      raycaster.setFromCamera( mouse, camera );
+
+      const intersects = raycaster.intersectObjects( scene.children, false );
+
+      if ( intersects.length > 0 ) {
+
+        const targetDistance = intersects[ 0 ].distance;
+
+        camera.focusAt( targetDistance ); // using Cinematic camera focusAt method
+
+        if ( INTERSECTED != intersects[ 0 ].object ) {
+
+          if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+
+          INTERSECTED = intersects[ 0 ].object;
+          INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+          INTERSECTED.material.emissive.setHex( 0xff0000 );
+
+        }
+
+      } else {
+
+        if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+
+        INTERSECTED = null;
+
+      }
+
+      //
+
+      if ( camera.postprocessing.enabled ) {
+
+        camera.renderCinematic( scene, renderer );
+
+      } else {
+
+        scene.overrideMaterial = null;
+
+        renderer.clear();
+        renderer.render( scene, camera );
+
+      }
+
+    }
+  }
 })

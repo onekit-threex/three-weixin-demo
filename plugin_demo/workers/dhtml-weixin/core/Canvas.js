@@ -10,11 +10,11 @@ export default class Canvas {
     }
     var img;
     if (x instanceof HTMLImageElement) {
-      img = x.wx_element;
+      img = x.mini_element;
     } else if (x instanceof ImageBitmap) {
-      img = x.wx_element;
+      img = x.mini_element;
     } else if (x instanceof HTMLCanvasElement) {
-      img = x.wx_element;
+      img = x.mini_element;
       if(tobase64){
         img = img.toDataURL()
         if(toBuffer){
@@ -29,8 +29,8 @@ export default class Canvas {
     return img;
   }
   static fix(canvas3d, canvas2d) {
-    if (canvas3d.wx_element) {
-      canvas3d = canvas3d.wx_element;
+    if (canvas3d.mini_element) {
+      canvas3d = canvas3d.mini_element;
     }
     return new Promise((callback) => {
       var image = canvas2d.createImage();
@@ -41,8 +41,8 @@ export default class Canvas {
     });
   }
   static canvas2img(canvas3d, canvas2d) {
-    if (canvas3d.wx_element) {
-      canvas3d = canvas3d.wx_element;
+    if (canvas3d.mini_element) {
+      canvas3d = canvas3d.mini_element;
     }
     return new Promise((callback) => {
       var img = new HTMLImageElement(canvas2d);

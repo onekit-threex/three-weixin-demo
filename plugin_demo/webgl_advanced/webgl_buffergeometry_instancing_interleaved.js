@@ -1,15 +1,28 @@
-// webgl_advanced/webgl_buffergeometry_instancing_interleaved.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import Stats from './jsm/libs/stats.module.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-
+import Stats from 'three/addons/libs/stats.module.js';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -20,16 +33,19 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-let container, stats;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+
+		let container, stats;
 		let camera, scene, renderer, mesh;
 
 		const instances = 5000;
@@ -118,7 +134,8 @@ let container, stats;
 			// material
 
 			const material = new THREE.MeshBasicMaterial();
-			material.map = new THREE.TextureLoader( ).load( 'textures/crate.gif' );
+			material.map = new THREE.TextureLoader().load( 'textures/crate.gif' );
+			material.map.colorSpace = THREE.SRGBColorSpace;
 			material.map.flipY = false;
 
 			// per instance data
@@ -160,7 +177,7 @@ let container, stats;
 
 			scene.add( mesh );
 
-			renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
+			renderer = new THREE.WebGLRenderer();
 			renderer.setPixelRatio( window.devicePixelRatio );
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			container.appendChild( renderer.domElement );
@@ -192,7 +209,7 @@ let container, stats;
 
 		function animate() {
 
-			requestId = requestAnimationFrame(animate);
+			requestId = requestAnimationFrame( animate );
 
 			render();
 			stats.update();
@@ -218,11 +235,12 @@ let container, stats;
 			}
 
 			mesh.instanceMatrix.needsUpdate = true;
+			mesh.computeBoundingSphere();
 
 			lastTime = time;
 
 			renderer.render( scene, camera );
 
 		}
-}
+  }
 })

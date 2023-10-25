@@ -1,0 +1,19 @@
+<view class="eGamePad" 
+  bindtouchstart="eGamePad_touchstart" 
+  bindtouchmove="eGamePad_touchmove" 
+  bindtouchend="eGamePad_touchend">
+  <view class="GamePadDirection eGamePadDirection1" 
+  catchtouchstart="eGamePadDirection1_touchstart" 
+  catchtouchmove="eGamePadDirection1_touchmove" 
+  catchtouchend="eGamePadDirection1_touchend">
+    <view class="GamePadDirectionHandler" wx:if="{{show}}" style="left:{{direction.x}}px;top:{{direction.y}}px;"></view>
+  </view>
+  <block wx:for="{{buttons}}" wx:for-item="button" wx:key="button">
+    <button plain class="eGamePadButton" class="Button" 
+      data-mouse="{{button.mouse}}"
+      data-keycode="{{button.keycode}}"
+      style="right:{{button.right}}px;bottom:{{button.bottom}}px;width:{{button.size}}px;height:{{button.size}}px;font-size:{{button.size/2}}px"
+      catchtouchstart="eGamePadButton_touch" 
+      catchtouchend="eGamePadButton_touch">{{button.text}}</button>
+  </block>
+</view>

@@ -1,15 +1,31 @@
-// webgl/webgl_shaders_sky.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { GUI } from './jsm/libs/lil-gui.module.min.js';
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
-import { Sky } from './jsm/objects/Sky.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+import { Sky } from 'three/addons/objects/Sky.js';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -19,128 +35,125 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        let camera, scene, renderer;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {	
 
-        let sky, sun;
+  let camera, scene, renderer;
 
-        init();
-        render();
+  let sky, sun;
 
-        function initSky() {
+  init();
+  render();
 
-            // Add Sky
-            sky = new Sky();
-            sky.scale.setScalar( 450000 );
-            scene.add( sky );
+  function initSky() {
 
-            sun = new THREE.Vector3();
+    // Add Sky
+    sky = new Sky();
+    sky.scale.setScalar( 450000 );
+    scene.add( sky );
 
-            /// GUI
+    sun = new THREE.Vector3();
 
-            const effectController = {
-                turbidity: 10,
-                rayleigh: 3,
-                mieCoefficient: 0.005,
-                mieDirectionalG: 0.7,
-                elevation: 2,
-                azimuth: 180,
-                exposure: renderer.toneMappingExposure
-            };
+    /// GUI
 
-            function guiChanged() {
+    const effectController = {
+      turbidity: 10,
+      rayleigh: 3,
+      mieCoefficient: 0.005,
+      mieDirectionalG: 0.7,
+      elevation: 2,
+      azimuth: 180,
+      exposure: renderer.toneMappingExposure
+    };
 
-                const uniforms = sky.material.uniforms;
-                uniforms[ 'turbidity' ].value = effectController.turbidity;
-                uniforms[ 'rayleigh' ].value = effectController.rayleigh;
-                uniforms[ 'mieCoefficient' ].value = effectController.mieCoefficient;
-                uniforms[ 'mieDirectionalG' ].value = effectController.mieDirectionalG;
+    function guiChanged() {
 
-                const phi = THREE.MathUtils.degToRad( 90 - effectController.elevation );
-                const theta = THREE.MathUtils.degToRad( effectController.azimuth );
+      const uniforms = sky.material.uniforms;
+      uniforms[ 'turbidity' ].value = effectController.turbidity;
+      uniforms[ 'rayleigh' ].value = effectController.rayleigh;
+      uniforms[ 'mieCoefficient' ].value = effectController.mieCoefficient;
+      uniforms[ 'mieDirectionalG' ].value = effectController.mieDirectionalG;
 
-                sun.setFromSphericalCoords( 1, phi, theta );
+      const phi = THREE.MathUtils.degToRad( 90 - effectController.elevation );
+      const theta = THREE.MathUtils.degToRad( effectController.azimuth );
 
-                uniforms[ 'sunPosition' ].value.copy( sun );
+      sun.setFromSphericalCoords( 1, phi, theta );
 
-                renderer.toneMappingExposure = effectController.exposure;
-                renderer.render( scene, camera );
+      uniforms[ 'sunPosition' ].value.copy( sun );
 
-            }
-
-            const gui = new GUI();
-
-            gui.add( effectController, 'turbidity', 0.0, 20.0, 0.1 ).onChange( guiChanged );
-            gui.add( effectController, 'rayleigh', 0.0, 4, 0.001 ).onChange( guiChanged );
-            gui.add( effectController, 'mieCoefficient', 0.0, 0.1, 0.001 ).onChange( guiChanged );
-            gui.add( effectController, 'mieDirectionalG', 0.0, 1, 0.001 ).onChange( guiChanged );
-            gui.add( effectController, 'elevation', 0, 90, 0.1 ).onChange( guiChanged );
-            gui.add( effectController, 'azimuth', - 180, 180, 0.1 ).onChange( guiChanged );
-            gui.add( effectController, 'exposure', 0, 1, 0.0001 ).onChange( guiChanged );
-
-            guiChanged();
-
-        }
-
-        function init() {
-
-            camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 100, 2000000 );
-            camera.position.set( 0, 100, 2000 );
-
-            scene = new THREE.Scene();
-
-            const helper = new THREE.GridHelper( 10000, 2, 0xffffff, 0xffffff );
-            scene.add( helper );
-
-            renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-            renderer.setPixelRatio( window.devicePixelRatio );
-            renderer.setSize( window.innerWidth, window.innerHeight );
-            renderer.outputEncoding = THREE.sRGBEncoding;
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 0.5;
-            document.body.appendChild( renderer.domElement );
-
-            const controls = new OrbitControls( camera, renderer.domElement );
-            controls.addEventListener( 'change', render );
-            //controls.maxPolarAngle = Math.PI / 2;
-            controls.enableZoom = false;
-            controls.enablePan = false;
-
-            initSky();
-
-            window.addEventListener( 'resize', onWindowResize );
-
-        }
-
-        function onWindowResize() {
-
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-
-            renderer.setSize( window.innerWidth, window.innerHeight );
-
-            render();
-
-        }
-
-        function render() {
-
-            renderer.render( scene, camera );
-
-        }
+      renderer.toneMappingExposure = effectController.exposure;
+      renderer.render( scene, camera );
 
     }
+
+    const gui = new GUI();
+
+    gui.add( effectController, 'turbidity', 0.0, 20.0, 0.1 ).onChange( guiChanged );
+    gui.add( effectController, 'rayleigh', 0.0, 4, 0.001 ).onChange( guiChanged );
+    gui.add( effectController, 'mieCoefficient', 0.0, 0.1, 0.001 ).onChange( guiChanged );
+    gui.add( effectController, 'mieDirectionalG', 0.0, 1, 0.001 ).onChange( guiChanged );
+    gui.add( effectController, 'elevation', 0, 90, 0.1 ).onChange( guiChanged );
+    gui.add( effectController, 'azimuth', - 180, 180, 0.1 ).onChange( guiChanged );
+    gui.add( effectController, 'exposure', 0, 1, 0.0001 ).onChange( guiChanged );
+
+    guiChanged();
+
+  }
+
+  function init() {
+
+    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 100, 2000000 );
+    camera.position.set( 0, 100, 2000 );
+
+    scene = new THREE.Scene();
+
+    const helper = new THREE.GridHelper( 10000, 2, 0xffffff, 0xffffff );
+    scene.add( helper );
+
+    renderer = new THREE.WebGLRenderer();
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.5;
+    document.body.appendChild( renderer.domElement );
+
+    const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+    controls.addEventListener( 'change', render );
+    //controls.maxPolarAngle = Math.PI / 2;
+    controls.enableZoom = false;
+    controls.enablePan = false;
+
+    initSky();
+
+    window.addEventListener( 'resize', onWindowResize );
+
+  }
+
+  function onWindowResize() {
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+    render();
+
+  }
+
+  function render() {
+
+    renderer.render( scene, camera );
+
+  }
+  }
 })

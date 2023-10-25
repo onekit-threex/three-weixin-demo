@@ -1,148 +1,66 @@
 // webgl/webgl_morphtargets_horse.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  Stats from './jsm/libs/stats.module.js';
-
-import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
-var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
-		setTimeout(() => {
-			if (this.renderer instanceof THREE.WebGLRenderer) {
-				this.renderer.dispose()
-				this.renderer.forceContextLoss()
-				this.renderer.context = null
-				this.renderer.domElement = null
-				this.renderer = null
-			}
-		}, 0)
-        
-	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        
-			let container, stats;
-			let camera, scene, renderer;
-			let mesh, mixer;
 
-			const radius = 600;
-			let theta = 0;
-			let prevTime = Date.now();
+  /**
+   * 页面的初始数据
+   */
+  data: {
 
-			init();
-			animate();
+  },
 
-			function init() {
+  /**
+   * 生命周期函数--监听页面加载
+   */
+  onLoad(options) {
 
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
+  },
 
-				//
+  /**
+   * 生命周期函数--监听页面初次渲染完成
+   */
+  onReady() {
 
-				camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 10000 );
-				camera.position.y = 300;
+  },
 
-				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xf0f0f0 );
+  /**
+   * 生命周期函数--监听页面显示
+   */
+  onShow() {
 
-				//
+  },
 
-				const light1 = new THREE.DirectionalLight( 0xefefff, 1.5 );
-				light1.position.set( 1, 1, 1 ).normalize();
-				scene.add( light1 );
+  /**
+   * 生命周期函数--监听页面隐藏
+   */
+  onHide() {
 
-				const light2 = new THREE.DirectionalLight( 0xffefef, 1.5 );
-				light2.position.set( - 1, - 1, - 1 ).normalize();
-				scene.add( light2 );
+  },
 
-				const loader = new GLTFLoader();
-				loader.load( 'models/gltf/Horse.glb', function ( gltf ) {
+  /**
+   * 生命周期函数--监听页面卸载
+   */
+  onUnload() {
 
-					mesh = gltf.scene.children[ 0 ];
-					mesh.scale.set( 1.5, 1.5, 1.5 );
-					scene.add( mesh );
+  },
 
-					mixer = new THREE.AnimationMixer( mesh );
+  /**
+   * 页面相关事件处理函数--监听用户下拉动作
+   */
+  onPullDownRefresh() {
 
-					mixer.clipAction( gltf.animations[ 0 ] ).setDuration( 1 ).play();
+  },
 
-				} );
+  /**
+   * 页面上拉触底事件的处理函数
+   */
+  onReachBottom() {
 
-				//
+  },
 
-				renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
+  /**
+   * 用户点击右上角分享
+   */
+  onShareAppMessage() {
 
-				renderer.outputEncoding = THREE.sRGBEncoding;
-
-				container.appendChild( renderer.domElement );
-
-				//
-
-				stats = new Stats();
-				container.appendChild( stats.dom );
-
-				//
-
-				window.addEventListener( 'resize', onWindowResize );
-
-			}
-
-			function onWindowResize() {
-
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-			}
-
-			//
-
-			function animate() {
-
-				requestId = requestAnimationFrame(animate);
-
-				render();
-				stats.update();
-
-			}
-
-			function render() {
-
-				theta += 0.1;
-
-				camera.position.x = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
-				camera.position.z = radius * Math.cos( THREE.MathUtils.degToRad( theta ) );
-
-				camera.lookAt( 0, 150, 0 );
-
-				if ( mixer ) {
-
-					const time = Date.now();
-
-					mixer.update( ( time - prevTime ) * 0.001 );
-
-					prevTime = time;
-
-				}
-
-				renderer.render( scene, camera );
-
-			}
-    }
+  }
 })

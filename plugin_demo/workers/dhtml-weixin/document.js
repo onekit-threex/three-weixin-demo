@@ -17,9 +17,9 @@ function getPage() {
   return pages[pages.length - 1];
 }
 class HTMLElement extends Element {
-  constructor(wx_element) {
+  constructor(mini_element) {
     super();
-    this.wx_element = wx_element;
+    this.mini_element = mini_element;
     this.style = new Style();
     this.classList = new ClassCollection();
     this._children = [];
@@ -36,7 +36,7 @@ class HTMLElement extends Element {
   }
   set id(id) {
     this._id = id;
-    this.wx_key = id;
+    this.mini_key = id;
   }
   get id() {
     return this._id;
@@ -55,7 +55,7 @@ class HTMLElement extends Element {
     innerHTML = innerHTML.replaceAll("<br>", "\n");
     innerHTML = innerHTML.replaceAll("&nbsp;", " ");
     const page = getPage();
-    const key = `${this.wx_key}_innerHTML`;
+    const key = `${this.mini_key}_innerHTML`;
     const data = {};
     data[key] = innerHTML;
     page.setData(data);
@@ -77,12 +77,12 @@ class HTMLElement extends Element {
   click() {}
 
   getBoundingClientRect() {
-		if (this.wx_element) {
+		if (this.mini_element) {
 			return {
 				left: 0,
 				top:0,
-				width: this.wx_element.width/window.devicePixelRatio,
-				height: this.wx_element.height/window.devicePixelRatio,
+				width: this.mini_element.width/window.devicePixelRatio,
+				height: this.mini_element.height/window.devicePixelRatio,
 			};
 		}
 		return {
@@ -96,10 +96,10 @@ class HTMLElement extends Element {
   setPointerCapture() {}
   releasePointerCapture() {}
   get clientWidth() {
-    return this.wx_element ? this.wx_element.width : 0;
+    return this.mini_element ? this.mini_element.width : 0;
   }
   get clientHeight() {
-    return this.wx_element ? this.wx_element.height : 0;
+    return this.mini_element ? this.mini_element.height : 0;
   }
 }
 

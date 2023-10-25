@@ -1,13 +1,28 @@
-// webgl/webgl_loader_texture_ktx.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { KTXLoader } from './jsm/loaders/KTXLoader.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+
+import { KTXLoader } from 'three/addons/loaders/KTXLoader.js';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -17,22 +32,35 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-        let camera, scene, renderer;
+	/*
+	This is how compressed textures are supposed to be used:
+
+	best for desktop:
+	BC1(DXT1) - opaque textures
+	BC3(DXT5) - transparent textures with full alpha range
+
+	best for iOS:
+	PVR2, PVR4 - opaque textures or alpha
+
+	best for Android:
+	ETC1 - opaque textures
+	ASTC_4x4, ASTC8x8 - transparent textures with full alpha range
+	*/
+
+	let camera, scene, renderer;
 	const meshes = [];
 
 	init();
@@ -40,7 +68,7 @@ var that = this
 
 	function init() {
 
-		renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
+		renderer = new THREE.WebGLRenderer( { antialias: true } );
 		renderer.setPixelRatio( window.devicePixelRatio );
 		renderer.setSize( window.innerWidth, window.innerHeight );
 		document.body.appendChild( renderer.domElement );
@@ -68,12 +96,14 @@ var that = this
 			material1 = new THREE.MeshBasicMaterial( {
 				map: loader.load( 'textures/compressed/disturb_PVR2bpp.ktx' )
 			} );
+			material1.map.colorSpace = THREE.SRGBColorSpace;
 			material2 = new THREE.MeshBasicMaterial( {
 				map: loader.load( 'textures/compressed/lensflare_PVR4bpp.ktx' ),
 				depthTest: false,
 				transparent: true,
 				side: THREE.DoubleSide
 			} );
+			material2.map.colorSpace = THREE.SRGBColorSpace;
 
 			meshes.push( new THREE.Mesh( geometry, material1 ) );
 			meshes.push( new THREE.Mesh( geometry, material2 ) );
@@ -85,12 +115,14 @@ var that = this
 			material1 = new THREE.MeshBasicMaterial( {
 				map: loader.load( 'textures/compressed/disturb_BC1.ktx' )
 			} );
+			material1.map.colorSpace = THREE.SRGBColorSpace;
 			material2 = new THREE.MeshBasicMaterial( {
 				map: loader.load( 'textures/compressed/lensflare_BC3.ktx' ),
 				depthTest: false,
 				transparent: true,
 				side: THREE.DoubleSide
 			} );
+			material2.map.colorSpace = THREE.SRGBColorSpace;
 
 			meshes.push( new THREE.Mesh( geometry, material1 ) );
 			meshes.push( new THREE.Mesh( geometry, material2 ) );
@@ -112,12 +144,14 @@ var that = this
 			material1 = new THREE.MeshBasicMaterial( {
 				map: loader.load( 'textures/compressed/disturb_ASTC4x4.ktx' )
 			} );
+			material1.map.colorSpace = THREE.SRGBColorSpace;
 			material2 = new THREE.MeshBasicMaterial( {
 				map: loader.load( 'textures/compressed/lensflare_ASTC8x8.ktx' ),
 				depthTest: false,
 				transparent: true,
 				side: THREE.DoubleSide
 			} );
+			material2.map.colorSpace = THREE.SRGBColorSpace;
 
 			meshes.push( new THREE.Mesh( geometry, material1 ) );
 			meshes.push( new THREE.Mesh( geometry, material2 ) );
@@ -149,7 +183,7 @@ var that = this
 
 	function animate() {
 
-		requestAnimationFrame(animate);
+		requestId = requestAnimationFrame( animate );
 
 		const time = Date.now() * 0.001;
 
@@ -165,5 +199,5 @@ var that = this
 
 	}
 
-    }
+  }
 })

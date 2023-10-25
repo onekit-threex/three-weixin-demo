@@ -1,15 +1,22 @@
 // misc/misc_exporter_gltf.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import { OBJLoader } from './jsm/loaders/OBJLoader.js';
-import { GLTFExporter } from './jsm/exporters/GLTFExporter.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import {document,window,requestAnimationFrame,cancelAnimationFrame,Event,core} from 'dhtml-weixin';
+import * as THREE from './three/Three.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
 this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -21,13 +28,16 @@ this.worker && this.worker.terminate()
 		}, 0)
 	},
 	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
+        const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
         this.canvas.dispatchEvent(web_e)
     },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
+    onLoad() {
+      document.createElementAsync("canvas", "webgl2").then(canvas => {
+        this.canvas = canvas
+        this.body_load(canvas).then()
+      })
+    },
+   async body_load(canvas3d) {
 var that = this
 function exportGLTF( input ) {
 
@@ -476,7 +486,7 @@ function init() {
 
     //
 
-    renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
+    renderer = that.renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
 

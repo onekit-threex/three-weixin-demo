@@ -1,16 +1,31 @@
-// webgl/webgl_lightprobe.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { GUI } from './jsm/libs/lil-gui.module.min.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-			import { OrbitControls } from './jsm/controls/OrbitControls0.js';
-			import { LightProbeGenerator } from './jsm/lights/LightProbeGenerator.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+import { LightProbeGenerator } from './three/addons/lights/LightProbeGenerator.js';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -20,161 +35,156 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        
-        let mesh, renderer, scene, camera;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {	
 
-        let gui;
+  let mesh, renderer, scene, camera;
 
-        let lightProbe;
-        let directionalLight;
+  let gui;
 
-        // linear color space
-        const API = {
-            lightProbeIntensity: 1.0,
-            directionalLightIntensity: 0.2,
-            envMapIntensity: 1
-        };
+  let lightProbe;
+  let directionalLight;
 
-        init();
+  // linear color space
+  const API = {
+    lightProbeIntensity: 1.0,
+    directionalLightIntensity: 0.6,
+    envMapIntensity: 1
+  };
 
-        function init() {
+  init();
 
-            // renderer
-            renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-            renderer.setPixelRatio( window.devicePixelRatio );
-            renderer.setSize( window.innerWidth, window.innerHeight );
-            document.body.appendChild( renderer.domElement );
+  function init() {
 
-            // tone mapping
-            renderer.toneMapping = THREE.NoToneMapping;
+    // renderer
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
 
-            renderer.outputEncoding = THREE.sRGBEncoding;
-
-            // scene
-            scene = new THREE.Scene();
-
-            // camera
-            camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 1000 );
-            camera.position.set( 0, 0, 30 );
-
-            // controls
-            const controls = new OrbitControls( camera, renderer.domElement );
-            controls.addEventListener( 'change', render );
-            controls.minDistance = 10;
-            controls.maxDistance = 50;
-            controls.enablePan = false;
-
-            // probe
-            lightProbe = new THREE.LightProbe();
-            scene.add( lightProbe );
-
-            // light
-            directionalLight = new THREE.DirectionalLight( 0xffffff, API.directionalLightIntensity );
-            directionalLight.position.set( 10, 10, 10 );
-            scene.add( directionalLight );
-
-            // envmap
-            const genCubeUrls = function ( prefix, postfix ) {
-
-                return [
-                    prefix + 'px' + postfix, prefix + 'nx' + postfix,
-                    prefix + 'py' + postfix, prefix + 'ny' + postfix,
-                    prefix + 'pz' + postfix, prefix + 'nz' + postfix
-                ];
-
-            };
-
-            const urls = genCubeUrls( 'textures/cube/pisa/', '.png' );
-
-            new THREE.CubeTextureLoader().load( urls, function ( cubeTexture ) {
-
-                cubeTexture.encoding = THREE.sRGBEncoding;
-
-                scene.background = cubeTexture;
-
-                lightProbe.copy( LightProbeGenerator.fromCubeTexture( cubeTexture ) );
-
-                const geometry = new THREE.SphereGeometry( 5, 64, 32 );
-                //const geometry = new THREE.TorusKnotGeometry( 4, 1.5, 256, 32, 2, 3 );
-
-                const material = new THREE.MeshStandardMaterial( {
-                    color: 0xffffff,
-                    metalness: 0,
-                    roughness: 0,
-                    envMap: cubeTexture,
-                    envMapIntensity: API.envMapIntensity,
-                } );
-
-                // mesh
-                mesh = new THREE.Mesh( geometry, material );
-                scene.add( mesh );
-
-                render();
-
-            } );
+    // tone mapping
+    renderer.toneMapping = THREE.NoToneMapping;
 
 
-            // gui
-            gui = new GUI( { title: 'Intensity' } );
+    // scene
+    scene = new THREE.Scene();
 
-            gui.add( API, 'lightProbeIntensity', 0, 1, 0.02 )
-                .name( 'light probe' )
-                .onChange( function () {
+    // camera
+    camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 1000 );
+    camera.position.set( 0, 0, 30 );
 
-                    lightProbe.intensity = API.lightProbeIntensity; render();
+    // controls
+    const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+    controls.addEventListener( 'change', render );
+    controls.minDistance = 10;
+    controls.maxDistance = 50;
+    controls.enablePan = false;
 
-                } );
+    // probe
+    lightProbe = new THREE.LightProbe();
+    scene.add( lightProbe );
 
-            gui.add( API, 'directionalLightIntensity', 0, 1, 0.02 )
-                .name( 'directional light' )
-                .onChange( function () {
+    // light
+    directionalLight = new THREE.DirectionalLight( 0xffffff, API.directionalLightIntensity );
+    directionalLight.position.set( 10, 10, 10 );
+    scene.add( directionalLight );
 
-                    directionalLight.intensity = API.directionalLightIntensity; render();
+    // envmap
+    const genCubeUrls = function ( prefix, postfix ) {
 
-                } );
+      return [
+        prefix + 'px' + postfix, prefix + 'nx' + postfix,
+        prefix + 'py' + postfix, prefix + 'ny' + postfix,
+        prefix + 'pz' + postfix, prefix + 'nz' + postfix
+      ];
 
-            gui.add( API, 'envMapIntensity', 0, 1, 0.02 )
-                .name( 'envMap' )
-                .onChange( function () {
+    };
 
-                    mesh.material.envMapIntensity = API.envMapIntensity; render();
+    const urls = genCubeUrls( 'textures/cube/pisa/', '.png' );
 
-                } );
+    new THREE.CubeTextureLoader().load( urls, function ( cubeTexture ) {
 
-            // listener
-            window.addEventListener( 'resize', onWindowResize );
+      scene.background = cubeTexture;
 
-        }
+      lightProbe.copy( LightProbeGenerator.fromCubeTexture( cubeTexture ) );
 
-        function onWindowResize() {
+      const geometry = new THREE.SphereGeometry( 5, 64, 32 );
+      //const geometry = new THREE.TorusKnotGeometry( 4, 1.5, 256, 32, 2, 3 );
 
-            renderer.setSize( window.innerWidth, window.innerHeight );
+      const material = new THREE.MeshStandardMaterial( {
+        color: 0xffffff,
+        metalness: 0,
+        roughness: 0,
+        envMap: cubeTexture,
+        envMapIntensity: API.envMapIntensity,
+      } );
 
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+      // mesh
+      mesh = new THREE.Mesh( geometry, material );
+      scene.add( mesh );
 
-            render();
+      render();
 
-        }
+    } );
 
-        function render() {
 
-            renderer.render( scene, camera );
+    // gui
+    gui = new GUI( { title: 'Intensity' } );
 
-        }
-    }
+    gui.add( API, 'lightProbeIntensity', 0, 1, 0.02 )
+      .name( 'light probe' )
+      .onChange( function () {
+
+        lightProbe.intensity = API.lightProbeIntensity; render();
+
+      } );
+
+    gui.add( API, 'directionalLightIntensity', 0, 1, 0.02 )
+      .name( 'directional light' )
+      .onChange( function () {
+
+        directionalLight.intensity = API.directionalLightIntensity; render();
+
+      } );
+
+    gui.add( API, 'envMapIntensity', 0, 1, 0.02 )
+      .name( 'envMap' )
+      .onChange( function () {
+
+        mesh.material.envMapIntensity = API.envMapIntensity; render();
+
+      } );
+
+    // listener
+    window.addEventListener( 'resize', onWindowResize );
+
+  }
+
+  function onWindowResize() {
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    render();
+
+  }
+
+  function render() {
+
+    renderer.render( scene, camera );
+
+  }
+  }
 })

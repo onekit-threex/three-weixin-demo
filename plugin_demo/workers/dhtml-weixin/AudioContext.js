@@ -1,72 +1,72 @@
 class Gain {
-    constructor(wx_gain) {
-        this.wx_gain = wx_gain
+    constructor(mini_gain) {
+        this.mini_gain = mini_gain
     }
     connect() {
 
     }
 }
 class BufferSource {
-    constructor(wx_source) {
-        this.wx_source = wx_source
+    constructor(mini_source) {
+        this.mini_source = mini_source
     }
     get playbackRate(){
-        return this.wx_source.playbackRate
+        return this.mini_source.playbackRate
     }
     set buffer(buffer){
-        this.wx_source.buffer = buffer
+        this.mini_source.buffer = buffer
     }
     set loop(loop){
-        this.wx_source.loop = loop
+        this.mini_source.loop = loop
     }
     set loopStart(loopStart){
-        this.wx_source.loopStart = loopStart
+        this.mini_source.loopStart = loopStart
     }
     set loopEnd(loopEnd){
-        this.wx_source.loopEnd = loopEnd
+        this.mini_source.loopEnd = loopEnd
     }
     set onended(onended){
-        this.wx_source.onended = onended
+        this.mini_source.onended = onended
     }
     start(when, offset, duration){
-        this.wx_source.start(  when, offset, duration)
+        this.mini_source.start(  when, offset, duration)
     }
     stop(){
-        this.wx_source.stop( )
+        this.mini_source.stop( )
     }
     connect(data){
-        this.wx_source.connect( data)
+        this.mini_source.connect( data)
     }
 }
 class Panner {
-    constructor(wx_panner) {
-        this.wx_panner = wx_panner
+    constructor(mini_panner) {
+        this.mini_panner = mini_panner
     }
     set panningModel(panningModel) {
-        this.wx_panner.panningModel = panningModel
+        this.mini_panner.panningModel = panningModel
     }
     connect(gain) {
-      //  this.wx_panner.connct(gain.wx_gain)
+      //  this.mini_panner.connct(gain.mini_gain)
     }
 }
 export default class AudioContext {
     constructor() {
-        this.wx_context = wx.createWebAudioContext()
+        this.mini_context = wx.createWebAudioContext()
     }
     createBufferSource() {
-        return new BufferSource(this.wx_context.createBufferSource())
+        return new BufferSource(this.mini_context.createBufferSource())
     }
     createPanner() {
-        return new Panner(this.wx_context.createPanner())
+        return new Panner(this.mini_context.createPanner())
     }
     get currentTime() {
-        return this.wx_context.currentTime
+        return this.mini_context.currentTime
     }
     get destination() {
-        return this.wx_context.destination
+        return this.mini_context.destination
     }
     createGain() {
-        return new Gain(this.wx_context.createGain())
+        return new Gain(this.mini_context.createGain())
     }
     createMediaElementSource(mediaElement) {
 
@@ -75,7 +75,7 @@ export default class AudioContext {
 
     }
     decodeAudioData(arrayBuffer, successCallback, errorCallback) {
-        this.wx_context.decodeAudioData(arrayBuffer, buffer => {
+        this.mini_context.decodeAudioData(arrayBuffer, buffer => {
             successCallback(buffer)
         }, err => {
             errorCallback(err)

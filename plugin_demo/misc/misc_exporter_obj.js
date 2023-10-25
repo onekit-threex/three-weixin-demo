@@ -1,16 +1,30 @@
-// misc/misc_exporter_obj.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
-import { OBJExporter } from './jsm/exporters/OBJExporter.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+  import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
+  import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -21,248 +35,250 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-let camera, scene, renderer;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-const params = {
-    addTriangle: addTriangle,
-    addCube: addCube,
-    addCylinder: addCylinder,
-    addMultiple: addMultiple,
-    addTransformed: addTransformed,
-    addPoints: addPoints,
-    exportToObj: exportToObj
-};
+			let camera, scene, renderer;
 
-init();
-animate();
+			const params = {
+				addTriangle: addTriangle,
+				addCube: addCube,
+				addCylinder: addCylinder,
+				addMultiple: addMultiple,
+				addTransformed: addTransformed,
+				addPoints: addPoints,
+				exportToObj: exportToObj
+			};
 
-function init() {
+			init();
+			animate();
 
-    renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-    renderer.outputEncoding = THREE.sRGBEncoding;
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    document.body.appendChild( renderer.domElement );
+			function init() {
 
-    camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-    camera.position.set( 0, 0, 400 );
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
 
-    scene = new THREE.Scene();
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+				camera.position.set( 0, 0, 400 );
 
-    const ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 );
-    scene.add( ambientLight );
+				scene = new THREE.Scene();
 
-    const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.8 );
-    directionalLight.position.set( 0, 1, 1 );
-    scene.add( directionalLight );
+				const ambientLight = new THREE.AmbientLight( 0xffffff );
+				scene.add( ambientLight );
 
-    const gui = new GUI();
+				const directionalLight = new THREE.DirectionalLight( 0xffffff, 2.5 );
+				directionalLight.position.set( 0, 1, 1 );
+				scene.add( directionalLight );
 
-    let h = gui.addFolder( 'Geometry Selection' );
-    h.add( params, 'addTriangle' ).name( 'Triangle' );
-    h.add( params, 'addCube' ).name( 'Cube' );
-    h.add( params, 'addCylinder' ).name( 'Cylinder' );
-    h.add( params, 'addMultiple' ).name( 'Multiple objects' );
-    h.add( params, 'addTransformed' ).name( 'Transformed objects' );
-    h.add( params, 'addPoints' ).name( 'Point Cloud' );
+				const gui = new GUI();
 
-    h = gui.addFolder( 'Export' );
-    h.add( params, 'exportToObj' ).name( 'Export OBJ' );
+				let h = gui.addFolder( 'Geometry Selection' );
+				h.add( params, 'addTriangle' ).name( 'Triangle' );
+				h.add( params, 'addCube' ).name( 'Cube' );
+				h.add( params, 'addCylinder' ).name( 'Cylinder' );
+				h.add( params, 'addMultiple' ).name( 'Multiple objects' );
+				h.add( params, 'addTransformed' ).name( 'Transformed objects' );
+				h.add( params, 'addPoints' ).name( 'Point Cloud' );
 
-    gui.open();
+				h = gui.addFolder( 'Export' );
+				h.add( params, 'exportToObj' ).name( 'Export OBJ' );
 
-    addGeometry( 1 );
+				gui.open();
 
-    window.addEventListener( 'resize', onWindowResize );
+				addGeometry( 1 );
 
-    const controls = new OrbitControls( camera, renderer.domElement );
-    controls.enablePan = false;
+				window.addEventListener( 'resize', onWindowResize );
 
-}
+				const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+				controls.enablePan = false;
 
-function exportToObj() {
+			}
 
-    const exporter = new OBJExporter();
-    const result = exporter.parse( scene );
-    saveString( result, 'object.obj' );
+			function exportToObj() {
 
-}
+				const exporter = new OBJExporter();
+				const result = exporter.parse( scene );
+				saveString( result, 'object.obj' );
 
-function addGeometry( type ) {
+			}
 
-    for ( let i = 0; i < scene.children.length; i ++ ) {
+			function addGeometry( type ) {
 
-        const child = scene.children[ i ];
+				for ( let i = 0; i < scene.children.length; i ++ ) {
 
-        if ( child.isMesh || child.isPoints ) {
+					const child = scene.children[ i ];
 
-            child.geometry.dispose();
-            scene.remove( child );
-            i --;
+					if ( child.isMesh || child.isPoints ) {
 
-        }
+						child.geometry.dispose();
+						scene.remove( child );
+						i --;
 
-    }
+					}
 
-    if ( type === 1 ) {
+				}
 
-        const material = new THREE.MeshLambertMaterial( { color: 0x00cc00 } );
-        const geometry = generateTriangleGeometry();
+				if ( type === 1 ) {
 
-        scene.add( new THREE.Mesh( geometry, material ) );
+					const material = new THREE.MeshLambertMaterial( { color: 0x00cc00 } );
+					const geometry = generateTriangleGeometry();
 
+					scene.add( new THREE.Mesh( geometry, material ) );
 
-    } else if ( type === 2 ) {
 
-        const material = new THREE.MeshLambertMaterial( { color: 0x00cc00 } );
-        const geometry = new THREE.BoxGeometry( 100, 100, 100 );
-        scene.add( new THREE.Mesh( geometry, material ) );
+				} else if ( type === 2 ) {
 
-    } else if ( type === 3 ) {
+					const material = new THREE.MeshLambertMaterial( { color: 0x00cc00 } );
+					const geometry = new THREE.BoxGeometry( 100, 100, 100 );
+					scene.add( new THREE.Mesh( geometry, material ) );
 
-        const material = new THREE.MeshLambertMaterial( { color: 0x00cc00 } );
-        const geometry = new THREE.CylinderGeometry( 50, 50, 100, 30, 1 );
-        scene.add( new THREE.Mesh( geometry, material ) );
+				} else if ( type === 3 ) {
 
-    } else if ( type === 4 || type === 5 ) {
+					const material = new THREE.MeshLambertMaterial( { color: 0x00cc00 } );
+					const geometry = new THREE.CylinderGeometry( 50, 50, 100, 30, 1 );
+					scene.add( new THREE.Mesh( geometry, material ) );
 
-        const material = new THREE.MeshLambertMaterial( { color: 0x00cc00 } );
-        const geometry = generateTriangleGeometry();
+				} else if ( type === 4 || type === 5 ) {
 
-        const mesh = new THREE.Mesh( geometry, material );
-        mesh.position.x = - 200;
-        scene.add( mesh );
+					const material = new THREE.MeshLambertMaterial( { color: 0x00cc00 } );
+					const geometry = generateTriangleGeometry();
 
-        const geometry2 = new THREE.BoxGeometry( 100, 100, 100 );
-        const mesh2 = new THREE.Mesh( geometry2, material );
-        scene.add( mesh2 );
+					const mesh = new THREE.Mesh( geometry, material );
+					mesh.position.x = - 200;
+					scene.add( mesh );
 
-        const geometry3 = new THREE.CylinderGeometry( 50, 50, 100, 30, 1 );
-        const mesh3 = new THREE.Mesh( geometry3, material );
-        mesh3.position.x = 200;
-        scene.add( mesh3 );
+					const geometry2 = new THREE.BoxGeometry( 100, 100, 100 );
+					const mesh2 = new THREE.Mesh( geometry2, material );
+					scene.add( mesh2 );
 
-        if ( type === 5 ) {
+					const geometry3 = new THREE.CylinderGeometry( 50, 50, 100, 30, 1 );
+					const mesh3 = new THREE.Mesh( geometry3, material );
+					mesh3.position.x = 200;
+					scene.add( mesh3 );
 
-            mesh.rotation.y = Math.PI / 4.0;
-            mesh2.rotation.y = Math.PI / 4.0;
-            mesh3.rotation.y = Math.PI / 4.0;
+					if ( type === 5 ) {
 
-        }
+						mesh.rotation.y = Math.PI / 4.0;
+						mesh2.rotation.y = Math.PI / 4.0;
+						mesh3.rotation.y = Math.PI / 4.0;
 
-    } else if ( type === 6 ) {
+					}
 
-        const points = [ 0, 0, 0, 100, 0, 0, 100, 100, 0, 0, 100, 0 ];
-        const colors = [ 0.5, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0.5, 0 ];
+				} else if ( type === 6 ) {
 
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( points, 3 ) );
-        geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
+					const points = [ 0, 0, 0, 100, 0, 0, 100, 100, 0, 0, 100, 0 ];
+					const colors = [ 0.5, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0.5, 0 ];
 
-        const material = new THREE.PointsMaterial( { size: 10, vertexColors: true } );
+					const geometry = new THREE.BufferGeometry();
+					geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( points, 3 ) );
+					geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
 
-        const pointCloud = new THREE.Points( geometry, material );
-        pointCloud.name = 'point cloud';
-        scene.add( pointCloud );
+					const material = new THREE.PointsMaterial( { size: 10, vertexColors: true } );
 
-    }
+					const pointCloud = new THREE.Points( geometry, material );
+					pointCloud.name = 'point cloud';
+					scene.add( pointCloud );
 
-}
+				}
 
-function addTriangle() {
+			}
 
-    addGeometry( 1 );
+			function addTriangle() {
 
-}
+				addGeometry( 1 );
 
-function addCube() {
+			}
 
-    addGeometry( 2 );
+			function addCube() {
 
-}
+				addGeometry( 2 );
 
-function addCylinder() {
+			}
 
-    addGeometry( 3 );
+			function addCylinder() {
 
-}
+				addGeometry( 3 );
 
-function addMultiple() {
+			}
 
-    addGeometry( 4 );
+			function addMultiple() {
 
-}
+				addGeometry( 4 );
 
-function addTransformed() {
+			}
 
-    addGeometry( 5 );
+			function addTransformed() {
 
-}
+				addGeometry( 5 );
 
-function addPoints() {
+			}
 
-    addGeometry( 6 );
+			function addPoints() {
 
-}
+				addGeometry( 6 );
 
-const link = document.createElement( 'a' );
-link.style.display = 'none';
-document.body.appendChild( link );
+			}
 
-function save( blob, filename ) {
+			const link = document.createElement( 'a' );
+			link.style.display = 'none';
+			document.body.appendChild( link );
 
-    link.href = URL.createObjectURL( blob );
-    link.download = filename;
-    link.click();
+			function save( blob, filename ) {
 
-}
+				link.href = URL.createObjectURL( blob );
+				link.download = filename;
+				link.click();
 
-function saveString( text, filename ) {
+			}
 
-    save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+			function saveString( text, filename ) {
 
-}
+				save( new Blob( [ text ], { type: 'text/plain' } ), filename );
 
-function onWindowResize() {
+			}
 
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+			function onWindowResize() {
 
-    renderer.setSize( window.innerWidth, window.innerHeight );
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
 
-}
+				renderer.setSize( window.innerWidth, window.innerHeight );
 
-function animate() {
+			}
 
-    requestId = requestAnimationFrame(animate);
+			function animate() {
 
-    renderer.render( scene, camera );
+				requestId = requestAnimationFrame( animate );
 
-}
+				renderer.render( scene, camera );
 
-function generateTriangleGeometry() {
+			}
 
-    const geometry = new THREE.BufferGeometry();
-    const vertices = [];
+			function generateTriangleGeometry() {
 
-    vertices.push( - 50, - 50, 0 );
-    vertices.push( 50, - 50, 0 );
-    vertices.push( 50, 50, 0 );
+				const geometry = new THREE.BufferGeometry();
+				const vertices = [];
 
-    geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
-    geometry.computeVertexNormals();
+				vertices.push( - 50, - 50, 0 );
+				vertices.push( 50, - 50, 0 );
+				vertices.push( 50, 50, 0 );
 
-    return geometry;
+				geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+				geometry.computeVertexNormals();
 
-}
-}
+				return geometry;
+
+			}
+  }
 })

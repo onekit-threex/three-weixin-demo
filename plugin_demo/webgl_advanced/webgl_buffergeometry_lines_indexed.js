@@ -1,15 +1,28 @@
-// webgl_advanced/webgl_buffergeometry_lines_indexed.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import Stats from './jsm/libs/stats.module.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-
+import Stats from 'three/addons/libs/stats.module.js';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -20,50 +33,51 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
+    let container, stats;
 
-let container, stats;
+    let camera, scene, renderer;
 
-let camera, scene, renderer;
+    let parent_node;
 
-let parent_node;
+    init();
+    animate();
 
-init();
-animate();
+    function init() {
 
-function init() {
+      container = document.getElementById( 'container' );
 
-    container = document.getElementById( 'container' );
+      camera = new THREE.PerspectiveCamera( 27, window.innerWidth / window.innerHeight, 1, 10000 );
+      camera.position.z = 9000;
 
-    camera = new THREE.PerspectiveCamera( 27, window.innerWidth / window.innerHeight, 1, 10000 );
-    camera.position.z = 9000;
+      scene = new THREE.Scene();
 
-    scene = new THREE.Scene();
+      const geometry = new THREE.BufferGeometry();
+      const material = new THREE.LineBasicMaterial( { vertexColors: true } );
 
-    const geometry = new THREE.BufferGeometry();
-    const material = new THREE.LineBasicMaterial( { vertexColors: true } );
+      const indices = [];
+      const positions = [];
+      const colors = [];
 
-    const indices = [];
-    const positions = [];
-    const colors = [];
+      let next_positions_index = 0;
 
-    let next_positions_index = 0;
+      //
 
-    //
+      const iteration_count = 4;
+      const rangle = 60 * Math.PI / 180.0;
 
-    const iteration_count = 4;
-    const rangle = 60 * Math.PI / 180.0;
-
-    function add_vertex( v ) {
+      function add_vertex( v ) {
 
         if ( next_positions_index == 0xffff ) console.error( 'Too many points.' );
 
@@ -72,19 +86,19 @@ function init() {
 
         return next_positions_index ++;
 
-    }
+      }
 
-    // simple Koch curve
+      // simple Koch curve
 
-    function snowflake_iteration( p0, p4, depth ) {
+      function snowflake_iteration( p0, p4, depth ) {
 
         if ( -- depth < 0 ) {
 
-            const i = next_positions_index - 1; // p0 already there
-            add_vertex( p4 );
-            indices.push( i, i + 1 );
+          const i = next_positions_index - 1; // p0 already there
+          add_vertex( p4 );
+          indices.push( i, i + 1 );
 
-            return;
+          return;
 
         }
 
@@ -105,144 +119,142 @@ function init() {
         snowflake_iteration( p2, p3, depth );
         snowflake_iteration( p3, p4, depth );
 
-    }
+      }
 
-    function snowflake( points, loop, x_offset ) {
+      function snowflake( points, loop, x_offset ) {
 
         for ( let iteration = 0; iteration != iteration_count; iteration ++ ) {
 
-            add_vertex( points[ 0 ] );
+          add_vertex( points[ 0 ] );
 
-            for ( let p_index = 0, p_count = points.length - 1; p_index != p_count; p_index ++ ) {
+          for ( let p_index = 0, p_count = points.length - 1; p_index != p_count; p_index ++ ) {
 
-                snowflake_iteration( points[ p_index ], points[ p_index + 1 ], iteration );
+            snowflake_iteration( points[ p_index ], points[ p_index + 1 ], iteration );
 
-            }
+          }
 
-            if ( loop ) snowflake_iteration( points[ points.length - 1 ], points[ 0 ], iteration );
+          if ( loop ) snowflake_iteration( points[ points.length - 1 ], points[ 0 ], iteration );
 
-            // translate input curve for next iteration
+          // translate input curve for next iteration
 
-            for ( let p_index = 0, p_count = points.length; p_index != p_count; p_index ++ ) {
+          for ( let p_index = 0, p_count = points.length; p_index != p_count; p_index ++ ) {
 
-                points[ p_index ].x += x_offset;
+            points[ p_index ].x += x_offset;
 
-            }
+          }
 
         }
 
+      }
+
+      let y = 0;
+
+      snowflake(
+        [
+          new THREE.Vector3( 0, y, 0 ),
+          new THREE.Vector3( 500, y, 0 )
+        ],
+        false, 600
+      );
+
+      y += 600;
+      snowflake(
+        [
+          new THREE.Vector3( 0, y, 0 ),
+          new THREE.Vector3( 250, y + 400, 0 ),
+          new THREE.Vector3( 500, y, 0 )
+        ],
+        true, 600
+      );
+
+      y += 600;
+      snowflake(
+        [
+          new THREE.Vector3( 0, y, 0 ),
+          new THREE.Vector3( 500, y, 0 ),
+          new THREE.Vector3( 500, y + 500, 0 ),
+          new THREE.Vector3( 0, y + 500, 0 )
+        ],
+        true, 600
+      );
+
+      y += 1000;
+      snowflake(
+        [
+          new THREE.Vector3( 250, y, 0 ),
+          new THREE.Vector3( 500, y, 0 ),
+          new THREE.Vector3( 250, y, 0 ),
+          new THREE.Vector3( 250, y + 250, 0 ),
+          new THREE.Vector3( 250, y, 0 ),
+          new THREE.Vector3( 0, y, 0 ),
+          new THREE.Vector3( 250, y, 0 ),
+          new THREE.Vector3( 250, y - 250, 0 ),
+          new THREE.Vector3( 250, y, 0 )
+        ],
+        false, 600
+      );
+
+      //
+
+      geometry.setIndex( indices );
+      geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
+      geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
+      geometry.computeBoundingSphere();
+
+      const lineSegments = new THREE.LineSegments( geometry, material );
+      lineSegments.position.x -= 1200;
+      lineSegments.position.y -= 1200;
+
+      parent_node = new THREE.Object3D();
+      parent_node.add( lineSegments );
+
+      scene.add( parent_node );
+
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+
+      container.appendChild( renderer.domElement );
+
+      //
+
+      stats = new Stats();
+      container.appendChild( stats.dom );
+
+      //
+
+      window.addEventListener( 'resize', onWindowResize );
+
     }
 
-    let y = 0;
+    function onWindowResize() {
 
-    snowflake(
-        [
-            new THREE.Vector3( 0, y, 0 ),
-            new THREE.Vector3( 500, y, 0 )
-        ],
-        false, 600
-    );
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
 
-    y += 600;
-    snowflake(
-        [
-            new THREE.Vector3( 0, y, 0 ),
-            new THREE.Vector3( 250, y + 400, 0 ),
-            new THREE.Vector3( 500, y, 0 )
-        ],
-        true, 600
-    );
+      renderer.setSize( window.innerWidth, window.innerHeight );
 
-    y += 600;
-    snowflake(
-        [
-            new THREE.Vector3( 0, y, 0 ),
-            new THREE.Vector3( 500, y, 0 ),
-            new THREE.Vector3( 500, y + 500, 0 ),
-            new THREE.Vector3( 0, y + 500, 0 )
-        ],
-        true, 600
-    );
-
-    y += 1000;
-    snowflake(
-        [
-            new THREE.Vector3( 250, y, 0 ),
-            new THREE.Vector3( 500, y, 0 ),
-            new THREE.Vector3( 250, y, 0 ),
-            new THREE.Vector3( 250, y + 250, 0 ),
-            new THREE.Vector3( 250, y, 0 ),
-            new THREE.Vector3( 0, y, 0 ),
-            new THREE.Vector3( 250, y, 0 ),
-            new THREE.Vector3( 250, y - 250, 0 ),
-            new THREE.Vector3( 250, y, 0 )
-        ],
-        false, 600
-    );
+    }
 
     //
 
-    geometry.setIndex( indices );
-    geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
-    geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
-    geometry.computeBoundingSphere();
+    function animate() {
 
-    const lineSegments = new THREE.LineSegments( geometry, material );
-    lineSegments.position.x -= 1200;
-    lineSegments.position.y -= 1200;
+      requestId = requestAnimationFrame( animate );
 
-    parent_node = new THREE.Object3D();
-    parent_node.add( lineSegments );
+      render();
+      stats.update();
 
-    scene.add( parent_node );
+    }
 
-    renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    renderer.outputEncoding = THREE.sRGBEncoding;
+    function render() {
 
-    container.appendChild( renderer.domElement );
+      const time = Date.now() * 0.001;
 
-    //
+      parent_node.rotation.z = time * 0.5;
 
-    stats = new Stats();
-    container.appendChild( stats.dom );
+      renderer.render( scene, camera );
 
-    //
-
-    window.addEventListener( 'resize', onWindowResize );
-
-}
-
-function onWindowResize() {
-
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-
-    renderer.setSize( window.innerWidth, window.innerHeight );
-
-}
-
-//
-
-function animate() {
-
-    requestId = requestAnimationFrame(animate);
-
-    render();
-    stats.update();
-
-}
-
-function render() {
-
-    const time = Date.now() * 0.001;
-
-    parent_node.rotation.z = time * 0.5;
-
-    renderer.render( scene, camera );
-
-}
-
-}
+    }
+  }
 })

@@ -1,14 +1,32 @@
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  Stats from './jsm/libs/stats.module.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
+  import Stats from 'three/addons/libs/stats.module.js';
+  import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
 var requestId
 Page({
-    onUnload() {
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -18,21 +36,19 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-	}, 
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        
-        
+	},
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+
 			function planesFromMesh( vertices, indices ) {
 
 				// creates a clipping volume from a convex triangular mesh
@@ -177,9 +193,9 @@ var that = this
 
 				// Lights
 
-				scene.add( new THREE.AmbientLight( 0xffffff, 0.3 ) );
+				scene.add( new THREE.AmbientLight( 0xffffff ) );
 
-				const spotLight = new THREE.SpotLight( 0xffffff, 0.5 );
+				const spotLight = new THREE.SpotLight( 0xffffff, 60 );
 				spotLight.angle = Math.PI / 5;
 				spotLight.penumbra = 0.2;
 				spotLight.position.set( 2, 3, 3 );
@@ -190,7 +206,7 @@ var that = this
 				spotLight.shadow.mapSize.height = 1024;
 				scene.add( spotLight );
 
-				const dirLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+				const dirLight = new THREE.DirectionalLight( 0xffffff, 1.5 );
 				dirLight.position.set( 0, 2, 0 );
 				dirLight.castShadow = true;
 				dirLight.shadow.camera.near = 1;
@@ -286,7 +302,7 @@ var that = this
 
 				const container = document.body;
 
-				renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
+				renderer = new THREE.WebGLRenderer();
 				renderer.shadowMap.enabled = true;
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
@@ -304,7 +320,7 @@ var that = this
 
 				// Controls
 
-				const controls = new OrbitControls( camera, renderer.domElement );
+				const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
 				controls.minDistance = 1;
 				controls.maxDistance = 8;
 				controls.target.set( 0, 1, 0 );
@@ -405,7 +421,7 @@ var that = this
 				const currentTime = Date.now(),
 					time = ( currentTime - startTime ) / 1000;
 
-				requestAnimationFrame(animate);
+				requestId = requestAnimationFrame( animate );
 
 				object.position.y = 1;
 				object.rotation.x = time * 0.5;
@@ -434,13 +450,13 @@ var that = this
 
 				assignTransformedPlanes( globalClippingPlanes, GlobalClippingPlanes, transform );
 
-				//stats.begin();
+				stats.begin();
 				renderer.render( scene, camera );
-			//	stats.end();
+				stats.end();
 
 			}
 
 			init();
 			animate();
-    }
+  }
 })

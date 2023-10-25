@@ -1,21 +1,35 @@
-// webgl_postprocessing/webgl_postprocessing.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import { EffectComposer } from './jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from './jsm/postprocessing/RenderPass.js';
-import { ShaderPass } from './jsm/postprocessing/ShaderPass.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
-import { RGBShiftShader } from './jsm/shaders/RGBShiftShader.js';
-import { DotScreenShader } from './jsm/shaders/DotScreenShader.js';
-
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import { RGBShiftShader } from 'three/addons/shaders/RGBShiftShader.js';
+import { DotScreenShader } from 'three/addons/shaders/DotScreenShader.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -26,43 +40,45 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-let camera, renderer, composer;
-let object;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+    let camera, renderer, composer;
+    let object;
 
-init();
-animate();
+    init();
+    animate();
 
-function init() {
+    function init() {
 
-    renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    document.body.appendChild( renderer.domElement );
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      document.body.appendChild( renderer.domElement );
 
-    //
+      //
 
-    camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-    camera.position.z = 400;
+      camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+      camera.position.z = 400;
 
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog( 0x000000, 1, 1000 );
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.Fog( 0x000000, 1, 1000 );
 
-    object = new THREE.Object3D();
-    scene.add( object );
+      object = new THREE.Object3D();
+      scene.add( object );
 
-    const geometry = new THREE.SphereGeometry( 1, 4, 4 );
-    const material = new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: true } );
+      const geometry = new THREE.SphereGeometry( 1, 4, 4 );
+      const material = new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: true } );
 
-    for ( let i = 0; i < 100; i ++ ) {
+      for ( let i = 0; i < 100; i ++ ) {
 
         const mesh = new THREE.Mesh( geometry, material );
         mesh.position.set( Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5 ).normalize();
@@ -71,53 +87,55 @@ function init() {
         mesh.scale.x = mesh.scale.y = mesh.scale.z = Math.random() * 50;
         object.add( mesh );
 
+      }
+
+      scene.add( new THREE.AmbientLight( 0xcccccc ) );
+
+      const light = new THREE.DirectionalLight( 0xffffff, 3 );
+      light.position.set( 1, 1, 1 );
+      scene.add( light );
+
+      // postprocessing
+
+      composer = new EffectComposer( renderer );
+      composer.addPass( new RenderPass( scene, camera ) );
+
+      const effect1 = new ShaderPass( DotScreenShader );
+      effect1.uniforms[ 'scale' ].value = 4;
+      composer.addPass( effect1 );
+
+      const effect2 = new ShaderPass( RGBShiftShader );
+      effect2.uniforms[ 'amount' ].value = 0.0015;
+      composer.addPass( effect2 );
+
+      const effect3 = new OutputPass();
+      composer.addPass( effect3 );
+
+      //
+
+      window.addEventListener( 'resize', onWindowResize );
+
     }
 
-    scene.add( new THREE.AmbientLight( 0x222222 ) );
+    function onWindowResize() {
 
-    const light = new THREE.DirectionalLight( 0xffffff );
-    light.position.set( 1, 1, 1 );
-    scene.add( light );
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
 
-    // postprocessing
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      composer.setSize( window.innerWidth, window.innerHeight );
 
-    composer = new EffectComposer( renderer );
-    composer.addPass( new RenderPass( scene, camera ) );
+    }
 
-    const effect1 = new ShaderPass( DotScreenShader );
-    effect1.uniforms[ 'scale' ].value = 4;
-    composer.addPass( effect1 );
+    function animate() {
 
-    const effect2 = new ShaderPass( RGBShiftShader );
-    effect2.uniforms[ 'amount' ].value = 0.0015;
-    composer.addPass( effect2 );
+      requestId = requestAnimationFrame( animate );
 
-    //
+      object.rotation.x += 0.005;
+      object.rotation.y += 0.01;
 
-    window.addEventListener( 'resize', onWindowResize );
+      composer.render();
 
-}
-
-function onWindowResize() {
-
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    composer.setSize( window.innerWidth, window.innerHeight );
-
-}
-
-function animate() {
-
-    requestId = requestAnimationFrame(animate);
-
-    object.rotation.x += 0.005;
-    object.rotation.y += 0.01;
-
-    composer.render();
-
-}
-
-}
+    }
+  }
 })

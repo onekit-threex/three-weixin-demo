@@ -1,23 +1,39 @@
-// webgl_nodes/webgl_nodes_points.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import * as Nodes from './jsm/nodes/Nodes.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+import { attribute, timerLocal, positionLocal, spritesheetUV, pointUV, vec2, texture, uniform, mix, PointsNodeMaterial } from './three/addons/nodes/Nodes.js';
 
-			import Stats from './jsm/libs/stats.module.js';
+import Stats from 'three/addons/libs/stats.module.js';
 
-			import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-			import { TeapotGeometry } from './jsm/geometries/TeapotGeometry.js';
+import { TeapotGeometry } from './three/addons/geometries/TeapotGeometry.js';
 
-			import { OrbitControls } from './jsm/controls/OrbitControls0.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
 
-			import { nodeFrame } from './jsm/renderers/webgl/nodes/WebGLNodes.js';
+import { nodeFrame } from 'three/addons/renderers/webgl-legacy/nodes/WebGLNodes.js';
 
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -28,21 +44,23 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-let camera, scene, renderer, stats;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+  let camera, scene, renderer, stats;
 
-init();
-animate();
+  init();
+  animate();
 
-function init() {
+  function init() {
 
     camera = new THREE.PerspectiveCamera( 55, window.innerWidth / window.innerHeight, 2, 2000 );
     camera.position.x = 0;
@@ -70,11 +88,11 @@ function init() {
 
     for ( let i = 0; i < particleCount; i ++ ) {
 
-        speed.push( 20 + Math.random() * 50 );
+      speed.push( 20 + Math.random() * 50 );
 
-        intensity.push( Math.random() * .15 );
+      intensity.push( Math.random() * .04 );
 
-        size.push( 30 + Math.random() * 230 );
+      size.push( 30 + Math.random() * 230 );
 
     }
 
@@ -88,39 +106,38 @@ function init() {
 
     // Forked from: https://answers.unrealengine.com/questions/143267/emergency-need-help-with-fire-fx-weird-loop.html
 
-    const fireMap = new THREE.TextureLoader( ).load( 'textures/sprites/firetorch_1.jpg' );
+    const fireMap = new THREE.TextureLoader().load( 'textures/sprites/firetorch_1.jpg' );
+    fireMap.colorSpace = THREE.SRGBColorSpace;
 
     // nodes
 
-    const targetPosition = new Nodes.AttributeNode( 'targetPosition', 'vec3' );
-    const particleSpeed = new Nodes.AttributeNode( 'particleSpeed', 'float' );
-    const particleIntensity = new Nodes.AttributeNode( 'particleIntensity', 'float' );
-    const particleSize = new Nodes.AttributeNode( 'particleSize', 'float' );
+    const targetPosition = attribute( 'targetPosition', 'vec3' );
+    const particleSpeed = attribute( 'particleSpeed', 'float' );
+    const particleIntensity = attribute( 'particleIntensity', 'float' );
+    const particleSize = attribute( 'particleSize', 'float' );
 
-    const time = new Nodes.TimerNode();
+    const time = timerLocal();
 
-    const spriteSheetCount = new Nodes.ConstNode( new THREE.Vector2( 6, 6 ) );
-
-    const fireUV = new Nodes.SpriteSheetUVNode(
-        spriteSheetCount, // count
-        new Nodes.PointUVNode(), // uv
-        new Nodes.OperatorNode( '*', time, particleSpeed ) // current frame
+    const fireUV = spritesheetUV(
+      vec2( 6, 6 ), // count
+      pointUV, // uv
+      time.mul( particleSpeed ) // current frame
     );
 
-    const fireSprite = new Nodes.TextureNode( fireMap, fireUV );
-    const fire = new Nodes.OperatorNode( '*', fireSprite, particleIntensity );
+    const fireSprite = texture( fireMap, fireUV );
+    const fire = fireSprite.mul( particleIntensity );
 
-    const lerpPosition = new Nodes.UniformNode( 0 );
+    const lerpPosition = uniform( 0 );
 
-    const positionNode = new Nodes.MathNode( Nodes.MathNode.MIX, new Nodes.PositionNode( Nodes.PositionNode.LOCAL ), targetPosition, lerpPosition );
+    const positionNode = mix( positionLocal, targetPosition, lerpPosition );
 
     // material
 
-    const material = new Nodes.PointsNodeMaterial( {
-        depthWrite: false,
-        transparent: true,
-        sizeAttenuation: true,
-        blending: THREE.AdditiveBlending
+    const material = new PointsNodeMaterial( {
+      depthWrite: false,
+      transparent: true,
+      sizeAttenuation: true,
+      blending: THREE.AdditiveBlending
     } );
 
     material.colorNode = fire;
@@ -132,7 +149,7 @@ function init() {
 
     // renderer
 
-    renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
+    renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
     document.body.appendChild( renderer.domElement );
@@ -149,13 +166,13 @@ function init() {
 
     gui.add( material, 'sizeAttenuation' ).onChange( function () {
 
-        material.needsUpdate = true;
+      material.needsUpdate = true;
 
     } );
 
     gui.add( guiNode, 'lerpPosition', 0, 1 ).onChange( function () {
 
-        lerpPosition.value = guiNode.lerpPosition;
+      lerpPosition.value = guiNode.lerpPosition;
 
     } );
 
@@ -163,7 +180,7 @@ function init() {
 
     // controls
 
-    const controls = new OrbitControls( camera, renderer.domElement );
+    const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
     controls.maxDistance = 1000;
     controls.update();
 
@@ -171,34 +188,34 @@ function init() {
 
     window.addEventListener( 'resize', onWindowResize );
 
-}
+  }
 
-function onWindowResize() {
+  function onWindowResize() {
 
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 
     renderer.setSize( window.innerWidth, window.innerHeight );
 
-}
+  }
 
-//
+  //
 
-function animate() {
+  function animate() {
 
-    requestId = requestAnimationFrame(animate);
+    requestId = requestAnimationFrame( animate );
 
     render();
     stats.update();
 
-}
+  }
 
-function render() {
+  function render() {
 
     nodeFrame.update();
 
     renderer.render( scene, camera );
 
-}
-}
+  }
+  }
 })

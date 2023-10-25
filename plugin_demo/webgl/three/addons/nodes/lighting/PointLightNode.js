@@ -1,0 +1,100 @@
+
+import {
+	Blob,
+	btoa,
+	createImageBitmap,
+	CSSStyleDeclaration,
+	performance,
+	document,
+	DOMParser,
+	EventTarget,
+	fetch,
+	Headers,
+	HTMLCanvasElement,
+	Image,
+	HTMLImageElement,
+	ImageBitmap,
+	location,
+	navigator,
+	Request,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+	Response,
+	URL,
+	window,
+	self,
+	WebAssembly,
+	Worker,
+	XMLHttpRequest,
+	ImageData,
+	TextDecoder,
+	core
+	} from 'dhtml-weixin';
+import AnalyticLightNode from './AnalyticLightNode.js';
+import { addLightNode } from './LightsNode.js';
+import { getDistanceAttenuation } from './LightUtils.js';
+import { uniform } from '../core/UniformNode.js';
+import { objectViewPosition } from '../accessors/Object3DNode.js';
+import { positionView } from '../accessors/PositionNode.js';
+import { addNodeClass } from '../core/Node.js';
+
+import { PointLight } from '../../../Three';
+
+class PointLightNode extends AnalyticLightNode {
+
+	constructor( light = null ) {
+
+		super( light );
+
+		this.cutoffDistanceNode = uniform( 0 );
+		this.decayExponentNode = uniform( 0 );
+
+	}
+
+	update( frame ) {
+
+		const { light } = this;
+
+		super.update( frame );
+
+		this.cutoffDistanceNode.value = light.distance;
+		this.decayExponentNode.value = light.decay;
+
+	}
+
+	setup( builder ) {
+
+		const { colorNode, cutoffDistanceNode, decayExponentNode, light } = this;
+
+		const lightingModel = builder.context.lightingModel;
+
+		const lVector = objectViewPosition( light ).sub( positionView ); // @TODO: Add it into LightNode
+
+		const lightDirection = lVector.normalize();
+		const lightDistance = lVector.length();
+
+		const lightAttenuation = getDistanceAttenuation( {
+			lightDistance,
+			cutoffDistance: cutoffDistanceNode,
+			decayExponent: decayExponentNode
+		} );
+
+		const lightColor = colorNode.mul( lightAttenuation );
+
+		const reflectedLight = builder.context.reflectedLight;
+
+		lightingModel.direct( {
+			lightDirection,
+			lightColor,
+			reflectedLight
+		}, builder.stack, builder );
+
+	}
+
+}
+
+export default PointLightNode;
+
+addNodeClass( 'PointLightNode', PointLightNode );
+
+addLightNode( PointLight, PointLightNode );

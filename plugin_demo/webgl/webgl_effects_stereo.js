@@ -1,11 +1,28 @@
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { StereoEffect } from './jsm/effects/StereoEffect.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+
+import { StereoEffect } from './three/addons/effects/StereoEffect.js';
 var requestId
 Page({
-    onUnload() {
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -16,131 +33,130 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        let container, camera, scene, renderer, effect;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-        const spheres = [];
+    let container, camera, scene, renderer, effect;
 
-        let mouseX = 0, mouseY = 0;
+    const spheres = [];
 
-        let windowHalfX = window.innerWidth / 2;
-        let windowHalfY = window.innerHeight / 2;
+    let mouseX = 0, mouseY = 0;
 
-        document.addEventListener( 'mousemove', onDocumentMouseMove );
+    let windowHalfX = window.innerWidth / 2;
+    let windowHalfY = window.innerHeight / 2;
 
-        init();
-        animate();
+    document.addEventListener( 'mousemove', onDocumentMouseMove );
 
-        function init() {
+    init();
+    animate();
 
-            container = document.createElement( 'div' );
-            document.body.appendChild( container );
+    function init() {
 
-            camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 100000 );
-            camera.position.z = 3200;
+      container = document.createElement( 'div' );
+      document.body.appendChild( container );
 
-            scene = new THREE.Scene();
-            scene.background = new THREE.CubeTextureLoader()
-                .setPath( 'textures/cube/Park3Med/' )
-                .load( [ 'px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg' ] );
+      camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 100000 );
+      camera.position.z = 3200;
 
-            const geometry = new THREE.SphereGeometry( 100, 32, 16 );
+      scene = new THREE.Scene();
+      scene.background = new THREE.CubeTextureLoader()
+        .setPath( 'textures/cube/Park3Med/' )
+        .load( [ 'px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg' ] );
 
-            const textureCube = new THREE.CubeTextureLoader()
-                .setPath( 'textures/cube/Park3Med/' )
-                .load( [ 'px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg' ] );
-            textureCube.mapping = THREE.CubeRefractionMapping;
+      const geometry = new THREE.SphereGeometry( 100, 32, 16 );
 
-            const material = new THREE.MeshBasicMaterial( { color: 0xffffff, envMap: textureCube, refractionRatio: 0.95 } );
+      const textureCube = new THREE.CubeTextureLoader()
+        .setPath( 'textures/cube/Park3Med/' )
+        .load( [ 'px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg' ] );
+      textureCube.mapping = THREE.CubeRefractionMapping;
 
-            for ( let i = 0; i < 500; i ++ ) {
+      const material = new THREE.MeshBasicMaterial( { color: 0xffffff, envMap: textureCube, refractionRatio: 0.95 } );
 
-                const mesh = new THREE.Mesh( geometry, material );
-                mesh.position.x = Math.random() * 10000 - 5000;
-                mesh.position.y = Math.random() * 10000 - 5000;
-                mesh.position.z = Math.random() * 10000 - 5000;
-                mesh.scale.x = mesh.scale.y = mesh.scale.z = Math.random() * 3 + 1;
-                scene.add( mesh );
+      for ( let i = 0; i < 500; i ++ ) {
 
-                spheres.push( mesh );
+        const mesh = new THREE.Mesh( geometry, material );
+        mesh.position.x = Math.random() * 10000 - 5000;
+        mesh.position.y = Math.random() * 10000 - 5000;
+        mesh.position.z = Math.random() * 10000 - 5000;
+        mesh.scale.x = mesh.scale.y = mesh.scale.z = Math.random() * 3 + 1;
+        scene.add( mesh );
 
-            }
+        spheres.push( mesh );
 
-            //
+      }
 
-            renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-            renderer.setPixelRatio( window.devicePixelRatio );
-            container.appendChild( renderer.domElement );
+      //
 
-            effect = new StereoEffect( renderer );
-            effect.setSize( window.innerWidth, window.innerHeight );
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio( window.devicePixelRatio );
+      container.appendChild( renderer.domElement );
 
-            //
+      effect = new StereoEffect( renderer );
+      effect.setSize( window.innerWidth, window.innerHeight );
 
-            window.addEventListener( 'resize', onWindowResize );
+      //
 
-        }
-
-        function onWindowResize() {
-
-            windowHalfX = window.innerWidth / 2;
-            windowHalfY = window.innerHeight / 2;
-
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-
-            effect.setSize( window.innerWidth, window.innerHeight );
-
-        }
-
-        function onDocumentMouseMove( event ) {
-
-            mouseX = ( event.clientX - windowHalfX ) * 10;
-            mouseY = ( event.clientY - windowHalfY ) * 10;
-
-        }
-
-        //
-
-        function animate() {
-
-            requestId = requestAnimationFrame(animate);
-
-            render();
-
-        }
-
-        function render() {
-
-            const timer = 0.0001 * Date.now();
-
-            camera.position.x += ( mouseX - camera.position.x ) * .05;
-            camera.position.y += ( - mouseY - camera.position.y ) * .05;
-            camera.lookAt( scene.position );
-
-            for ( let i = 0, il = spheres.length; i < il; i ++ ) {
-
-                const sphere = spheres[ i ];
-
-                sphere.position.x = 5000 * Math.cos( timer + i );
-                sphere.position.y = 5000 * Math.sin( timer + i * 1.1 );
-
-            }
-
-            effect.render( scene, camera );
-
-        }
+      window.addEventListener( 'resize', onWindowResize );
 
     }
+
+    function onWindowResize() {
+
+      windowHalfX = window.innerWidth / 2;
+      windowHalfY = window.innerHeight / 2;
+
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      effect.setSize( window.innerWidth, window.innerHeight );
+
+    }
+
+    function onDocumentMouseMove( event ) {
+
+      mouseX = ( event.clientX - windowHalfX ) * 10;
+      mouseY = ( event.clientY - windowHalfY ) * 10;
+
+    }
+
+    //
+
+    function animate() {
+
+      requestId = requestAnimationFrame( animate );
+
+      render();
+
+    }
+
+    function render() {
+
+      const timer = 0.0001 * Date.now();
+
+      camera.position.x += ( mouseX - camera.position.x ) * .05;
+      camera.position.y += ( - mouseY - camera.position.y ) * .05;
+      camera.lookAt( scene.position );
+
+      for ( let i = 0, il = spheres.length; i < il; i ++ ) {
+
+        const sphere = spheres[ i ];
+
+        sphere.position.x = 5000 * Math.cos( timer + i );
+        sphere.position.y = 5000 * Math.sin( timer + i * 1.1 );
+
+      }
+
+      effect.render( scene, camera );
+
+    }
+  }
 })

@@ -1,13 +1,28 @@
-// webgl/webgl_loader_texture_dds.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { DDSLoader } from './jsm/loaders/DDSLoader.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+
+import { DDSLoader } from 'three/addons/loaders/DDSLoader.js';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -17,184 +32,232 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-        let camera, scene, renderer;
-			const meshes = [];
+    let camera, scene, renderer;
+    const meshes = [];
 
-			init();
-			animate();
+    init();
+    animate();
 
-			function init() {
+    function init() {
 
-				camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 2000 );
-				camera.position.z = 1000;
+      camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 100 );
+      camera.position.z = 15;
 
-				scene = new THREE.Scene();
+      scene = new THREE.Scene();
 
-				const geometry = new THREE.BoxGeometry( 200, 200, 200 );
+      const geometry = new THREE.BoxGeometry( 2, 2, 2 );
 
-				/*
-				This is how compressed textures are supposed to be used:
+      /*
+      This is how compressed textures are supposed to be used:
 
-				DXT1 - RGB - opaque textures
-				DXT3 - RGBA - transparent textures with sharp alpha transitions
-				DXT5 - RGBA - transparent textures with full alpha range
-				*/
+      DXT1 - RGB - opaque textures
+      DXT3 - RGBA - transparent textures with sharp alpha transitions
+      DXT5 - RGBA - transparent textures with full alpha range
+      */
 
-				const loader = new DDSLoader();
+      const loader = new DDSLoader();
 
-				const map1 = loader.load( 'textures/compressed/disturb_dxt1_nomip.dds' );
-				map1.minFilter = map1.magFilter = THREE.LinearFilter;
-				map1.anisotropy = 4;
+      const map1 = loader.load( 'textures/compressed/disturb_dxt1_nomip.dds' );
+      map1.minFilter = map1.magFilter = THREE.LinearFilter;
+      map1.anisotropy = 4;
+      map1.colorSpace = THREE.SRGBColorSpace;
 
-				const map2 = loader.load( 'textures/compressed/disturb_dxt1_mip.dds' );
-				map2.anisotropy = 4;
+      const map2 = loader.load( 'textures/compressed/disturb_dxt1_mip.dds' );
+      map2.anisotropy = 4;
+      map2.colorSpace = THREE.SRGBColorSpace;
 
-				const map3 = loader.load( 'textures/compressed/hepatica_dxt3_mip.dds' );
-				map3.anisotropy = 4;
+      const map3 = loader.load( 'textures/compressed/hepatica_dxt3_mip.dds' );
+      map3.anisotropy = 4;
+      map3.colorSpace = THREE.SRGBColorSpace;
 
-				const map4 = loader.load( 'textures/compressed/explosion_dxt5_mip.dds' );
-				map4.anisotropy = 4;
+      const map4 = loader.load( 'textures/compressed/explosion_dxt5_mip.dds' );
+      map4.anisotropy = 4;
+      map4.colorSpace = THREE.SRGBColorSpace;
 
-				const map5 = loader.load( 'textures/compressed/disturb_argb_nomip.dds' );
-				map5.minFilter = map5.magFilter = THREE.LinearFilter;
-				map5.anisotropy = 4;
+      const map5 = loader.load( 'textures/compressed/disturb_argb_nomip.dds' );
+      map5.minFilter = map5.magFilter = THREE.LinearFilter;
+      map5.anisotropy = 4;
+      map5.colorSpace = THREE.SRGBColorSpace;
 
-				const map6 = loader.load( 'textures/compressed/disturb_argb_mip.dds' );
-				map6.anisotropy = 4;
+      const map6 = loader.load( 'textures/compressed/disturb_argb_mip.dds' );
+      map6.anisotropy = 4;
+      map6.colorSpace = THREE.SRGBColorSpace;
 
-				const cubemap1 = loader.load( 'textures/compressed/Mountains.dds', function ( texture ) {
+      const map7 = loader.load( 'textures/compressed/disturb_dx10_bc6h_signed_nomip.dds' );
+      map7.anisotropy = 4;
 
-					texture.magFilter = THREE.LinearFilter;
-					texture.minFilter = THREE.LinearFilter;
-					texture.mapping = THREE.CubeReflectionMapping;
-					material1.needsUpdate = true;
+      const map8 = loader.load( 'textures/compressed/disturb_dx10_bc6h_signed_mip.dds' );
+      map8.anisotropy = 4;
 
-				} );
+      const map9 = loader.load( 'textures/compressed/disturb_dx10_bc6h_unsigned_nomip.dds' );
+      map9.anisotropy = 4;
 
-				const cubemap2 = loader.load( 'textures/compressed/Mountains_argb_mip.dds', function ( texture ) {
+      const map10 = loader.load( 'textures/compressed/disturb_dx10_bc6h_unsigned_mip.dds' );
+      map10.anisotropy = 4;
 
-					texture.magFilter = THREE.LinearFilter;
-					texture.minFilter = THREE.LinearFilter;
-					texture.mapping = THREE.CubeReflectionMapping;
-					material5.needsUpdate = true;
 
-				} );
+      const cubemap1 = loader.load( 'textures/compressed/Mountains.dds', function ( texture ) {
 
-				const cubemap3 = loader.load( 'textures/compressed/Mountains_argb_nomip.dds', function ( texture ) {
+        texture.magFilter = THREE.LinearFilter;
+        texture.minFilter = THREE.LinearFilter;
+        texture.mapping = THREE.CubeReflectionMapping;
+        texture.colorSpace = THREE.SRGBColorSpace;
+        material1.needsUpdate = true;
 
-					texture.magFilter = THREE.LinearFilter;
-					texture.minFilter = THREE.LinearFilter;
-					texture.mapping = THREE.CubeReflectionMapping;
-					material6.needsUpdate = true;
+      } );
 
-				} );
+      const cubemap2 = loader.load( 'textures/compressed/Mountains_argb_mip.dds', function ( texture ) {
 
-				const material1 = new THREE.MeshBasicMaterial( { map: map1, envMap: cubemap1 } );
-				const material2 = new THREE.MeshBasicMaterial( { map: map2 } );
-				const material3 = new THREE.MeshBasicMaterial( { map: map3, alphaTest: 0.5, side: THREE.DoubleSide } );
-				const material4 = new THREE.MeshBasicMaterial( { map: map4, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthTest: false, transparent: true } );
-				const material5 = new THREE.MeshBasicMaterial( { envMap: cubemap2 } );
-				const material6 = new THREE.MeshBasicMaterial( { envMap: cubemap3 } );
-				const material7 = new THREE.MeshBasicMaterial( { map: map5 } );
-				const material8 = new THREE.MeshBasicMaterial( { map: map6 } );
+        texture.magFilter = THREE.LinearFilter;
+        texture.minFilter = THREE.LinearFilter;
+        texture.mapping = THREE.CubeReflectionMapping;
+        texture.colorSpace = THREE.SRGBColorSpace;
+        material5.needsUpdate = true;
 
-				let mesh = new THREE.Mesh( new THREE.TorusGeometry( 100, 50, 32, 16 ), material1 );
-				mesh.position.x = - 600;
-				mesh.position.y = - 200;
-				scene.add( mesh );
-				meshes.push( mesh );
+      } );
 
-				mesh = new THREE.Mesh( geometry, material2 );
-				mesh.position.x = - 200;
-				mesh.position.y = - 200;
-				scene.add( mesh );
-				meshes.push( mesh );
+      const cubemap3 = loader.load( 'textures/compressed/Mountains_argb_nomip.dds', function ( texture ) {
 
-				mesh = new THREE.Mesh( geometry, material3 );
-				mesh.position.x = - 200;
-				mesh.position.y = 200;
-				scene.add( mesh );
-				meshes.push( mesh );
+        texture.magFilter = THREE.LinearFilter;
+        texture.minFilter = THREE.LinearFilter;
+        texture.mapping = THREE.CubeReflectionMapping;
+        texture.colorSpace = THREE.SRGBColorSpace;
+        material6.needsUpdate = true;
 
-				mesh = new THREE.Mesh( geometry, material4 );
-				mesh.position.x = - 600;
-				mesh.position.y = 200;
-				scene.add( mesh );
-				meshes.push( mesh );
+      } );
 
-				mesh = new THREE.Mesh( geometry, material5 );
-				mesh.position.x = 200;
-				mesh.position.y = 200;
-				scene.add( mesh );
-				meshes.push( mesh );
+      const material1 = new THREE.MeshBasicMaterial( { map: map1, envMap: cubemap1 } );
+      const material2 = new THREE.MeshBasicMaterial( { map: map2 } );
+      const material3 = new THREE.MeshBasicMaterial( { map: map3, alphaTest: 0.5, side: THREE.DoubleSide } );
+      const material4 = new THREE.MeshBasicMaterial( { map: map4, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthTest: false, transparent: true } );
+      const material5 = new THREE.MeshBasicMaterial( { envMap: cubemap2 } );
+      const material6 = new THREE.MeshBasicMaterial( { envMap: cubemap3 } );
+      const material7 = new THREE.MeshBasicMaterial( { map: map5 } );
+      const material8 = new THREE.MeshBasicMaterial( { map: map6 } );
+      const material9 = new THREE.MeshBasicMaterial( { map: map7 } );
+      const material10 = new THREE.MeshBasicMaterial( { map: map8 } );
+      const material11 = new THREE.MeshBasicMaterial( { map: map9 } );
+      const material12 = new THREE.MeshBasicMaterial( { map: map10 } );
 
-				mesh = new THREE.Mesh( geometry, material6 );
-				mesh.position.x = 200;
-				mesh.position.y = - 200;
-				scene.add( mesh );
-				meshes.push( mesh );
+      let mesh = new THREE.Mesh( new THREE.TorusGeometry(), material1 );
+      mesh.position.x = - 10;
+      mesh.position.y = - 2;
+      scene.add( mesh );
+      meshes.push( mesh );
 
-				mesh = new THREE.Mesh( geometry, material7 );
-				mesh.position.x = 600;
-				mesh.position.y = - 200;
-				scene.add( mesh );
-				meshes.push( mesh );
+      mesh = new THREE.Mesh( geometry, material2 );
+      mesh.position.x = - 6;
+      mesh.position.y = - 2;
+      scene.add( mesh );
+      meshes.push( mesh );
 
-				mesh = new THREE.Mesh( geometry, material8 );
-				mesh.position.x = 600;
-				mesh.position.y = 200;
-				scene.add( mesh );
-				meshes.push( mesh );
+      mesh = new THREE.Mesh( geometry, material3 );
+      mesh.position.x = - 6;
+      mesh.position.y = 2;
+      scene.add( mesh );
+      meshes.push( mesh );
 
-				renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
+      mesh = new THREE.Mesh( geometry, material4 );
+      mesh.position.x = - 10;
+      mesh.position.y = 2;
+      scene.add( mesh );
+      meshes.push( mesh );
 
-				window.addEventListener( 'resize', onWindowResize );
+      mesh = new THREE.Mesh( geometry, material5 );
+      mesh.position.x = - 2;
+      mesh.position.y = 2;
+      scene.add( mesh );
+      meshes.push( mesh );
 
-			}
+      mesh = new THREE.Mesh( geometry, material6 );
+      mesh.position.x = - 2;
+      mesh.position.y = - 2;
+      scene.add( mesh );
+      meshes.push( mesh );
 
-			function onWindowResize() {
+      mesh = new THREE.Mesh( geometry, material7 );
+      mesh.position.x = 2;
+      mesh.position.y = - 2;
+      scene.add( mesh );
+      meshes.push( mesh );
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+      mesh = new THREE.Mesh( geometry, material8 );
+      mesh.position.x = 2;
+      mesh.position.y = 2;
+      scene.add( mesh );
+      meshes.push( mesh );
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+      mesh = new THREE.Mesh( geometry, material9 );
+      mesh.position.x = 6;
+      mesh.position.y = - 2;
+      scene.add( mesh );
+      meshes.push( mesh );
 
-			}
+      mesh = new THREE.Mesh( geometry, material10 );
+      mesh.position.x = 6;
+      mesh.position.y = 2;
+      scene.add( mesh );
+      meshes.push( mesh );
 
-			function animate() {
+      mesh = new THREE.Mesh( geometry, material11 );
+      mesh.position.x = 10;
+      mesh.position.y = - 2;
+      scene.add( mesh );
+      meshes.push( mesh );
 
-				requestId = requestAnimationFrame(animate);
+      mesh = new THREE.Mesh( geometry, material12 );
+      mesh.position.x = 10;
+      mesh.position.y = 2;
+      scene.add( mesh );
+      meshes.push( mesh );
 
-				const time = Date.now() * 0.001;
+      renderer = new THREE.WebGLRenderer( { antialias: true } );
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      document.body.appendChild( renderer.domElement );
 
-				for ( let i = 0; i < meshes.length; i ++ ) {
+      window.addEventListener( 'resize', onWindowResize );
 
-					const mesh = meshes[ i ];
-					mesh.rotation.x = time;
-					mesh.rotation.y = time;
-
-				}
-
-				renderer.render( scene, camera );
-
-			}
     }
+
+    function onWindowResize() {
+
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize( window.innerWidth, window.innerHeight );
+
+    }
+
+    function animate() {
+
+      requestId = requestAnimationFrame( animate );
+
+      const time = Date.now() * 0.001;
+
+      for ( let i = 0; i < meshes.length; i ++ ) {
+
+        const mesh = meshes[ i ];
+        mesh.rotation.x = time;
+        mesh.rotation.y = time;
+
+      }
+
+      renderer.render( scene, camera );
+
+    }
+  }
 })

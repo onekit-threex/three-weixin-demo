@@ -1,116 +1,66 @@
 // webgl/webgl_modifier_simplifier.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { OrbitControls } from './jsm/controls/OrbitControls0.js';
-import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
-import { SimplifyModifier } from './jsm/modifiers/SimplifyModifier.js';
-var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
-		setTimeout(() => {
-			if (this.renderer instanceof THREE.WebGLRenderer) {
-				this.renderer.dispose()
-				this.renderer.forceContextLoss()
-				this.renderer.context = null
-				this.renderer.domElement = null
-				this.renderer = null
-			}
-		}, 0)
-        
-	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        
-			let renderer, scene, camera;
 
-			init();
+  /**
+   * 页面的初始数据
+   */
+  data: {
 
-			function init() {
+  },
 
-				const info = document.createElement( 'div' );
-				info.style.position = 'absolute';
-				info.style.top = '10px';
-				info.style.width = '100%';
-				info.style.textAlign = 'center';
-				info.innerHTML = '<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - Vertex Reduction using SimplifyModifier';
-				document.body.appendChild( info );
+  /**
+   * 生命周期函数--监听页面加载
+   */
+  onLoad(options) {
 
-				renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
+  },
 
-				scene = new THREE.Scene();
+  /**
+   * 生命周期函数--监听页面初次渲染完成
+   */
+  onReady() {
 
-				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 1000 );
-				camera.position.z = 15;
+  },
 
-				const controls = new OrbitControls( camera, renderer.domElement );
-				controls.addEventListener( 'change', render ); // use if there is no animation loop
-				controls.enablePan = false;
-				controls.enableZoom = false;
+  /**
+   * 生命周期函数--监听页面显示
+   */
+  onShow() {
 
-				scene.add( new THREE.AmbientLight( 0xffffff, 0.2 ) );
+  },
 
-				const light = new THREE.PointLight( 0xffffff, 0.7 );
-				camera.add( light );
-				scene.add( camera );
+  /**
+   * 生命周期函数--监听页面隐藏
+   */
+  onHide() {
 
-				new GLTFLoader().load( 'models/gltf/LeePerrySmith/LeePerrySmith.glb', function ( gltf ) {
+  },
 
-					const mesh = gltf.scene.children[ 0 ];
-					mesh.position.x = - 3;
-					mesh.rotation.y = Math.PI / 2;
-					scene.add( mesh );
+  /**
+   * 生命周期函数--监听页面卸载
+   */
+  onUnload() {
 
-					const modifier = new SimplifyModifier();
+  },
 
-					const simplified = mesh.clone();
-					simplified.material = simplified.material.clone();
-					simplified.material.flatShading = true;
-					const count = Math.floor( simplified.geometry.attributes.position.count * 0.875 ); // number of vertices to remove
-					simplified.geometry = modifier.modify( simplified.geometry, count );
+  /**
+   * 页面相关事件处理函数--监听用户下拉动作
+   */
+  onPullDownRefresh() {
 
-					simplified.position.x = 3;
-					simplified.rotation.y = - Math.PI / 2;
-					scene.add( simplified );
+  },
 
-					render();
+  /**
+   * 页面上拉触底事件的处理函数
+   */
+  onReachBottom() {
 
-				} );
+  },
 
-				window.addEventListener( 'resize', onWindowResize );
+  /**
+   * 用户点击右上角分享
+   */
+  onShareAppMessage() {
 
-			}
-
-			function onWindowResize() {
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				render();
-
-			}
-
-			function render() {
-
-				renderer.render( scene, camera );
-
-			}
-    }
+  }
 })

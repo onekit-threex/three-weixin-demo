@@ -1,8 +1,7 @@
-<canvas id="canvas_webgl" type="webgl"  
-    disable-scroll="true"
-    bindtouchstart="webgl_touch"
-    bindtouchmove="webgl_touch"
-    bindtouchend="webgl_touch"
-    bindtouchcancel="webgl_touch">
-    </canvas>
-<canvas id="drawing-canvas" type="2d" style="width:200rpx;height:200rpx;position:absolute;right:0;"/>
+<wxs module="_">
+module.exports = {
+//  rpxpx(dp,rpx)
+}
+</wxs>
+<canvas id="canvas_webgl2" type="webgl2" bindtouchstart="webgl_touch" bindtouchmove="webgl_touch" bindtouchend="webgl_touch" bindtouchcancel="webgl_touch"></canvas>
+<canvas id="drawing-canvas" canvas-id="drawing-canvas" type="2d" height="128" width="128" style="width:128px;height:128px;"></canvas>

@@ -1,0 +1,4 @@
+<canvas id="canvas_webgl2" type="webgl2" bindtouchstart="webgl_touch" bindtouchmove="webgl_touch" bindtouchend="webgl_touch" bindtouchcancel="webgl_touch"></canvas>
+
+<video id="video" src="{{onekit_path}}textures/sintel.mp4">
+		</video>

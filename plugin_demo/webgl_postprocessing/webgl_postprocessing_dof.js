@@ -1,19 +1,34 @@
-// webgl_postprocessing/webgl_postprocessing_dof.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';	
 
-import Stats from './jsm/libs/stats.module.js';
-			import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import Stats from 'three/addons/libs/stats.module.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-			import { EffectComposer } from './jsm/postprocessing/EffectComposer.js';
-			import { RenderPass } from './jsm/postprocessing/RenderPass.js';
-			import { BokehPass } from './jsm/postprocessing/BokehPass.js';
-
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -24,234 +39,236 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-let camera, scene, renderer, stats,
-singleMaterial, zmaterial,
-parameters, nobjects, cubeMaterial;
+  let camera, scene, renderer, stats,
+    singleMaterial, zmaterial,
+    parameters, nobjects, cubeMaterial;
 
-let mouseX = 0, mouseY = 0;
+  let mouseX = 0, mouseY = 0;
 
-let windowHalfX = window.innerWidth / 2;
-let windowHalfY = window.innerHeight / 2;
+  let windowHalfX = window.innerWidth / 2;
+  let windowHalfY = window.innerHeight / 2;
 
-let width = window.innerWidth;
-let height = window.innerHeight;
+  let width = window.innerWidth;
+  let height = window.innerHeight;
 
-const materials = [], objects = [];
+  const materials = [], objects = [];
 
-const postprocessing = {};
+  const postprocessing = {};
 
-init();
-animate();
+  init();
+  animate();
 
-function init() {
+  function init() {
 
-const container = document.createElement( 'div' );
-document.body.appendChild( container );
+    const container = document.createElement( 'div' );
+    document.body.appendChild( container );
 
-camera = new THREE.PerspectiveCamera( 70, width / height, 1, 3000 );
-camera.position.z = 200;
+    camera = new THREE.PerspectiveCamera( 70, width / height, 1, 3000 );
+    camera.position.z = 200;
 
-scene = new THREE.Scene();
+    scene = new THREE.Scene();
 
-renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-renderer.setPixelRatio( window.devicePixelRatio );
-renderer.setSize( width, height );
-container.appendChild( renderer.domElement );
+    renderer = new THREE.WebGLRenderer();
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( width, height );
+    container.appendChild( renderer.domElement );
 
-const path = 'textures/cube/SwedishRoyalCastle/';
-const format = '.jpg';
-const urls = [
-    path + 'px' + format, path + 'nx' + format,
-    path + 'py' + format, path + 'ny' + format,
-    path + 'pz' + format, path + 'nz' + format
-];
+    const path = 'textures/cube/SwedishRoyalCastle/';
+    const format = '.jpg';
+    const urls = [
+      path + 'px' + format, path + 'nx' + format,
+      path + 'py' + format, path + 'ny' + format,
+      path + 'pz' + format, path + 'nz' + format
+    ];
 
-const textureCube = new THREE.CubeTextureLoader().load( urls );
+    const textureCube = new THREE.CubeTextureLoader().load( urls );
 
-parameters = { color: 0xff1100, envMap: textureCube };
-cubeMaterial = new THREE.MeshBasicMaterial( parameters );
+    parameters = { color: 0xff4900, envMap: textureCube };
+    cubeMaterial = new THREE.MeshBasicMaterial( parameters );
 
-singleMaterial = false;
+    singleMaterial = false;
 
-if ( singleMaterial ) zmaterial = [ cubeMaterial ];
+    if ( singleMaterial ) zmaterial = [ cubeMaterial ];
 
-const geo = new THREE.SphereGeometry( 1, 20, 10 );
+    const geo = new THREE.SphereGeometry( 1, 20, 10 );
 
-const xgrid = 14, ygrid = 9, zgrid = 14;
+    const xgrid = 14, ygrid = 9, zgrid = 14;
 
-nobjects = xgrid * ygrid * zgrid;
+    nobjects = xgrid * ygrid * zgrid;
 
-const s = 60;
-let count = 0;
+    const s = 60;
+    let count = 0;
 
-for ( let i = 0; i < xgrid; i ++ ) {
+    for ( let i = 0; i < xgrid; i ++ ) {
 
-    for ( let j = 0; j < ygrid; j ++ ) {
+      for ( let j = 0; j < ygrid; j ++ ) {
 
         for ( let k = 0; k < zgrid; k ++ ) {
 
-            let mesh;
+          let mesh;
 
-            if ( singleMaterial ) {
+          if ( singleMaterial ) {
 
-                mesh = new THREE.Mesh( geo, zmaterial );
+            mesh = new THREE.Mesh( geo, zmaterial );
 
-            } else {
+          } else {
 
-                mesh = new THREE.Mesh( geo, new THREE.MeshBasicMaterial( parameters ) );
-                materials[ count ] = mesh.material;
+            mesh = new THREE.Mesh( geo, new THREE.MeshBasicMaterial( parameters ) );
+            materials[ count ] = mesh.material;
 
-            }
+          }
 
-            const x = 200 * ( i - xgrid / 2 );
-            const y = 200 * ( j - ygrid / 2 );
-            const z = 200 * ( k - zgrid / 2 );
+          const x = 200 * ( i - xgrid / 2 );
+          const y = 200 * ( j - ygrid / 2 );
+          const z = 200 * ( k - zgrid / 2 );
 
-            mesh.position.set( x, y, z );
-            mesh.scale.set( s, s, s );
+          mesh.position.set( x, y, z );
+          mesh.scale.set( s, s, s );
 
-            mesh.matrixAutoUpdate = false;
-            mesh.updateMatrix();
+          mesh.matrixAutoUpdate = false;
+          mesh.updateMatrix();
 
-            scene.add( mesh );
-            objects.push( mesh );
+          scene.add( mesh );
+          objects.push( mesh );
 
-            count ++;
+          count ++;
 
         }
 
+      }
+
     }
 
-}
+    initPostprocessing();
 
-initPostprocessing();
+    renderer.autoClear = false;
 
-renderer.autoClear = false;
+    stats = new Stats();
+    container.appendChild( stats.dom );
 
-stats = new Stats();
-container.appendChild( stats.dom );
+    container.style.touchAction = 'none';
+    container.addEventListener( 'pointermove', onPointerMove );
 
-container.style.touchAction = 'none';
-container.addEventListener( 'pointermove', onPointerMove );
+    window.addEventListener( 'resize', onWindowResize );
 
-window.addEventListener( 'resize', onWindowResize );
+    const effectController = {
 
-const effectController = {
+      focus: 500.0,
+      aperture: 5,
+      maxblur: 0.01
 
-    focus: 500.0,
-    aperture: 5,
-    maxblur: 0.01
+    };
 
-};
+    const matChanger = function ( ) {
 
-const matChanger = function ( ) {
+      postprocessing.bokeh.uniforms[ 'focus' ].value = effectController.focus;
+      postprocessing.bokeh.uniforms[ 'aperture' ].value = effectController.aperture * 0.00001;
+      postprocessing.bokeh.uniforms[ 'maxblur' ].value = effectController.maxblur;
 
-    postprocessing.bokeh.uniforms[ 'focus' ].value = effectController.focus;
-    postprocessing.bokeh.uniforms[ 'aperture' ].value = effectController.aperture * 0.00001;
-    postprocessing.bokeh.uniforms[ 'maxblur' ].value = effectController.maxblur;
+    };
 
-};
+    const gui = new GUI();
+    gui.add( effectController, 'focus', 10.0, 3000.0, 10 ).onChange( matChanger );
+    gui.add( effectController, 'aperture', 0, 10, 0.1 ).onChange( matChanger );
+    gui.add( effectController, 'maxblur', 0.0, 0.01, 0.001 ).onChange( matChanger );
+    gui.close();
 
-const gui = new GUI();
-gui.add( effectController, 'focus', 10.0, 3000.0, 10 ).onChange( matChanger );
-gui.add( effectController, 'aperture', 0, 10, 0.1 ).onChange( matChanger );
-gui.add( effectController, 'maxblur', 0.0, 0.01, 0.001 ).onChange( matChanger );
-gui.close();
+    matChanger();
 
-matChanger();
+  }
 
-}
+  function onPointerMove( event ) {
 
-function onPointerMove( event ) {
+    if ( event.isPrimary === false ) return;
 
-if ( event.isPrimary === false ) return;
+    mouseX = event.clientX - windowHalfX;
+    mouseY = event.clientY - windowHalfY;
 
-mouseX = event.clientX - windowHalfX;
-mouseY = event.clientY - windowHalfY;
+  }
 
-}
+  function onWindowResize() {
 
-function onWindowResize() {
+    windowHalfX = window.innerWidth / 2;
+    windowHalfY = window.innerHeight / 2;
 
-windowHalfX = window.innerWidth / 2;
-windowHalfY = window.innerHeight / 2;
+    width = window.innerWidth;
+    height = window.innerHeight;
 
-width = window.innerWidth;
-height = window.innerHeight;
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
 
-camera.aspect = width / height;
-camera.updateProjectionMatrix();
+    renderer.setSize( width, height );
+    postprocessing.composer.setSize( width, height );
 
-renderer.setSize( width, height );
-postprocessing.composer.setSize( width, height );
+  }
 
-}
+  function initPostprocessing() {
 
-function initPostprocessing() {
+    const renderPass = new RenderPass( scene, camera );
 
-const renderPass = new RenderPass( scene, camera );
+    const bokehPass = new BokehPass( scene, camera, {
+      focus: 1.0,
+      aperture: 0.025,
+      maxblur: 0.01
+    } );
 
-const bokehPass = new BokehPass( scene, camera, {
-    focus: 1.0,
-    aperture: 0.025,
-    maxblur: 0.01,
+    const outputPass = new OutputPass();
 
-    width: width,
-    height: height
-} );
+    const composer = new EffectComposer( renderer );
 
-const composer = new EffectComposer( renderer );
+    composer.addPass( renderPass );
+    composer.addPass( bokehPass );
+    composer.addPass( outputPass );
 
-composer.addPass( renderPass );
-composer.addPass( bokehPass );
+    postprocessing.composer = composer;
+    postprocessing.bokeh = bokehPass;
 
-postprocessing.composer = composer;
-postprocessing.bokeh = bokehPass;
+  }
 
-}
+  function animate() {
 
-function animate() {
+    requestId = requestAnimationFrame( animate, renderer.domElement );
 
-requestId = requestAnimationFrame( animate, renderer.domElement );
+    stats.begin();
+    render();
+    stats.end();
 
-stats.begin();
-render();
-stats.end();
+  }
 
-}
+  function render() {
 
-function render() {
+    const time = Date.now() * 0.00005;
 
-const time = Date.now() * 0.00005;
+    camera.position.x += ( mouseX - camera.position.x ) * 0.036;
+    camera.position.y += ( - ( mouseY ) - camera.position.y ) * 0.036;
 
-camera.position.x += ( mouseX - camera.position.x ) * 0.036;
-camera.position.y += ( - ( mouseY ) - camera.position.y ) * 0.036;
+    camera.lookAt( scene.position );
 
-camera.lookAt( scene.position );
+    if ( ! singleMaterial ) {
 
-if ( ! singleMaterial ) {
-
-    for ( let i = 0; i < nobjects; i ++ ) {
+      for ( let i = 0; i < nobjects; i ++ ) {
 
         const h = ( 360 * ( i / nobjects + time ) % 360 ) / 360;
         materials[ i ].color.setHSL( h, 1, 0.5 );
 
+      }
+
     }
 
-}
+    postprocessing.composer.render( 0.1 );
 
-postprocessing.composer.render( 0.1 );
-
-}
-}
+  }
+  }
 })

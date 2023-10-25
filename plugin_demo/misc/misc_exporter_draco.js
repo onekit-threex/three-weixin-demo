@@ -1,18 +1,30 @@
-// misc/misc_exporter_draco.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
-import { DRACOExporter } from './jsm/exporters/DRACOExporter.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+import { DRACOExporter } from 'three/addons/exporters/DRACOExporter.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
-		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -23,136 +35,140 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-let scene, camera, renderer, exporter, mesh;
+    let scene, camera, renderer, exporter, mesh;
 
-const params = {
-    export: exportFile
-};
+    const params = {
+      export: exportFile
+    };
 
-init();
-animate();
+    init();
+    animate();
 
-function init() {
+    function init() {
 
-    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
-    camera.position.set( 200, 100, 200 );
+      camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 100 );
+      camera.position.set( 4, 2, 4 );
 
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color( 0xa0a0a0 );
-    scene.fog = new THREE.Fog( 0xa0a0a0, 200, 1000 );
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color( 0xa0a0a0 );
+      scene.fog = new THREE.Fog( 0xa0a0a0, 4, 20 );
 
-    exporter = new DRACOExporter();
+      exporter = new DRACOExporter();
 
-    //
+      //
 
-    const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
-    hemiLight.position.set( 0, 200, 0 );
-    scene.add( hemiLight );
+      const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444, 3 );
+      hemiLight.position.set( 0, 20, 0 );
+      scene.add( hemiLight );
 
-    const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
-    directionalLight.position.set( 0, 200, 100 );
-    directionalLight.castShadow = true;
-    directionalLight.shadow.camera.top = 180;
-    directionalLight.shadow.camera.bottom = - 100;
-    directionalLight.shadow.camera.left = - 120;
-    directionalLight.shadow.camera.right = 120;
-    scene.add( directionalLight );
+      const directionalLight = new THREE.DirectionalLight( 0xffffff, 3 );
+      directionalLight.position.set( 0, 20, 10 );
+      directionalLight.castShadow = true;
+      directionalLight.shadow.camera.top = 2;
+      directionalLight.shadow.camera.bottom = - 2;
+      directionalLight.shadow.camera.left = - 2;
+      directionalLight.shadow.camera.right = 2;
+      scene.add( directionalLight );
 
-    // ground
+      // ground
 
-    const ground = new THREE.Mesh(
-        new THREE.PlaneGeometry( 2000, 2000 ),
-        new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false } )
-    );
-    ground.rotation.x = - Math.PI / 2;
-    ground.position.y = - 75;
-    ground.receiveShadow = true;
-    scene.add( ground );
+      const ground = new THREE.Mesh( new THREE.PlaneGeometry( 40, 40 ), new THREE.MeshPhongMaterial( { color: 0xbbbbbb, depthWrite: false } ) );
+      ground.rotation.x = - Math.PI / 2;
+      ground.receiveShadow = true;
+      scene.add( ground );
 
-    const grid = new THREE.GridHelper( 2000, 20, 0x000000, 0x000000 );
-    grid.material.opacity = 0.2;
-    grid.material.transparent = true;
-    grid.position.y = - 75;
-    scene.add( grid );
+      const grid = new THREE.GridHelper( 40, 20, 0x000000, 0x000000 );
+      grid.material.opacity = 0.2;
+      grid.material.transparent = true;
+      scene.add( grid );
 
-    // export mesh
+      // export mesh
 
-    const geometry = new THREE.TorusKnotGeometry( 50, 15, 200, 30 );
-    const material = new THREE.MeshPhongMaterial( { color: 0x00ff00 } );
-    mesh = new THREE.Mesh( geometry, material );
-    mesh.castShadow = true;
-    mesh.position.y = 25;
-    scene.add( mesh );
+      const geometry = new THREE.TorusKnotGeometry( 0.75, 0.2, 200, 30 );
+      const material = new THREE.MeshPhongMaterial( { color: 0x00ff00 } );
+      mesh = new THREE.Mesh( geometry, material );
+      mesh.castShadow = true;
+      mesh.position.y = 1.5;
+      scene.add( mesh );
 
-    //
+      //
 
-    renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    renderer.shadowMap.enabled = true;
-    document.body.appendChild( renderer.domElement );
+      renderer = new THREE.WebGLRenderer( { antialias: true } );
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      renderer.shadowMap.enabled = true;
+      document.body.appendChild( renderer.domElement );
 
-    //
+      //
 
-    const controls = new OrbitControls( camera, renderer.domElement );
-    controls.target.set( 0, 25, 0 );
-    controls.update();
+      const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+      controls.target.set( 0, 1.5, 0 );
+      controls.update();
 
-    //
+      //
 
-    window.addEventListener( 'resize', onWindowResize );
+      window.addEventListener( 'resize', onWindowResize );
 
-    const gui = new GUI();
+      const gui = new GUI();
 
-    gui.add( params, 'export' ).name( 'Export DRC' );
-    gui.open();
+      gui.add( params, 'export' ).name( 'Export DRC' );
+      gui.open();
 
 
-}
+    }
 
-function onWindowResize() {
+    function onWindowResize() {
 
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
 
-    renderer.setSize( window.innerWidth, window.innerHeight );
+      renderer.setSize( window.innerWidth, window.innerHeight );
 
-}
+    }
 
-function animate() {
+    function animate() {
 
-    requestId = requestAnimationFrame(animate);
-    renderer.render( scene, camera );
+      requestId = requestAnimationFrame( animate );
+      renderer.render( scene, camera );
 
-}
+    }
 
-function exportFile() {
+    function exportFile() {
 
-    const result = exporter.parse( mesh );
-    saveArrayBuffer( result, 'file.drc' );
+      const result = exporter.parse( mesh );
+      saveArrayBuffer( result, 'file.drc' );
 
-}
+    }
 
-const link = document.createElement( 'a' );
-link.style.display = 'none';
-document.body.appendChild( link );
+    const link = document.createElement( 'a' );
+    link.style.display = 'none';
+    document.body.appendChild( link );
 
-function save( blob, filename ) {
+    function save( blob, filename ) {
 
-    link.href = URL.createObjectURL( blob );
-    link.download = filename;
-    link.click();
+      link.href = URL.createObjectURL( blob );
+      link.download = filename;
+      link.click();
 
-}
+    }
 
-function saveArrayBuffer( buffer, filename ) {
+    function saveArrayBuffer( buffer, filename ) {
 
-    save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+      save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
 
-}
-}
+    }
+
+  }
 })

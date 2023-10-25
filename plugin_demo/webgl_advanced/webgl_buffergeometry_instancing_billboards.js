@@ -1,70 +1,85 @@
-// webgl_advanced/webgl_buffergeometry_instancing_billboards.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import Stats from './jsm/libs/stats.module.js';
-const onekit = {
-    "vshader" :`
-    precision highp float;
-    uniform mat4 modelViewMatrix;
-    uniform mat4 projectionMatrix;
-    uniform float time;
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-    attribute vec3 position;
-    attribute vec2 uv;
-    attribute vec3 translate;
+import Stats from 'three/addons/libs/stats.module.js';
+const vshader = `
+precision highp float;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform float time;
 
-    varying vec2 vUv;
-    varying float vScale;
+attribute vec3 position;
+attribute vec2 uv;
+attribute vec3 translate;
 
-    void main() {
+varying vec2 vUv;
+varying float vScale;
 
-        vec4 mvPosition = modelViewMatrix * vec4( translate, 1.0 );
-        vec3 trTime = vec3(translate.x + time,translate.y + time,translate.z + time);
-        float scale =  sin( trTime.x * 2.1 ) + sin( trTime.y * 3.2 ) + sin( trTime.z * 4.3 );
-        vScale = scale;
-        scale = scale * 10.0 + 10.0;
-        mvPosition.xyz += position * scale;
-        vUv = uv;
-        gl_Position = projectionMatrix * mvPosition;
-    }
-    ` ,
-    "fshader":`
-    precision highp float;
+void main() {
 
-    uniform sampler2D map;
+  vec4 mvPosition = modelViewMatrix * vec4( translate, 1.0 );
+  vec3 trTime = vec3(translate.x + time,translate.y + time,translate.z + time);
+  float scale =  sin( trTime.x * 2.1 ) + sin( trTime.y * 3.2 ) + sin( trTime.z * 4.3 );
+  vScale = scale;
+  scale = scale * 10.0 + 10.0;
+  mvPosition.xyz += position * scale;
+  vUv = uv;
+  gl_Position = projectionMatrix * mvPosition;
 
-    varying vec2 vUv;
-    varying float vScale;
-
-    // HSL to RGB Convertion helpers
-    vec3 HUEtoRGB(float H){
-        H = mod(H,1.0);
-        float R = abs(H * 6.0 - 3.0) - 1.0;
-        float G = 2.0 - abs(H * 6.0 - 2.0);
-        float B = 2.0 - abs(H * 6.0 - 4.0);
-        return clamp(vec3(R,G,B),0.0,1.0);
-    }
-
-    vec3 HSLtoRGB(vec3 HSL){
-        vec3 RGB = HUEtoRGB(HSL.x);
-        float C = (1.0 - abs(2.0 * HSL.z - 1.0)) * HSL.y;
-        return (RGB - 0.5) * C + HSL.z;
-    }
-
-    void main() {
-        vec4 diffuseColor = texture2D( map, vUv );
-        gl_FragColor = vec4( diffuseColor.xyz * HSLtoRGB(vec3(vScale/5.0, 1.0, 0.5)), diffuseColor.w );
-
-        if ( diffuseColor.w < 0.5 ) discard;
-    }
-`
 }
+`
+const fshader = `
+precision highp float;
+
+uniform sampler2D map;
+
+varying vec2 vUv;
+varying float vScale;
+
+// HSL to RGB Convertion helpers
+vec3 HUEtoRGB(float H){
+  H = mod(H,1.0);
+  float R = abs(H * 6.0 - 3.0) - 1.0;
+  float G = 2.0 - abs(H * 6.0 - 2.0);
+  float B = 2.0 - abs(H * 6.0 - 4.0);
+  return clamp(vec3(R,G,B),0.0,1.0);
+}
+
+vec3 HSLtoRGB(vec3 HSL){
+  vec3 RGB = HUEtoRGB(HSL.x);
+  float C = (1.0 - abs(2.0 * HSL.z - 1.0)) * HSL.y;
+  return (RGB - 0.5) * C + HSL.z;
+}
+
+void main() {
+  vec4 diffuseColor = texture2D( map, vUv );
+  gl_FragColor = vec4( diffuseColor.xyz * HSLtoRGB(vec3(vScale/5.0, 1.0, 0.5)), diffuseColor.w );
+
+  if ( diffuseColor.w < 0.5 ) discard;
+}
+`
 
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -75,24 +90,26 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-let container, stats;
+		let container, stats;
 
 		let camera, scene, renderer;
 		let geometry, material, mesh;
 
 		function init() {
 
-			renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
+			renderer = new THREE.WebGLRenderer();
 
 			if ( renderer.capabilities.isWebGL2 === false && renderer.extensions.has( 'ANGLE_instanced_arrays' ) === false ) {
 
@@ -131,11 +148,11 @@ let container, stats;
 
 			material = new THREE.RawShaderMaterial( {
 				uniforms: {
-					'map': { value: new THREE.TextureLoader( ).load( 'textures/sprites/circle.png' ) },
+					'map': { value: new THREE.TextureLoader().load( 'textures/sprites/circle.png' ) },
 					'time': { value: 0.0 }
 				},
-				vertexShader: onekit['vshader' ],
-				fragmentShader: onekit['fshader' ],
+				vertexShader: vshader,
+				fragmentShader: fshader,
 				depthTest: true,
 				depthWrite: true
 			} );
@@ -168,7 +185,7 @@ let container, stats;
 
 		function animate() {
 
-			requestId = requestAnimationFrame(animate);
+			requestId = requestAnimationFrame( animate );
 
 			render();
 			stats.update();
@@ -193,5 +210,5 @@ let container, stats;
 			animate();
 
 		}
-}
+  }
 })

@@ -1,12 +1,18 @@
-// webgl_advanced/webgl_buffergeometry_instancing.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import Stats from './jsm/libs/stats.module.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-
-const onekit = {
-   "vertexShader":`
+import Stats from 'three/addons/libs/stats.module.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+const vertexShader = `
 		precision highp float;
 
 		uniform float sineTime;
@@ -35,8 +41,9 @@ const onekit = {
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( vPosition, 1.0 );
 
 		}
-`,
-"fragmentShader":`
+`
+
+const fragmentShader = `
 
 		precision highp float;
 
@@ -52,15 +59,20 @@ const onekit = {
 
 			gl_FragColor = color;
 
-		}
-`
-}
-
+    }
+    `
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -71,169 +83,171 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
+		let container, stats;
 
-let container, stats;
+		let camera, scene, renderer;
 
-let camera, scene, renderer;
+		init();
+		animate();
 
-init();
-animate();
+		function init() {
 
-function init() {
+			container = document.getElementById( 'container' );
 
-    container = document.getElementById( 'container' );
+			camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 10 );
+			camera.position.z = 2;
 
-    camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 10 );
-    camera.position.z = 2;
+			scene = new THREE.Scene();
 
-    scene = new THREE.Scene();
+			// geometry
 
-    // geometry
+			const vector = new THREE.Vector4();
 
-    const vector = new THREE.Vector4();
+			const instances = 50000;
 
-    const instances = 50000;
+			const positions = [];
+			const offsets = [];
+			const colors = [];
+			const orientationsStart = [];
+			const orientationsEnd = [];
 
-    const positions = [];
-    const offsets = [];
-    const colors = [];
-    const orientationsStart = [];
-    const orientationsEnd = [];
+			positions.push( 0.025, - 0.025, 0 );
+			positions.push( - 0.025, 0.025, 0 );
+			positions.push( 0, 0, 0.025 );
 
-    positions.push( 0.025, - 0.025, 0 );
-    positions.push( - 0.025, 0.025, 0 );
-    positions.push( 0, 0, 0.025 );
+			// instanced attributes
 
-    // instanced attributes
+			for ( let i = 0; i < instances; i ++ ) {
 
-    for ( let i = 0; i < instances; i ++ ) {
+				// offsets
 
-        // offsets
+				offsets.push( Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5 );
 
-        offsets.push( Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5 );
+				// colors
 
-        // colors
+				colors.push( Math.random(), Math.random(), Math.random(), Math.random() );
 
-        colors.push( Math.random(), Math.random(), Math.random(), Math.random() );
+				// orientation start
 
-        // orientation start
+				vector.set( Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1 );
+				vector.normalize();
 
-        vector.set( Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1 );
-        vector.normalize();
+				orientationsStart.push( vector.x, vector.y, vector.z, vector.w );
 
-        orientationsStart.push( vector.x, vector.y, vector.z, vector.w );
+				// orientation end
 
-        // orientation end
+				vector.set( Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1 );
+				vector.normalize();
 
-        vector.set( Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1 );
-        vector.normalize();
+				orientationsEnd.push( vector.x, vector.y, vector.z, vector.w );
 
-        orientationsEnd.push( vector.x, vector.y, vector.z, vector.w );
+			}
 
-    }
+			const geometry = new THREE.InstancedBufferGeometry();
+			geometry.instanceCount = instances; // set so its initalized for dat.GUI, will be set in first draw otherwise
 
-    const geometry = new THREE.InstancedBufferGeometry();
-    geometry.instanceCount = instances; // set so its initalized for dat.GUI, will be set in first draw otherwise
+			geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
 
-    geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
+			geometry.setAttribute( 'offset', new THREE.InstancedBufferAttribute( new Float32Array( offsets ), 3 ) );
+			geometry.setAttribute( 'color', new THREE.InstancedBufferAttribute( new Float32Array( colors ), 4 ) );
+			geometry.setAttribute( 'orientationStart', new THREE.InstancedBufferAttribute( new Float32Array( orientationsStart ), 4 ) );
+			geometry.setAttribute( 'orientationEnd', new THREE.InstancedBufferAttribute( new Float32Array( orientationsEnd ), 4 ) );
 
-    geometry.setAttribute( 'offset', new THREE.InstancedBufferAttribute( new Float32Array( offsets ), 3 ) );
-    geometry.setAttribute( 'color', new THREE.InstancedBufferAttribute( new Float32Array( colors ), 4 ) );
-    geometry.setAttribute( 'orientationStart', new THREE.InstancedBufferAttribute( new Float32Array( orientationsStart ), 4 ) );
-    geometry.setAttribute( 'orientationEnd', new THREE.InstancedBufferAttribute( new Float32Array( orientationsEnd ), 4 ) );
+			// material
 
-    // material
+			const material = new THREE.RawShaderMaterial( {
 
-    const material = new THREE.RawShaderMaterial( {
+				uniforms: {
+					'time': { value: 1.0 },
+					'sineTime': { value: 1.0 }
+				},
+				vertexShader,
+				fragmentShader,
+				side: THREE.DoubleSide,
+				forceSinglePass: true,
+				transparent: true
 
-        uniforms: {
-            'time': { value: 1.0 },
-            'sineTime': { value: 1.0 }
-        },
-        vertexShader:onekit['vertexShader' ],
-        fragmentShader: onekit['fragmentShader' ],
-        side: THREE.DoubleSide,
-        transparent: true
+			} );
 
-    } );
+			//
 
-    //
+			const mesh = new THREE.Mesh( geometry, material );
+			scene.add( mesh );
 
-    const mesh = new THREE.Mesh( geometry, material );
-    scene.add( mesh );
+			//
 
-    //
+			renderer = new THREE.WebGLRenderer();
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			container.appendChild( renderer.domElement );
 
-    renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    container.appendChild( renderer.domElement );
+			if ( renderer.capabilities.isWebGL2 === false && renderer.extensions.has( 'ANGLE_instanced_arrays' ) === false ) {
 
-    if ( renderer.capabilities.isWebGL2 === false && renderer.extensions.has( 'ANGLE_instanced_arrays' ) === false ) {
+				document.getElementById( 'notSupported' ).style.display = '';
+				return;
 
-        document.getElementById( 'notSupported' ).style.display = '';
-        return;
+			}
 
-    }
+			//
 
-    //
+			const gui = new GUI( { width: 350 } );
+			gui.add( geometry, 'instanceCount', 0, instances );
 
-    const gui = new GUI( { width: 350 } );
-    gui.add( geometry, 'instanceCount', 0, instances );
+			//
 
-    //
+			stats = new Stats();
+			container.appendChild( stats.dom );
 
-    stats = new Stats();
-    container.appendChild( stats.dom );
+			//
 
-    //
+			window.addEventListener( 'resize', onWindowResize );
 
-    window.addEventListener( 'resize', onWindowResize );
+		}
 
-}
+		function onWindowResize() {
 
-function onWindowResize() {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
 
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+			renderer.setSize( window.innerWidth, window.innerHeight );
 
-    renderer.setSize( window.innerWidth, window.innerHeight );
+		}
 
-}
+		//
 
-//
+		function animate() {
 
-function animate() {
+			requestId = requestAnimationFrame( animate );
 
-    requestId = requestAnimationFrame(animate);
+			render();
+			stats.update();
 
-    render();
-    stats.update();
+		}
 
-}
+		function render() {
 
-function render() {
+			const time = performance.now();
 
-    const time = performance.now();
+			const object = scene.children[ 0 ];
 
-    const object = scene.children[ 0 ];
+			object.rotation.y = time * 0.0005;
+			object.material.uniforms[ 'time' ].value = time * 0.005;
+			object.material.uniforms[ 'sineTime' ].value = Math.sin( object.material.uniforms[ 'time' ].value * 0.05 );
 
-    object.rotation.y = time * 0.0005;
-    object.material.uniforms[ 'time' ].value = time * 0.005;
-    object.material.uniforms[ 'sineTime' ].value = Math.sin( object.material.uniforms[ 'time' ].value * 0.05 );
+			renderer.render( scene, camera );
 
-    renderer.render( scene, camera );
-
-}
-}
+		}
+  }
 })

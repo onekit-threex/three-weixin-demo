@@ -1,16 +1,31 @@
-// webgl/webgl_water_flowmap.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
-import { Water } from './jsm/objects/Water2.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+import { Water } from 'three/addons/objects/Water2.js';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -20,128 +35,128 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        let scene, camera, renderer, water;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-        init();
-        animate();
+  let scene, camera, renderer, water;
 
-        function init() {
+  init();
+  animate();
 
-            // scene
+  function init() {
 
-            scene = new THREE.Scene();
+    // scene
 
-            // camera
+    scene = new THREE.Scene();
 
-            camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 200 );
-            camera.position.set( 0, 25, 0 );
-            camera.lookAt( scene.position );
+    // camera
 
-            // ground
+    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 200 );
+    camera.position.set( 0, 25, 0 );
+    camera.lookAt( scene.position );
 
-            const groundGeometry = new THREE.PlaneGeometry( 20, 20, 10, 10 );
-            const groundMaterial = new THREE.MeshBasicMaterial( { color: 0xcccccc } );
-            const ground = new THREE.Mesh( groundGeometry, groundMaterial );
-            ground.rotation.x = Math.PI * - 0.5;
-            scene.add( ground );
+    // ground
 
-            const textureLoader = new THREE.TextureLoader( );
-            textureLoader.load( 'textures/floors/FloorsCheckerboard_S_Diffuse.jpg', function ( map ) {
+    const groundGeometry = new THREE.PlaneGeometry( 20, 20, 10, 10 );
+    const groundMaterial = new THREE.MeshBasicMaterial( { color: 0xe7e7e7 } );
+    const ground = new THREE.Mesh( groundGeometry, groundMaterial );
+    ground.rotation.x = Math.PI * - 0.5;
+    scene.add( ground );
 
-                map.wrapS = THREE.RepeatWrapping;
-                map.wrapT = THREE.RepeatWrapping;
-                map.anisotropy = 16;
-                map.repeat.set( 4, 4 );
-                groundMaterial.map = map;
-                groundMaterial.needsUpdate = true;
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load( 'textures/floors/FloorsCheckerboard_S_Diffuse.jpg', function ( map ) {
 
-            } );
+      map.wrapS = THREE.RepeatWrapping;
+      map.wrapT = THREE.RepeatWrapping;
+      map.anisotropy = 16;
+      map.repeat.set( 4, 4 );
+      map.colorSpace = THREE.SRGBColorSpace;
+      groundMaterial.map = map;
+      groundMaterial.needsUpdate = true;
 
-            // water
+    } );
 
-            const waterGeometry = new THREE.PlaneGeometry( 20, 20 );
-            const flowMap = textureLoader.load( 'textures/water/Water_1_M_Flow.jpg' );
+    // water
 
-            water = new Water( waterGeometry, {
-                scale: 2,
-                textureWidth: 1024,
-                textureHeight: 1024,
-                flowMap: flowMap
-            } );
+    const waterGeometry = new THREE.PlaneGeometry( 20, 20 );
+    const flowMap = textureLoader.load( 'textures/water/Water_1_M_Flow.jpg' );
 
-            water.position.y = 1;
-            water.rotation.x = Math.PI * - 0.5;
-            scene.add( water );
+    water = new Water( waterGeometry, {
+      scale: 2,
+      textureWidth: 1024,
+      textureHeight: 1024,
+      flowMap: flowMap
+    } );
 
-            // flow map helper
+    water.position.y = 1;
+    water.rotation.x = Math.PI * - 0.5;
+    scene.add( water );
 
-            const helperGeometry = new THREE.PlaneGeometry( 20, 20 );
-            const helperMaterial = new THREE.MeshBasicMaterial( { map: flowMap } );
-            const helper = new THREE.Mesh( helperGeometry, helperMaterial );
-            helper.position.y = 1.01;
-            helper.rotation.x = Math.PI * - 0.5;
-            helper.visible = false;
-            scene.add( helper );
+    // flow map helper
 
-            // renderer
+    const helperGeometry = new THREE.PlaneGeometry( 20, 20 );
+    const helperMaterial = new THREE.MeshBasicMaterial( { map: flowMap } );
+    const helper = new THREE.Mesh( helperGeometry, helperMaterial );
+    helper.position.y = 1.01;
+    helper.rotation.x = Math.PI * - 0.5;
+    helper.visible = false;
+    scene.add( helper );
 
-            renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-            renderer.setSize( window.innerWidth, window.innerHeight );
-            renderer.setPixelRatio( window.devicePixelRatio );
-            document.body.appendChild( renderer.domElement );
+    // renderer
 
-            //
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    document.body.appendChild( renderer.domElement );
 
-            const gui = new GUI();
-            gui.add( helper, 'visible' ).name( 'Show Flow Map' );
-            gui.open();
+    //
 
-            //
+    const gui = new GUI();
+    gui.add( helper, 'visible' ).name( 'Show Flow Map' );
+    gui.open();
 
-            const controls = new OrbitControls( camera, renderer.domElement );
-            controls.minDistance = 5;
-            controls.maxDistance = 50;
+    //
 
-            //
+    const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+    controls.minDistance = 5;
+    controls.maxDistance = 50;
 
-            window.addEventListener( 'resize', onWindowResize );
+    //
 
-        }
+    window.addEventListener( 'resize', onWindowResize );
 
-        function onWindowResize() {
+  }
 
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize( window.innerWidth, window.innerHeight );
+  function onWindowResize() {
 
-        }
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize( window.innerWidth, window.innerHeight );
 
-        function animate() {
+  }
 
-            requestId = requestAnimationFrame(animate);
+  function animate() {
 
-            render();
+    requestId = requestAnimationFrame( animate );
 
-        }
+    render();
 
-        function render() {
+  }
 
-            renderer.render( scene, camera );
+  function render() {
 
-        }
-    }
+    renderer.render( scene, camera );
+
+  }
+  }
 })

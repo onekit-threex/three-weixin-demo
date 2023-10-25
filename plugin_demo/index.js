@@ -1,70 +1,50 @@
 import files from './files.json'
-//var index = 0
-//var timer
+var timer
 Page({
-  data:{
-    onekit_path:getApp().onekit_path
+  onAddToFavorites() {
+    return {
+    }
   },
-    onshareAppMessage(){
-        return {
-            title: 'ThreeJS原生引擎',
-            path: '/index'
-          }
-    },
-    onShareTimeline(){
-        return {
-            title: 'ThreeJS原生引擎',
-            path: '/index'
-          }
-    },
-	onLoad() {
-		const sections = []
-		const platform = wx.getSystemInfoSync()
-		for (const sectionName of Object.keys(files)) {
-			if (sectionName.startsWith("physics_")) {
-				const type = platform == "ios" ? "js" : "wasm"
-				if (!sectionName.endsWith("_" + type)) {
-					continue
-				}
-			}
-			sections.push({
-				sectionName,
-				demos: files[sectionName]
-			})
-		}
-		this.setData({
-			sections
-		})
-	},
-	/*
-	run() {
-        var subs = Object.keys(files)
-		var x = index;
-		for (var sub of subs) {
-			var demos = files[sub]
-			if (demos.length > x) {
-				var demo = demos[x]
-				console.error(index,sub,x, demo)
-				wx.redirectTo({
-					url: "/" + sub + "/" + demo
-                })
-                return
-			} else {
-                x -= demos.length
-			}
-		}
-		clearInterval(timer)
+  onShareTimeline(){
+    return {
+      title: '快来体验ThreeX的3D世界吧!'
+    }
+  },
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onLoad() {
+    const sections = []
+    const platform = wx.getSystemInfoSync().platform
+    for (const sectionName of Object.keys(files)) {
+      /*if (sectionName.startsWith("physics_")) {
 
-	},*/
-	onReady() {
-
-	//	timer = setInterval(() => {
-    //        index++
-	//	this.run()
-	//}, 4000)
-	//	this.run()
-	},
-	onHide() {
-		//clearInterval(timer)
-	}
+        const type = platform != "android" ? "js" : "wasm"
+        if (platform != "devtools" && !sectionName.endsWith("_" + type)) {
+          continue
+        }
+      }*/
+      sections.push({
+        sectionName,
+        demos: files[sectionName]
+      })
+    }
+    const onekit_path = getApp().onekit_path
+    this.setData({
+      onekit_path,
+      sections
+    })
+  },
+  demo_tap(e) {
+    const {
+      sub,
+      demo
+    } = e.target.dataset
+    wx.navigateTo({
+      url: `${sub}/${demo}`,
+    })
+  },
+  onHide() {
+    clearInterval(timer)
+  }
 })

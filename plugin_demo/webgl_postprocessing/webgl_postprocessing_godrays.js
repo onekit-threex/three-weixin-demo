@@ -1,20 +1,34 @@
-// webgl_postprocessing/webgl_postprocessing_godrays.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import Stats from './jsm/libs/stats.module.js';
+import Stats from 'three/addons/libs/stats.module.js';
 
-import { OBJLoader } from './jsm/loaders/OBJLoader.js';
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
-import { GodRaysFakeSunShader, GodRaysDepthMaskShader, GodRaysCombineShader, GodRaysGenerateShader } from './jsm/shaders/GodRaysShader.js';
-
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+import { GodRaysFakeSunShader, GodRaysDepthMaskShader, GodRaysCombineShader, GodRaysGenerateShader } from 'three/addons/shaders/GodRaysShader.js';
 
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -25,364 +39,362 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {	
+  let container, stats;
+  let camera, scene, renderer, materialDepth;
 
-let container, stats;
-			let camera, scene, renderer, materialDepth;
+  let sphereMesh;
 
-			let sphereMesh;
+  const sunPosition = new THREE.Vector3( 0, 1000, - 1000 );
+  const clipPosition = new THREE.Vector4();
+  const screenSpacePosition = new THREE.Vector3();
 
-			const sunPosition = new THREE.Vector3( 0, 1000, - 1000 );
-			const clipPosition = new THREE.Vector4();
-			const screenSpacePosition = new THREE.Vector3();
+  const postprocessing = { enabled: true };
 
-			const postprocessing = { enabled: true };
+  const orbitRadius = 200;
 
-			const orbitRadius = 200;
+  const bgColor = 0x000511;
+  const sunColor = 0xffee00;
 
-			const bgColor = 0x000511;
-			const sunColor = 0xffee00;
+  // Use a smaller size for some of the god-ray render targets for better performance.
+  const godrayRenderTargetResolutionMultiplier = 1.0 / 4.0;
 
-			// Use a smaller size for some of the god-ray render targets for better performance.
-			const godrayRenderTargetResolutionMultiplier = 1.0 / 4.0;
+  init();
+  animate();
 
-			init();
-			animate();
+  function init() {
 
-			function init() {
+    container = document.createElement( 'div' );
+    document.body.appendChild( container );
 
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
+    //
 
-				//
+    camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 3000 );
+    camera.position.z = 200;
 
-				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 3000 );
-				camera.position.z = 200;
+    scene = new THREE.Scene();
 
-				scene = new THREE.Scene();
+    //
 
-				//
+    materialDepth = new THREE.MeshDepthMaterial();
 
-				materialDepth = new THREE.MeshDepthMaterial();
+    // tree
 
-				const materialScene = new THREE.MeshBasicMaterial( { color: 0x000000 } );
+    const loader = new OBJLoader();
+    loader.load( 'models/obj/tree.obj', function ( object ) {
 
-				// tree
+      object.position.set( 0, - 150, - 150 );
+      object.scale.multiplyScalar( 400 );
+      scene.add( object );
 
-				const loader = new OBJLoader();
-				loader.load( 'models/obj/tree.obj', function ( object ) {
+    } );
 
-					object.material = materialScene;
-					object.position.set( 0, - 150, - 150 );
-					object.scale.multiplyScalar( 400 );
-					scene.add( object );
+    // sphere
 
-				} );
+    const geo = new THREE.SphereGeometry( 1, 20, 10 );
+    sphereMesh = new THREE.Mesh( geo, new THREE.MeshBasicMaterial( { color: 0x000000 } ) );
+    sphereMesh.scale.multiplyScalar( 20 );
+    scene.add( sphereMesh );
 
-				// sphere
+    //
 
-				const geo = new THREE.SphereGeometry( 1, 20, 10 );
-				sphereMesh = new THREE.Mesh( geo, materialScene );
-				sphereMesh.scale.multiplyScalar( 20 );
-				scene.add( sphereMesh );
+    renderer = new THREE.WebGLRenderer();
+    renderer.setClearColor( 0xffffff );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    container.appendChild( renderer.domElement );
 
-				//
+    renderer.autoClear = false;
 
-				renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-				renderer.setClearColor( 0xffffff );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				container.appendChild( renderer.domElement );
+    const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+    controls.minDistance = 50;
+    controls.maxDistance = 500;
 
-				renderer.autoClear = false;
+    //
 
-				const controls = new OrbitControls( camera, renderer.domElement );
-				controls.minDistance = 50;
-				controls.maxDistance = 500;
+    stats = new Stats();
+    container.appendChild( stats.dom );
 
-				//
+    //
 
-				stats = new Stats();
-				container.appendChild( stats.dom );
+    window.addEventListener( 'resize', onWindowResize );
 
-				//
+    //
 
-				window.addEventListener( 'resize', onWindowResize );
+    initPostprocessing( window.innerWidth, window.innerHeight );
 
-				//
+  }
 
-				initPostprocessing( window.innerWidth, window.innerHeight );
+  //
 
-			}
+  function onWindowResize() {
 
-			//
+    const renderTargetWidth = window.innerWidth;
+    const renderTargetHeight = window.innerHeight;
 
-			function onWindowResize() {
+    camera.aspect = renderTargetWidth / renderTargetHeight;
+    camera.updateProjectionMatrix();
 
-				const renderTargetWidth = window.innerWidth;
-				const renderTargetHeight = window.innerHeight;
+    renderer.setSize( renderTargetWidth, renderTargetHeight );
+    postprocessing.rtTextureColors.setSize( renderTargetWidth, renderTargetHeight );
+    postprocessing.rtTextureDepth.setSize( renderTargetWidth, renderTargetHeight );
+    postprocessing.rtTextureDepthMask.setSize( renderTargetWidth, renderTargetHeight );
 
-				camera.aspect = renderTargetWidth / renderTargetHeight;
-				camera.updateProjectionMatrix();
+    const adjustedWidth = renderTargetWidth * godrayRenderTargetResolutionMultiplier;
+    const adjustedHeight = renderTargetHeight * godrayRenderTargetResolutionMultiplier;
+    postprocessing.rtTextureGodRays1.setSize( adjustedWidth, adjustedHeight );
+    postprocessing.rtTextureGodRays2.setSize( adjustedWidth, adjustedHeight );
 
-				renderer.setSize( renderTargetWidth, renderTargetHeight );
-				postprocessing.rtTextureColors.setSize( renderTargetWidth, renderTargetHeight );
-				postprocessing.rtTextureDepth.setSize( renderTargetWidth, renderTargetHeight );
-				postprocessing.rtTextureDepthMask.setSize( renderTargetWidth, renderTargetHeight );
+  }
 
-				const adjustedWidth = renderTargetWidth * godrayRenderTargetResolutionMultiplier;
-				const adjustedHeight = renderTargetHeight * godrayRenderTargetResolutionMultiplier;
-				postprocessing.rtTextureGodRays1.setSize( adjustedWidth, adjustedHeight );
-				postprocessing.rtTextureGodRays2.setSize( adjustedWidth, adjustedHeight );
+  function initPostprocessing( renderTargetWidth, renderTargetHeight ) {
 
-			}
+    postprocessing.scene = new THREE.Scene();
 
-			function initPostprocessing( renderTargetWidth, renderTargetHeight ) {
+    postprocessing.camera = new THREE.OrthographicCamera( - 0.5, 0.5, 0.5, - 0.5, - 10000, 10000 );
+    postprocessing.camera.position.z = 100;
 
-				postprocessing.scene = new THREE.Scene();
+    postprocessing.scene.add( postprocessing.camera );
 
-				postprocessing.camera = new THREE.OrthographicCamera( - 0.5, 0.5, 0.5, - 0.5, - 10000, 10000 );
-				postprocessing.camera.position.z = 100;
+    postprocessing.rtTextureColors = new THREE.WebGLRenderTarget( renderTargetWidth, renderTargetHeight, { type: THREE.HalfFloatType } );
 
-				postprocessing.scene.add( postprocessing.camera );
+    // Switching the depth formats to luminance from rgb doesn't seem to work. I didn't
+    // investigate further for now.
+    // pars.format = LuminanceFormat;
 
-				postprocessing.rtTextureColors = new THREE.WebGLRenderTarget( renderTargetWidth, renderTargetHeight );
+    // I would have this quarter size and use it as one of the ping-pong render
+    // targets but the aliasing causes some temporal flickering
 
-				// Switching the depth formats to luminance from rgb doesn't seem to work. I didn't
-				// investigate further for now.
-				// pars.format = LuminanceFormat;
+    postprocessing.rtTextureDepth = new THREE.WebGLRenderTarget( renderTargetWidth, renderTargetHeight, { type: THREE.HalfFloatType } );
+    postprocessing.rtTextureDepthMask = new THREE.WebGLRenderTarget( renderTargetWidth, renderTargetHeight, { type: THREE.HalfFloatType } );
 
-				// I would have this quarter size and use it as one of the ping-pong render
-				// targets but the aliasing causes some temporal flickering
+    // The ping-pong render targets can use an adjusted resolution to minimize cost
 
-				postprocessing.rtTextureDepth = new THREE.WebGLRenderTarget( renderTargetWidth, renderTargetHeight );
-				postprocessing.rtTextureDepthMask = new THREE.WebGLRenderTarget( renderTargetWidth, renderTargetHeight );
+    const adjustedWidth = renderTargetWidth * godrayRenderTargetResolutionMultiplier;
+    const adjustedHeight = renderTargetHeight * godrayRenderTargetResolutionMultiplier;
+    postprocessing.rtTextureGodRays1 = new THREE.WebGLRenderTarget( adjustedWidth, adjustedHeight, { type: THREE.HalfFloatType } );
+    postprocessing.rtTextureGodRays2 = new THREE.WebGLRenderTarget( adjustedWidth, adjustedHeight, { type: THREE.HalfFloatType } );
 
-				// The ping-pong render targets can use an adjusted resolution to minimize cost
+    // god-ray shaders
 
-				const adjustedWidth = renderTargetWidth * godrayRenderTargetResolutionMultiplier;
-				const adjustedHeight = renderTargetHeight * godrayRenderTargetResolutionMultiplier;
-				postprocessing.rtTextureGodRays1 = new THREE.WebGLRenderTarget( adjustedWidth, adjustedHeight );
-				postprocessing.rtTextureGodRays2 = new THREE.WebGLRenderTarget( adjustedWidth, adjustedHeight );
+    const godraysMaskShader = GodRaysDepthMaskShader;
+    postprocessing.godrayMaskUniforms = THREE.UniformsUtils.clone( godraysMaskShader.uniforms );
+    postprocessing.materialGodraysDepthMask = new THREE.ShaderMaterial( {
 
-				// god-ray shaders
+      uniforms: postprocessing.godrayMaskUniforms,
+      vertexShader: godraysMaskShader.vertexShader,
+      fragmentShader: godraysMaskShader.fragmentShader
 
-				const godraysMaskShader = GodRaysDepthMaskShader;
-				postprocessing.godrayMaskUniforms = THREE.UniformsUtils.clone( godraysMaskShader.uniforms );
-				postprocessing.materialGodraysDepthMask = new THREE.ShaderMaterial( {
+    } );
 
-					uniforms: postprocessing.godrayMaskUniforms,
-					vertexShader: godraysMaskShader.vertexShader,
-					fragmentShader: godraysMaskShader.fragmentShader
+    const godraysGenShader = GodRaysGenerateShader;
+    postprocessing.godrayGenUniforms = THREE.UniformsUtils.clone( godraysGenShader.uniforms );
+    postprocessing.materialGodraysGenerate = new THREE.ShaderMaterial( {
 
-				} );
+      uniforms: postprocessing.godrayGenUniforms,
+      vertexShader: godraysGenShader.vertexShader,
+      fragmentShader: godraysGenShader.fragmentShader
 
-				const godraysGenShader = GodRaysGenerateShader;
-				postprocessing.godrayGenUniforms = THREE.UniformsUtils.clone( godraysGenShader.uniforms );
-				postprocessing.materialGodraysGenerate = new THREE.ShaderMaterial( {
+    } );
 
-					uniforms: postprocessing.godrayGenUniforms,
-					vertexShader: godraysGenShader.vertexShader,
-					fragmentShader: godraysGenShader.fragmentShader
+    const godraysCombineShader = GodRaysCombineShader;
+    postprocessing.godrayCombineUniforms = THREE.UniformsUtils.clone( godraysCombineShader.uniforms );
+    postprocessing.materialGodraysCombine = new THREE.ShaderMaterial( {
 
-				} );
+      uniforms: postprocessing.godrayCombineUniforms,
+      vertexShader: godraysCombineShader.vertexShader,
+      fragmentShader: godraysCombineShader.fragmentShader
 
-				const godraysCombineShader = GodRaysCombineShader;
-				postprocessing.godrayCombineUniforms = THREE.UniformsUtils.clone( godraysCombineShader.uniforms );
-				postprocessing.materialGodraysCombine = new THREE.ShaderMaterial( {
+    } );
 
-					uniforms: postprocessing.godrayCombineUniforms,
-					vertexShader: godraysCombineShader.vertexShader,
-					fragmentShader: godraysCombineShader.fragmentShader
+    const godraysFakeSunShader = GodRaysFakeSunShader;
+    postprocessing.godraysFakeSunUniforms = THREE.UniformsUtils.clone( godraysFakeSunShader.uniforms );
+    postprocessing.materialGodraysFakeSun = new THREE.ShaderMaterial( {
 
-				} );
+      uniforms: postprocessing.godraysFakeSunUniforms,
+      vertexShader: godraysFakeSunShader.vertexShader,
+      fragmentShader: godraysFakeSunShader.fragmentShader
 
-				const godraysFakeSunShader = GodRaysFakeSunShader;
-				postprocessing.godraysFakeSunUniforms = THREE.UniformsUtils.clone( godraysFakeSunShader.uniforms );
-				postprocessing.materialGodraysFakeSun = new THREE.ShaderMaterial( {
+    } );
 
-					uniforms: postprocessing.godraysFakeSunUniforms,
-					vertexShader: godraysFakeSunShader.vertexShader,
-					fragmentShader: godraysFakeSunShader.fragmentShader
+    postprocessing.godraysFakeSunUniforms.bgColor.value.setHex( bgColor );
+    postprocessing.godraysFakeSunUniforms.sunColor.value.setHex( sunColor );
 
-				} );
+    postprocessing.godrayCombineUniforms.fGodRayIntensity.value = 0.75;
 
-				postprocessing.godraysFakeSunUniforms.bgColor.value.setHex( bgColor );
-				postprocessing.godraysFakeSunUniforms.sunColor.value.setHex( sunColor );
+    postprocessing.quad = new THREE.Mesh(
+      new THREE.PlaneGeometry( 1.0, 1.0 ),
+      postprocessing.materialGodraysGenerate
+    );
+    postprocessing.quad.position.z = - 9900;
+    postprocessing.scene.add( postprocessing.quad );
 
-				postprocessing.godrayCombineUniforms.fGodRayIntensity.value = 0.75;
+  }
 
-				postprocessing.quad = new THREE.Mesh(
-					new THREE.PlaneGeometry( 1.0, 1.0 ),
-					postprocessing.materialGodraysGenerate
-				);
-				postprocessing.quad.position.z = - 9900;
-				postprocessing.scene.add( postprocessing.quad );
+  function animate() {
 
-			}
+    requestId = requestAnimationFrame( animate );
 
-			function animate() {
+    stats.begin();
+    render();
+    stats.end();
 
-				requestId = requestAnimationFrame( animate, renderer.domElement );
+  }
 
-				stats.begin();
-				render();
-				stats.end();
+  function getStepSize( filterLen, tapsPerPass, pass ) {
 
-			}
+    return filterLen * Math.pow( tapsPerPass, - pass );
 
-			function getStepSize( filterLen, tapsPerPass, pass ) {
+  }
 
-				return filterLen * Math.pow( tapsPerPass, - pass );
+  function filterGodRays( inputTex, renderTarget, stepSize ) {
 
-			}
+    postprocessing.scene.overrideMaterial = postprocessing.materialGodraysGenerate;
 
-			function filterGodRays( inputTex, renderTarget, stepSize ) {
+    postprocessing.godrayGenUniforms[ 'fStepSize' ].value = stepSize;
+    postprocessing.godrayGenUniforms[ 'tInput' ].value = inputTex;
 
-				postprocessing.scene.overrideMaterial = postprocessing.materialGodraysGenerate;
+    renderer.setRenderTarget( renderTarget );
+    renderer.render( postprocessing.scene, postprocessing.camera );
+    postprocessing.scene.overrideMaterial = null;
 
-				postprocessing.godrayGenUniforms[ 'fStepSize' ].value = stepSize;
-				postprocessing.godrayGenUniforms[ 'tInput' ].value = inputTex;
+  }
 
-				renderer.setRenderTarget( renderTarget );
-				renderer.render( postprocessing.scene, postprocessing.camera );
-				postprocessing.scene.overrideMaterial = null;
+  function render() {
 
-			}
+    const time = Date.now() / 4000;
 
-			function render() {
+    sphereMesh.position.x = orbitRadius * Math.cos( time );
+    sphereMesh.position.z = orbitRadius * Math.sin( time ) - 100;
 
-				const time = Date.now() / 4000;
+    if ( postprocessing.enabled ) {
 
-				sphereMesh.position.x = orbitRadius * Math.cos( time );
-				sphereMesh.position.z = orbitRadius * Math.sin( time ) - 100;
+      clipPosition.x = sunPosition.x;
+      clipPosition.y = sunPosition.y;
+      clipPosition.z = sunPosition.z;
+      clipPosition.w = 1;
 
-				if ( postprocessing.enabled ) {
+      clipPosition.applyMatrix4( camera.matrixWorldInverse ).applyMatrix4( camera.projectionMatrix );
 
-					clipPosition.x = sunPosition.x;
-					clipPosition.y = sunPosition.y;
-					clipPosition.z = sunPosition.z;
-					clipPosition.w = 1;
+      // perspective divide (produce NDC space)
 
-					clipPosition.applyMatrix4( camera.matrixWorldInverse ).applyMatrix4( camera.projectionMatrix );
+      clipPosition.x /= clipPosition.w;
+      clipPosition.y /= clipPosition.w;
 
-					// perspective divide (produce NDC space)
+      screenSpacePosition.x = ( clipPosition.x + 1 ) / 2; // transform from [-1,1] to [0,1]
+      screenSpacePosition.y = ( clipPosition.y + 1 ) / 2; // transform from [-1,1] to [0,1]
+      screenSpacePosition.z = clipPosition.z; // needs to stay in clip space for visibilty checks
 
-					clipPosition.x /= clipPosition.w;
-					clipPosition.y /= clipPosition.w;
+      // Give it to the god-ray and sun shaders
 
-					screenSpacePosition.x = ( clipPosition.x + 1 ) / 2; // transform from [-1,1] to [0,1]
-					screenSpacePosition.y = ( clipPosition.y + 1 ) / 2; // transform from [-1,1] to [0,1]
-					screenSpacePosition.z = clipPosition.z; // needs to stay in clip space for visibilty checks
+      postprocessing.godrayGenUniforms[ 'vSunPositionScreenSpace' ].value.copy( screenSpacePosition );
+      postprocessing.godraysFakeSunUniforms[ 'vSunPositionScreenSpace' ].value.copy( screenSpacePosition );
 
-					// Give it to the god-ray and sun shaders
+      // -- Draw sky and sun --
 
-					postprocessing.godrayGenUniforms[ 'vSunPositionScreenSpace' ].value.copy( screenSpacePosition );
-					postprocessing.godraysFakeSunUniforms[ 'vSunPositionScreenSpace' ].value.copy( screenSpacePosition );
+      // Clear colors and depths, will clear to sky color
 
-					// -- Draw sky and sun --
+      renderer.setRenderTarget( postprocessing.rtTextureColors );
+      renderer.clear( true, true, false );
 
-					// Clear colors and depths, will clear to sky color
+      // Sun render. Runs a shader that gives a brightness based on the screen
+      // space distance to the sun. Not very efficient, so i make a scissor
+      // rectangle around the suns position to avoid rendering surrounding pixels.
 
-					renderer.setRenderTarget( postprocessing.rtTextureColors );
-					renderer.clear( true, true, false );
+      const sunsqH = 0.74 * window.innerHeight; // 0.74 depends on extent of sun from shader
+      const sunsqW = 0.74 * window.innerHeight; // both depend on height because sun is aspect-corrected
 
-					// Sun render. Runs a shader that gives a brightness based on the screen
-					// space distance to the sun. Not very efficient, so i make a scissor
-					// rectangle around the suns position to avoid rendering surrounding pixels.
+      screenSpacePosition.x *= window.innerWidth;
+      screenSpacePosition.y *= window.innerHeight;
 
-					const sunsqH = 0.74 * window.innerHeight; // 0.74 depends on extent of sun from shader
-					const sunsqW = 0.74 * window.innerHeight; // both depend on height because sun is aspect-corrected
+      renderer.setScissor( screenSpacePosition.x - sunsqW / 2, screenSpacePosition.y - sunsqH / 2, sunsqW, sunsqH );
+      renderer.setScissorTest( true );
 
-					screenSpacePosition.x *= window.innerWidth;
-					screenSpacePosition.y *= window.innerHeight;
+      postprocessing.godraysFakeSunUniforms[ 'fAspect' ].value = window.innerWidth / window.innerHeight;
 
-					renderer.setScissor( screenSpacePosition.x - sunsqW / 2, screenSpacePosition.y - sunsqH / 2, sunsqW, sunsqH );
-					renderer.setScissorTest( true );
+      postprocessing.scene.overrideMaterial = postprocessing.materialGodraysFakeSun;
+      renderer.setRenderTarget( postprocessing.rtTextureColors );
+      renderer.render( postprocessing.scene, postprocessing.camera );
 
-					postprocessing.godraysFakeSunUniforms[ 'fAspect' ].value = window.innerWidth / window.innerHeight;
+      renderer.setScissorTest( false );
 
-					postprocessing.scene.overrideMaterial = postprocessing.materialGodraysFakeSun;
-					renderer.setRenderTarget( postprocessing.rtTextureColors );
-					renderer.render( postprocessing.scene, postprocessing.camera );
+      // -- Draw scene objects --
 
-					renderer.setScissorTest( false );
+      // Colors
 
-					// -- Draw scene objects --
+      scene.overrideMaterial = null;
+      renderer.setRenderTarget( postprocessing.rtTextureColors );
+      renderer.render( scene, camera );
 
-					// Colors
+      // Depth
 
-					scene.overrideMaterial = null;
-					renderer.setRenderTarget( postprocessing.rtTextureColors );
-					renderer.render( scene, camera );
+      scene.overrideMaterial = materialDepth;
+      renderer.setRenderTarget( postprocessing.rtTextureDepth );
+      renderer.clear();
+      renderer.render( scene, camera );
 
-					// Depth
+      //
 
-					scene.overrideMaterial = materialDepth;
-					renderer.setRenderTarget( postprocessing.rtTextureDepth );
-					renderer.clear();
-					renderer.render( scene, camera );
+      postprocessing.godrayMaskUniforms[ 'tInput' ].value = postprocessing.rtTextureDepth.texture;
 
-					//
+      postprocessing.scene.overrideMaterial = postprocessing.materialGodraysDepthMask;
+      renderer.setRenderTarget( postprocessing.rtTextureDepthMask );
+      renderer.render( postprocessing.scene, postprocessing.camera );
 
-					postprocessing.godrayMaskUniforms[ 'tInput' ].value = postprocessing.rtTextureDepth.texture;
+      // -- Render god-rays --
 
-					postprocessing.scene.overrideMaterial = postprocessing.materialGodraysDepthMask;
-					renderer.setRenderTarget( postprocessing.rtTextureDepthMask );
-					renderer.render( postprocessing.scene, postprocessing.camera );
+      // Maximum length of god-rays (in texture space [0,1]X[0,1])
 
-					// -- Render god-rays --
+      const filterLen = 1.0;
 
-					// Maximum length of god-rays (in texture space [0,1]X[0,1])
+      // Samples taken by filter
 
-					const filterLen = 1.0;
+      const TAPS_PER_PASS = 6.0;
 
-					// Samples taken by filter
+      // Pass order could equivalently be 3,2,1 (instead of 1,2,3), which
+      // would start with a small filter support and grow to large. however
+      // the large-to-small order produces less objectionable aliasing artifacts that
+      // appear as a glimmer along the length of the beams
 
-					const TAPS_PER_PASS = 6.0;
+      // pass 1 - render into first ping-pong target
+      filterGodRays( postprocessing.rtTextureDepthMask.texture, postprocessing.rtTextureGodRays2, getStepSize( filterLen, TAPS_PER_PASS, 1.0 ) );
 
-					// Pass order could equivalently be 3,2,1 (instead of 1,2,3), which
-					// would start with a small filter support and grow to large. however
-					// the large-to-small order produces less objectionable aliasing artifacts that
-					// appear as a glimmer along the length of the beams
+      // pass 2 - render into second ping-pong target
+      filterGodRays( postprocessing.rtTextureGodRays2.texture, postprocessing.rtTextureGodRays1, getStepSize( filterLen, TAPS_PER_PASS, 2.0 ) );
 
-					// pass 1 - render into first ping-pong target
-					filterGodRays( postprocessing.rtTextureDepthMask.texture, postprocessing.rtTextureGodRays2, getStepSize( filterLen, TAPS_PER_PASS, 1.0 ) );
+      // pass 3 - 1st RT
+      filterGodRays( postprocessing.rtTextureGodRays1.texture, postprocessing.rtTextureGodRays2, getStepSize( filterLen, TAPS_PER_PASS, 3.0 ) );
 
-					// pass 2 - render into second ping-pong target
-					filterGodRays( postprocessing.rtTextureGodRays2.texture, postprocessing.rtTextureGodRays1, getStepSize( filterLen, TAPS_PER_PASS, 2.0 ) );
+      // final pass - composite god-rays onto colors
 
-					// pass 3 - 1st RT
-					filterGodRays( postprocessing.rtTextureGodRays1.texture, postprocessing.rtTextureGodRays2, getStepSize( filterLen, TAPS_PER_PASS, 3.0 ) );
+      postprocessing.godrayCombineUniforms[ 'tColors' ].value = postprocessing.rtTextureColors.texture;
+      postprocessing.godrayCombineUniforms[ 'tGodRays' ].value = postprocessing.rtTextureGodRays2.texture;
 
-					// final pass - composite god-rays onto colors
+      postprocessing.scene.overrideMaterial = postprocessing.materialGodraysCombine;
 
-					postprocessing.godrayCombineUniforms[ 'tColors' ].value = postprocessing.rtTextureColors.texture;
-					postprocessing.godrayCombineUniforms[ 'tGodRays' ].value = postprocessing.rtTextureGodRays2.texture;
+      renderer.setRenderTarget( null );
+      renderer.render( postprocessing.scene, postprocessing.camera );
+      postprocessing.scene.overrideMaterial = null;
 
-					postprocessing.scene.overrideMaterial = postprocessing.materialGodraysCombine;
+    } else {
 
-					renderer.setRenderTarget( null );
-					renderer.render( postprocessing.scene, postprocessing.camera );
-					postprocessing.scene.overrideMaterial = null;
+      renderer.setRenderTarget( null );
+      renderer.clear();
+      renderer.render( scene, camera );
 
-				} else {
+    }
 
-					renderer.setRenderTarget( null );
-					renderer.clear();
-					renderer.render( scene, camera );
+  }
 
-				}
-
-			}
-
-}
+  }
 })

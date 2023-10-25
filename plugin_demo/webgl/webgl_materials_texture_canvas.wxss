@@ -1,1 +1,9 @@
-/* webgl/webgl_materials_texture_canvas.wxss */
+/* webgl_materials_texture_canvas.wxss */	#drawing-canvas {
+				position: absolute;
+				background-color: #000000;
+				top: 0px;
+				right: 0px;
+				z-index: 3000;
+				cursor: crosshair;
+				touch-action: none;
+			}

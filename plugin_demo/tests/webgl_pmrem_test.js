@@ -1,17 +1,33 @@
-// tests/webgl_pmrem_test.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
-import { RGBELoader } from './jsm/loaders/RGBELoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -22,19 +38,20 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+  let scene, camera, controls, renderer;
 
-let scene, camera, controls, renderer;
-
-function init() {
+  function init() {
 
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -42,11 +59,9 @@ function init() {
 
     // renderer
 
-    renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( width, height );
-    renderer.outputEncoding = THREE.sRGBEncoding;
-    renderer.physicallyCorrectLights = true;
 
     // tonemapping
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -68,7 +83,7 @@ function init() {
 
     // controls
 
-    controls = new OrbitControls( camera, renderer.domElement );
+    controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
     controls.addEventListener( 'change', render ); // use if there is no animation loop
     controls.minDistance = 4;
     controls.maxDistance = 20;
@@ -93,73 +108,73 @@ function init() {
 
     const gui = new GUI();
     gui.add( { enabled: true }, 'enabled' )
-        .name( 'PMREM' )
-        .onChange( value => {
+      .name( 'PMREM' )
+      .onChange( value => {
 
-            directionalLight.intensity = value ? 0 : 1;
+        directionalLight.intensity = value ? 0 : 1;
 
-            scene.traverse( function ( child ) {
+        scene.traverse( function ( child ) {
 
-                if ( child.isMesh ) {
+          if ( child.isMesh ) {
 
-                    child.material.envMapIntensity = 1 - directionalLight.intensity;
+            child.material.envMapIntensity = 1 - directionalLight.intensity;
 
-                }
-
-            } );
-
-            render();
+          }
 
         } );
 
-}
+        render();
 
-function createObjects() {
+      } );
+
+  }
+
+  function createObjects() {
 
     let radianceMap = null;
     new RGBELoader()
-        // .setDataType( THREE.FloatType )
-        .setPath( 'textures/equirectangular/' )
-        .load( 'spot1Lux.hdr', function ( texture ) {
+      // .setDataType( THREE.FloatType )
+      .setPath( 'textures/equirectangular/' )
+      .load( 'spot1Lux.hdr', function ( texture ) {
 
-            radianceMap = pmremGenerator.fromEquirectangular( texture ).texture;
-            pmremGenerator.dispose();
+        radianceMap = pmremGenerator.fromEquirectangular( texture ).texture;
+        pmremGenerator.dispose();
 
-            scene.background = radianceMap;
+        scene.background = radianceMap;
 
-            const geometry = new THREE.SphereGeometry( 0.4, 32, 32 );
+        const geometry = new THREE.SphereGeometry( 0.4, 32, 32 );
 
-            for ( let x = 0; x <= 10; x ++ ) {
+        for ( let x = 0; x <= 10; x ++ ) {
 
-                for ( let y = 0; y <= 2; y ++ ) {
+          for ( let y = 0; y <= 2; y ++ ) {
 
-                    const material = new THREE.MeshPhysicalMaterial( {
-                        roughness: x / 10,
-                        metalness: y < 1 ? 1 : 0,
-                        color: y < 2 ? 0xffffff : 0x000000,
-                        envMap: radianceMap,
-                        envMapIntensity: 1
-                    } );
+            const material = new THREE.MeshPhysicalMaterial( {
+              roughness: x / 10,
+              metalness: y < 1 ? 1 : 0,
+              color: y < 2 ? 0xffffff : 0x000000,
+              envMap: radianceMap,
+              envMapIntensity: 1
+            } );
 
-                    const mesh = new THREE.Mesh( geometry, material );
-                    mesh.position.x = x - 5;
-                    mesh.position.y = 1 - y;
-                    scene.add( mesh );
+            const mesh = new THREE.Mesh( geometry, material );
+            mesh.position.x = x - 5;
+            mesh.position.y = 1 - y;
+            scene.add( mesh );
 
-                }
+          }
 
-            }
+        }
 
-            render();
+        render();
 
-        } );
+      } );
 
     const pmremGenerator = new THREE.PMREMGenerator( renderer );
     pmremGenerator.compileEquirectangularShader();
 
-}
+  }
 
-function onWindowResize() {
+  function onWindowResize() {
 
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -171,26 +186,26 @@ function onWindowResize() {
 
     render();
 
-}
+  }
 
-function updateCamera() {
+  function updateCamera() {
 
     const horizontalFoV = 40;
     const verticalFoV = 2 * Math.atan( Math.tan( horizontalFoV / 2 * Math.PI / 180 ) / camera.aspect ) * 180 / Math.PI;
     camera.fov = verticalFoV;
     camera.updateProjectionMatrix();
 
-}
+  }
 
-function render() {
+  function render() {
 
     renderer.render( scene, camera );
 
-}
+  }
 
-Promise.resolve()
+  Promise.resolve()
     .then( init )
     .then( createObjects )
     .then( render );
-}
+  }
 })

@@ -1,19 +1,34 @@
-// webgl_advanced/webgl_buffergeometry_compression.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import Stats from './jsm/libs/stats.module.js';
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
-import * as GeometryCompressionUtils from './jsm/utils/GeometryCompressionUtils.js';
-import * as BufferGeometryUtils from './jsm/utils/BufferGeometryUtils.js';
-import { TeapotGeometry } from './jsm/geometries/TeapotGeometry.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-
+import Stats from 'three/addons/libs/stats.module.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+import * as GeometryCompressionUtils from 'three/addons/utils/GeometryCompressionUtils.js';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+import { TeapotGeometry } from './three/addons/geometries/TeapotGeometry.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -24,267 +39,256 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-const statsEnabled = true;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-			let container, stats, gui;
+    const statsEnabled = true;
 
-			let camera, scene, renderer, controls;
+    let container, stats, gui;
 
-			const lights = [];
+    let camera, scene, renderer, controls;
 
-			// options
-			const data = {
-				'model': 'Icosahedron',
-				'wireframe': false,
-				'texture': false,
-				'detail': 4,
-				'rotationSpeed': 0.1,
+    const lights = [];
 
-				'QuantizePosEncoding': false,
-				'NormEncodingMethods': 'None', // for normal encodings
-				'DefaultUVEncoding': false,
+    // options
+    const data = {
+      'model': 'Icosahedron',
+      'wireframe': false,
+      'texture': false,
+      'detail': 4,
 
-				'totalGPUMemory': '0 bytes'
-			};
-			let memoryDisplay;
+      'QuantizePosEncoding': false,
+      'NormEncodingMethods': 'None', // for normal encodings
+      'DefaultUVEncoding': false,
 
-			// geometry params
-			const radius = 100;
+      'totalGPUMemory': '0 bytes'
+    };
+    let memoryDisplay;
 
-			// materials
-			const lineMaterial = new THREE.LineBasicMaterial( { color: 0xaaaaaa, transparent: true, opacity: 0.8 } );
-			const meshMaterial = new THREE.MeshPhongMaterial( { color: 0xffffff, emissive: 0x111111 } );
+    // geometry params
+    const radius = 100;
 
-			// texture
-			const texture = new THREE.TextureLoader( ).load( 'textures/uv_grid_opengl.jpg' );
-			texture.wrapS = THREE.RepeatWrapping;
-			texture.wrapT = THREE.RepeatWrapping;
+    // materials
+    const lineMaterial = new THREE.LineBasicMaterial( { color: 0xaaaaaa, transparent: true, opacity: 0.8 } );
+    const meshMaterial = new THREE.MeshPhongMaterial( { color: 0xffffff, side: THREE.DoubleSide } );
 
-			//
-			init();
-			animate();
+    // texture
+    const texture = new THREE.TextureLoader().load( 'textures/uv_grid_opengl.jpg' );
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.colorSpace = THREE.SRGBColorSpace;
 
+    //
+    init();
+    animate();
 
-			function init() {
 
-				//
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
+    function init() {
 
-				renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				container.appendChild( renderer.domElement );
+      //
 
-				//
+      container = document.createElement( 'div' );
+      document.body.appendChild( container );
 
-				scene = new THREE.Scene();
+      renderer = new THREE.WebGLRenderer( { antialias: true } );
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      container.appendChild( renderer.domElement );
 
-				camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.01, 10000000 );
-				camera.position.x = 2 * radius;
-				camera.position.y = 2 * radius;
-				camera.position.z = 2 * radius;
+      //
 
-				controls = new OrbitControls( camera, renderer.domElement );
+      scene = new THREE.Scene();
 
-				//
+      camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 1000 );
+      camera.position.setScalar( 2 * radius );
 
-				lights[ 0 ] = new THREE.PointLight( 0xffffff, 1, 0 );
-				lights[ 1 ] = new THREE.PointLight( 0xffffff, 1, 0 );
-				lights[ 2 ] = new THREE.PointLight( 0xffffff, 1, 0 );
+      controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+      controls.enablePan = false;
+      controls.enableZoom = false;
 
-				lights[ 0 ].position.set( 0, 2 * radius, 0 );
-				lights[ 1 ].position.set( 2 * radius, - 2 * radius, 2 * radius );
-				lights[ 2 ].position.set( - 2 * radius, - 2 * radius, - 2 * radius );
+      //
 
-				scene.add( lights[ 0 ] );
-				scene.add( lights[ 1 ] );
-				scene.add( lights[ 2 ] );
+      scene.add( new THREE.AmbientLight( 0xffffff, 0.3 ) );
 
-				//
+      lights[ 0 ] = new THREE.DirectionalLight( 0xffffff, 2.5 );
+      lights[ 1 ] = new THREE.DirectionalLight( 0xffffff, 2.5 );
+      lights[ 2 ] = new THREE.DirectionalLight( 0xffffff, 2.5 );
 
-				scene.add( new THREE.AxesHelper( radius * 5 ) );
+      lights[ 0 ].position.set( 0, 2 * radius, 0 );
+      lights[ 1 ].position.set( 2 * radius, - 2 * radius, 2 * radius );
+      lights[ 2 ].position.set( - 2 * radius, - 2 * radius, - 2 * radius );
 
-				//
+      scene.add( lights[ 0 ] );
+      scene.add( lights[ 1 ] );
+      scene.add( lights[ 2 ] );
 
-				let geom = newGeometry( data );
+      //
 
-				const mesh = new THREE.Mesh( geom, meshMaterial );
-				const lineSegments = new THREE.LineSegments( new THREE.WireframeGeometry( geom ), lineMaterial );
-				lineSegments.visible = data.wireframe;
+      scene.add( new THREE.AxesHelper( radius * 5 ) );
 
-				scene.add( mesh );
-				scene.add( lineSegments );
+      //
 
-				//
+      let geom = newGeometry( data );
 
-				gui = new GUI();
-				gui.width = 350;
+      const mesh = new THREE.Mesh( geom, meshMaterial );
+      scene.add( mesh );
 
-				function newGeometry( data ) {
+      const lineSegments = new THREE.LineSegments( new THREE.WireframeGeometry( geom ), lineMaterial );
+      lineSegments.visible = data.wireframe;
 
-					switch ( data.model ) {
+      scene.add( lineSegments );
 
-						case 'Icosahedron':
-							return new THREE.IcosahedronGeometry( radius, data.detail );
-						case 'Cylinder':
-							return new THREE.CylinderGeometry( radius, radius, radius * 2, data.detail * 6 );
-						case 'Teapot':
-							return new TeapotGeometry( radius, data.detail * 3, true, true, true, true, true );
-						case 'TorusKnot':
-							return new THREE.TorusKnotGeometry( radius, 10, data.detail * 20, data.detail * 6, 3, 4 );
+      //
 
-		}
+      gui = new GUI();
+      gui.width = 350;
 
-				}
+      function newGeometry( data ) {
 
-				function generateGeometry() {
+        switch ( data.model ) {
 
-					geom = newGeometry( data );
+          case 'Icosahedron':
+            return new THREE.IcosahedronGeometry( radius, data.detail );
+          case 'Cylinder':
+            return new THREE.CylinderGeometry( radius / 1.5, radius / 1.5, radius, data.detail * 6 );
+          case 'Teapot':
+            return new TeapotGeometry( radius / 1.5, data.detail * 3, true, true, true, true, true );
+          case 'TorusKnot':
+            return new THREE.TorusKnotGeometry( radius / 2, 10, data.detail * 30, data.detail * 6, 3, 4 );
 
-					updateGroupGeometry(
-						mesh,
-						lineSegments,
-						geom,
-						data );
+        }
 
-				}
+      }
 
-				// updateLineSegments
-				function updateLineSegments() {
+      function generateGeometry() {
 
-					lineSegments.visible = data.wireframe;
+        geom = newGeometry( data );
 
-				}
+        updateGroupGeometry( mesh, lineSegments, geom, data );
 
-				let folder = gui.addFolder( 'Scene' );
-				folder.add( data, 'model', [ 'Icosahedron', 'Cylinder', 'TorusKnot', 'Teapot' ] ).onChange( generateGeometry );
-				folder.add( data, 'wireframe', false ).onChange( updateLineSegments );
-				folder.add( data, 'texture', false ).onChange( generateGeometry );
-				folder.add( data, 'detail', 1, 8, 1 ).onChange( generateGeometry );
-				folder.add( data, 'rotationSpeed', 0, 0.5, 0.1 );
-				folder.open();
+      }
 
-				folder = gui.addFolder( 'Position Compression' );
-				folder.add( data, 'QuantizePosEncoding', false ).onChange( generateGeometry );
-				folder.open();
+      function updateLineSegments() {
 
-				folder = gui.addFolder( 'Normal Compression' );
-				folder.add( data, 'NormEncodingMethods', [ 'None', 'DEFAULT', 'OCT1Byte', 'OCT2Byte', 'ANGLES' ] ).onChange( generateGeometry );
-				folder.open();
+        lineSegments.visible = data.wireframe;
 
-				folder = gui.addFolder( 'UV Compression' );
-				folder.add( data, 'DefaultUVEncoding', false ).onChange( generateGeometry );
-				folder.open();
+      }
 
-				folder = gui.addFolder( 'Memory Info' );
-				folder.open();
-				memoryDisplay = folder.add( data, 'totalGPUMemory', '0 bytes' );
-				computeGPUMemory( mesh );
+      let folder = gui.addFolder( 'Scene' );
+      folder.add( data, 'model', [ 'Icosahedron', 'Cylinder', 'TorusKnot', 'Teapot' ] ).onChange( generateGeometry );
+      folder.add( data, 'wireframe', false ).onChange( updateLineSegments );
+      folder.add( data, 'texture', false ).onChange( generateGeometry );
+      folder.add( data, 'detail', 1, 8, 1 ).onChange( generateGeometry );
+      folder.open();
 
-				//
+      folder = gui.addFolder( 'Position Compression' );
+      folder.add( data, 'QuantizePosEncoding', false ).onChange( generateGeometry );
+      folder.open();
 
-				if ( statsEnabled ) {
+      folder = gui.addFolder( 'Normal Compression' );
+      folder.add( data, 'NormEncodingMethods', [ 'None', 'DEFAULT', 'OCT1Byte', 'OCT2Byte', 'ANGLES' ] ).onChange( generateGeometry );
+      folder.open();
 
-					stats = new Stats();
-					container.appendChild( stats.dom );
+      folder = gui.addFolder( 'UV Compression' );
+      folder.add( data, 'DefaultUVEncoding', false ).onChange( generateGeometry );
+      folder.open();
 
-				}
+      folder = gui.addFolder( 'Memory Info' );
+      folder.open();
+      memoryDisplay = folder.add( data, 'totalGPUMemory', '0 bytes' );
+      computeGPUMemory( mesh );
 
-				window.addEventListener( 'resize', onWindowResize );
+      //
 
-			}
+      if ( statsEnabled ) {
 
-			//
+        stats = new Stats();
+        container.appendChild( stats.dom );
 
-			function onWindowResize() {
+      }
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+      window.addEventListener( 'resize', onWindowResize );
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+    }
 
-			}
+    //
 
-			//
-			function updateLightsPossition() {
+    function onWindowResize() {
 
-				lights.forEach( light => {
+      renderer.setSize( window.innerWidth, window.innerHeight );
 
-					const direction = light.position.clone();
-					direction.applyAxisAngle( new THREE.Vector3( 1, 1, 0 ), data.rotationSpeed / 180 * Math.PI );
-					light.position.add( direction.sub( light.position ) );
+      camera.aspect = window.innerWidth / window.innerHeight;
 
-				} );
+      camera.updateProjectionMatrix();
 
-			}
+    }
 
-			//
+    //
 
-			function animate() {
+    function animate() {
 
-				requestId = requestAnimationFrame(animate);
+      requestId = requestAnimationFrame( animate );
 
-				controls.update();
-				updateLightsPossition();
+      renderer.render( scene, camera );
 
-				renderer.render( scene, camera );
+      if ( statsEnabled ) stats.update();
 
-				if ( statsEnabled ) stats.update();
+    }
 
-			}
+    //
 
-			//
+    function updateGroupGeometry( mesh, lineSegments, geometry, data ) {
 
-			function updateGroupGeometry( mesh, lineSegments, geometry, data ) {
+      // dispose first
 
-				// dispose first
-				lineSegments.geometry.dispose();
-				mesh.geometry.dispose();
+      lineSegments.geometry.dispose();
+      mesh.geometry.dispose();
+      mesh.material.dispose();
+      if ( mesh.material.map ) mesh.material.map.dispose();
 
-				lineSegments.geometry = new THREE.WireframeGeometry( geometry );
-				mesh.geometry = geometry;
-				mesh.material = new THREE.MeshPhongMaterial( { color: 0xffffff, emissive: 0x111111 } );
-				mesh.material.map = data.texture ? texture : null;
+      lineSegments.geometry = new THREE.WireframeGeometry( geometry );
+      mesh.geometry = geometry;
+      mesh.material = new THREE.MeshPhongMaterial( { color: 0xffffff, side: THREE.DoubleSide } );
+      mesh.material.map = data.texture ? texture : null;
 
-				if ( data[ 'QuantizePosEncoding' ] ) {
+      if ( data[ 'QuantizePosEncoding' ] ) {
 
-					GeometryCompressionUtils.compressPositions( mesh );
+        GeometryCompressionUtils.compressPositions( mesh );
 
-				}
+      }
 
-				if ( data[ 'NormEncodingMethods' ] !== 'None' ) {
+      if ( data[ 'NormEncodingMethods' ] !== 'None' ) {
 
-					GeometryCompressionUtils.compressNormals( mesh, data[ 'NormEncodingMethods' ] );
+        GeometryCompressionUtils.compressNormals( mesh, data[ 'NormEncodingMethods' ] );
 
-				}
+      }
 
-				if ( data[ 'DefaultUVEncoding' ] ) {
+      if ( data[ 'DefaultUVEncoding' ] ) {
 
-					GeometryCompressionUtils.compressUvs( mesh );
+        GeometryCompressionUtils.compressUvs( mesh );
 
-				}
+      }
 
-				computeGPUMemory( mesh );
+      computeGPUMemory( mesh );
 
-			}
+    }
 
 
-			function computeGPUMemory( mesh ) {
+    function computeGPUMemory( mesh ) {
 
-				// Use BufferGeometryUtils to do memory calculation
-				memoryDisplay.setValue( BufferGeometryUtils.estimateBytesUsed( mesh.geometry ) + ' bytes' );
+      // Use BufferGeometryUtils to do memory calculation
 
-			}
+      memoryDisplay.setValue( BufferGeometryUtils.estimateBytesUsed( mesh.geometry ) + ' bytes' );
 
-}
+    }
+  }
 })

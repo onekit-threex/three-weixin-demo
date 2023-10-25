@@ -1,17 +1,32 @@
-// webgl_postprocessing/webgl_postprocessing_dof2.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import Stats from './jsm/libs/stats.module.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import Stats from 'three/addons/libs/stats.module.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-import { BokehShader, BokehDepthShader } from './jsm/shaders/BokehShader2.js';
+import { BokehShader, BokehDepthShader } from 'three/addons/shaders/BokehShader2.js';
 
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -20,38 +35,45 @@ this.worker && this.worker.terminate()
 				this.renderer.domElement = null
 				this.renderer = null
 			}
-		}, 200)
+		}, 0)
 	},
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {	
+  let container, stats;
+  let camera, scene, renderer, materialDepth;
 
-let container, stats;
-let camera, scene, renderer, materialDepth;
+  let windowHalfX = window.innerWidth / 2;
+  let windowHalfY = window.innerHeight / 2;
 
-let windowHalfX = window.innerWidth / 2;
-let windowHalfY = window.innerHeight / 2;
+  let distance = 100;
+  let effectController;
 
-let distance = 100;
-let effectController;
+  const postprocessing = { enabled: true };
 
-const postprocessing = { enabled: true };
-
-const shaderSettings = {
+  const shaderSettings = {
     rings: 3,
     samples: 4
-};
+  };
 
-const mouse = new THREE.Vector2();
-const raycaster = new THREE.Raycaster();
-const target = new THREE.Vector3( 0, 20, - 50 );
-const planes = [];
-const leaves = 100;
+  const mouse = new THREE.Vector2();
+  const raycaster = new THREE.Raycaster();
+  const target = new THREE.Vector3( 0, 20, - 50 );
+  const planes = [];
+  const leaves = 100;
 
-init();
-animate();
+  init();
+  animate();
 
-function init() {
+  function init() {
 
     container = document.createElement( 'div' );
     document.body.appendChild( container );
@@ -64,7 +86,7 @@ function init() {
     scene = new THREE.Scene();
     scene.add( camera );
 
-    renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
+    renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
     renderer.autoClear = false;
@@ -73,9 +95,9 @@ function init() {
     const depthShader = BokehDepthShader;
 
     materialDepth = new THREE.ShaderMaterial( {
-        uniforms: depthShader.uniforms,
-        vertexShader: depthShader.vertexShader,
-        fragmentShader: depthShader.fragmentShader
+      uniforms: depthShader.uniforms,
+      vertexShader: depthShader.vertexShader,
+      fragmentShader: depthShader.fragmentShader
     } );
 
     materialDepth.uniforms[ 'mNear' ].value = camera.near;
@@ -85,8 +107,8 @@ function init() {
 
     const r = 'textures/cube/Bridge2/';
     const urls = [ r + 'posx.jpg', r + 'negx.jpg',
-                 r + 'posy.jpg', r + 'negy.jpg',
-                 r + 'posz.jpg', r + 'negz.jpg' ];
+           r + 'posy.jpg', r + 'negy.jpg',
+           r + 'posz.jpg', r + 'negz.jpg' ];
 
     const textureCube = new THREE.CubeTextureLoader().load( urls );
 
@@ -97,28 +119,29 @@ function init() {
     const planePiece = new THREE.PlaneGeometry( 10, 10, 1, 1 );
 
     const planeMat = new THREE.MeshPhongMaterial( {
-        color: 0xffffff * 0.4,
-        shininess: 0.5,
-        specular: 0xffffff,
-        envMap: textureCube,
-        side: THREE.DoubleSide
+      color: 0xffffff * 0.4,
+      shininess: 0.5,
+      specular: 0xffffff,
+      envMap: textureCube,
+      side: THREE.DoubleSide,
+      forceSinglePass: true
     } );
 
     const rand = Math.random;
 
     for ( let i = 0; i < leaves; i ++ ) {
 
-        const plane = new THREE.Mesh( planePiece, planeMat );
-        plane.rotation.set( rand(), rand(), rand() );
-        plane.rotation.dx = rand() * 0.1;
-        plane.rotation.dy = rand() * 0.1;
-        plane.rotation.dz = rand() * 0.1;
+      const plane = new THREE.Mesh( planePiece, planeMat );
+      plane.rotation.set( rand(), rand(), rand() );
+      plane.rotation.dx = rand() * 0.1;
+      plane.rotation.dy = rand() * 0.1;
+      plane.rotation.dz = rand() * 0.1;
 
-        plane.position.set( rand() * 150, 0 + rand() * 300, rand() * 150 );
-        plane.position.dx = ( rand() - 0.5 );
-        plane.position.dz = ( rand() - 0.5 );
-        scene.add( plane );
-        planes.push( plane );
+      plane.position.set( rand() * 150, 0 + rand() * 300, rand() * 150 );
+      plane.position.dx = ( rand() - 0.5 );
+      plane.position.dz = ( rand() - 0.5 );
+      scene.add( plane );
+      planes.push( plane );
 
     }
 
@@ -127,33 +150,33 @@ function init() {
     const loader2 = new THREE.BufferGeometryLoader();
     loader2.load( 'models/json/suzanne_buffergeometry.json', function ( geometry ) {
 
-        geometry.computeVertexNormals();
+      geometry.computeVertexNormals();
 
-        const material = new THREE.MeshPhongMaterial( {
-            specular: 0xffffff,
-            envMap: textureCube,
-            shininess: 50,
-            reflectivity: 1.0,
-            flatShading: true
-        } );
+      const material = new THREE.MeshPhongMaterial( {
+        specular: 0xffffff,
+        envMap: textureCube,
+        shininess: 50,
+        reflectivity: 1.0,
+        flatShading: true
+      } );
 
-        const monkeys = 20;
+      const monkeys = 20;
 
-        for ( let i = 0; i < monkeys; i ++ ) {
+      for ( let i = 0; i < monkeys; i ++ ) {
 
-            const mesh = new THREE.Mesh( geometry, material );
+        const mesh = new THREE.Mesh( geometry, material );
 
-            mesh.position.z = Math.cos( i / monkeys * Math.PI * 2 ) * 200;
-            mesh.position.y = Math.sin( i / monkeys * Math.PI * 3 ) * 20;
-            mesh.position.x = Math.sin( i / monkeys * Math.PI * 2 ) * 200;
+        mesh.position.z = Math.cos( i / monkeys * Math.PI * 2 ) * 200;
+        mesh.position.y = Math.sin( i / monkeys * Math.PI * 3 ) * 20;
+        mesh.position.x = Math.sin( i / monkeys * Math.PI * 2 ) * 200;
 
-            mesh.rotation.y = i / monkeys * Math.PI * 2;
+        mesh.rotation.y = i / monkeys * Math.PI * 2;
 
-            mesh.scale.setScalar( 30 );
+        mesh.scale.setScalar( 30 );
 
-            scene.add( mesh );
+        scene.add( mesh );
 
-        }
+      }
 
     } );
 
@@ -163,31 +186,31 @@ function init() {
 
     for ( let i = 0; i < 20; i ++ ) {
 
-        const ballmaterial = new THREE.MeshPhongMaterial( {
-            color: 0xffffff * Math.random(),
-            shininess: 0.5,
-            specular: 0xffffff,
-            envMap: textureCube } );
+      const ballmaterial = new THREE.MeshPhongMaterial( {
+        color: 0xffffff * Math.random(),
+        shininess: 0.5,
+        specular: 0xffffff,
+        envMap: textureCube } );
 
-        const mesh = new THREE.Mesh( geometry, ballmaterial );
+      const mesh = new THREE.Mesh( geometry, ballmaterial );
 
-        mesh.position.x = ( Math.random() - 0.5 ) * 200;
-        mesh.position.y = Math.random() * 50;
-        mesh.position.z = ( Math.random() - 0.5 ) * 200;
-        mesh.scale.multiplyScalar( 10 );
-        scene.add( mesh );
+      mesh.position.x = ( Math.random() - 0.5 ) * 200;
+      mesh.position.y = Math.random() * 50;
+      mesh.position.z = ( Math.random() - 0.5 ) * 200;
+      mesh.scale.multiplyScalar( 10 );
+      scene.add( mesh );
 
     }
 
     // lights
 
-    scene.add( new THREE.AmbientLight( 0x222222 ) );
+    scene.add( new THREE.AmbientLight( 0xcccccc ) );
 
-    const directionalLight1 = new THREE.DirectionalLight( 0xffffff, 2 );
+    const directionalLight1 = new THREE.DirectionalLight( 0xffffff, 6 );
     directionalLight1.position.set( 2, 1.2, 10 ).normalize();
     scene.add( directionalLight1 );
 
-    const directionalLight2 = new THREE.DirectionalLight( 0xffffff, 1 );
+    const directionalLight2 = new THREE.DirectionalLight( 0xffffff, 3 );
     directionalLight2.position.set( - 2, 1.2, - 10 ).normalize();
     scene.add( directionalLight2 );
 
@@ -201,48 +224,48 @@ function init() {
 
     effectController = {
 
-        enabled: true,
-        jsDepthCalculation: true,
-        shaderFocus: false,
+      enabled: true,
+      jsDepthCalculation: true,
+      shaderFocus: false,
 
-        fstop: 2.2,
-        maxblur: 1.0,
+      fstop: 2.2,
+      maxblur: 1.0,
 
-        showFocus: false,
-        focalDepth: 2.8,
-        manualdof: false,
-        vignetting: false,
-        depthblur: false,
+      showFocus: false,
+      focalDepth: 2.8,
+      manualdof: false,
+      vignetting: false,
+      depthblur: false,
 
-        threshold: 0.5,
-        gain: 2.0,
-        bias: 0.5,
-        fringe: 0.7,
+      threshold: 0.5,
+      gain: 2.0,
+      bias: 0.5,
+      fringe: 0.7,
 
-        focalLength: 35,
-        noise: true,
-        pentagon: false,
+      focalLength: 35,
+      noise: true,
+      pentagon: false,
 
-        dithering: 0.0001
+      dithering: 0.0001
 
     };
 
     const matChanger = function () {
 
-        for ( const e in effectController ) {
+      for ( const e in effectController ) {
 
-            if ( e in postprocessing.bokeh_uniforms ) {
+        if ( e in postprocessing.bokeh_uniforms ) {
 
-                postprocessing.bokeh_uniforms[ e ].value = effectController[ e ];
-
-            }
+          postprocessing.bokeh_uniforms[ e ].value = effectController[ e ];
 
         }
 
-        postprocessing.enabled = effectController.enabled;
-        postprocessing.bokeh_uniforms[ 'znear' ].value = camera.near;
-        postprocessing.bokeh_uniforms[ 'zfar' ].value = camera.far;
-        camera.setFocalLength( effectController.focalLength );
+      }
+
+      postprocessing.enabled = effectController.enabled;
+      postprocessing.bokeh_uniforms[ 'znear' ].value = camera.near;
+      postprocessing.bokeh_uniforms[ 'zfar' ].value = camera.far;
+      camera.setFocalLength( effectController.focalLength );
 
     };
 
@@ -282,9 +305,9 @@ function init() {
 
     window.addEventListener( 'resize', onWindowResize );
 
-}
+  }
 
-function onWindowResize() {
+  function onWindowResize() {
 
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
@@ -300,9 +323,9 @@ function onWindowResize() {
 
     renderer.setSize( window.innerWidth, window.innerHeight );
 
-}
+  }
 
-function onPointerMove( event ) {
+  function onPointerMove( event ) {
 
     if ( event.isPrimary === false ) return;
 
@@ -311,9 +334,9 @@ function onPointerMove( event ) {
 
     postprocessing.bokeh_uniforms[ 'focusCoords' ].value.set( event.clientX / window.innerWidth, 1 - ( event.clientY / window.innerHeight ) );
 
-}
+  }
 
-function initPostprocessing() {
+  function initPostprocessing() {
 
     postprocessing.scene = new THREE.Scene();
 
@@ -322,8 +345,8 @@ function initPostprocessing() {
 
     postprocessing.scene.add( postprocessing.camera );
 
-    postprocessing.rtTextureDepth = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight );
-    postprocessing.rtTextureColor = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight );
+    postprocessing.rtTextureDepth = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, { type: THREE.HalfFloatType } );
+    postprocessing.rtTextureColor = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, { type: THREE.HalfFloatType } );
 
     const bokeh_shader = BokehShader;
 
@@ -336,13 +359,13 @@ function initPostprocessing() {
 
     postprocessing.materialBokeh = new THREE.ShaderMaterial( {
 
-        uniforms: postprocessing.bokeh_uniforms,
-        vertexShader: bokeh_shader.vertexShader,
-        fragmentShader: bokeh_shader.fragmentShader,
-        defines: {
-            RINGS: shaderSettings.rings,
-            SAMPLES: shaderSettings.samples
-        }
+      uniforms: postprocessing.bokeh_uniforms,
+      vertexShader: bokeh_shader.vertexShader,
+      fragmentShader: bokeh_shader.fragmentShader,
+      defines: {
+        RINGS: shaderSettings.rings,
+        SAMPLES: shaderSettings.samples
+      }
 
     } );
 
@@ -350,47 +373,47 @@ function initPostprocessing() {
     postprocessing.quad.position.z = - 500;
     postprocessing.scene.add( postprocessing.quad );
 
-}
+  }
 
-function shaderUpdate() {
+  function shaderUpdate() {
 
     postprocessing.materialBokeh.defines.RINGS = shaderSettings.rings;
     postprocessing.materialBokeh.defines.SAMPLES = shaderSettings.samples;
     postprocessing.materialBokeh.needsUpdate = true;
 
-}
+  }
 
-function animate() {
+  function animate() {
 
     requestId = requestAnimationFrame( animate, renderer.domElement );
 
     render();
     stats.update();
 
-}
+  }
 
-function linearize( depth ) {
+  function linearize( depth ) {
 
     const zfar = camera.far;
     const znear = camera.near;
     return - zfar * znear / ( depth * ( zfar - znear ) - zfar );
 
-}
+  }
 
-function smoothstep( near, far, depth ) {
+  function smoothstep( near, far, depth ) {
 
     const x = saturate( ( depth - near ) / ( far - near ) );
     return x * x * ( 3 - 2 * x );
 
-}
+  }
 
-function saturate( x ) {
+  function saturate( x ) {
 
     return Math.max( 0, Math.min( 1, x ) );
 
-}
+  }
 
-function render() {
+  function render() {
 
     const time = Date.now() * 0.00015;
 
@@ -404,73 +427,73 @@ function render() {
 
     if ( effectController.jsDepthCalculation ) {
 
-        raycaster.setFromCamera( mouse, camera );
+      raycaster.setFromCamera( mouse, camera );
 
-        const intersects = raycaster.intersectObjects( scene.children, true );
+      const intersects = raycaster.intersectObjects( scene.children, true );
 
-        const targetDistance = ( intersects.length > 0 ) ? intersects[ 0 ].distance : 1000;
+      const targetDistance = ( intersects.length > 0 ) ? intersects[ 0 ].distance : 1000;
 
-        distance += ( targetDistance - distance ) * 0.03;
+      distance += ( targetDistance - distance ) * 0.03;
 
-        const sdistance = smoothstep( camera.near, camera.far, distance );
+      const sdistance = smoothstep( camera.near, camera.far, distance );
 
-        const ldistance = linearize( 1 - sdistance );
+      const ldistance = linearize( 1 - sdistance );
 
-        postprocessing.bokeh_uniforms[ 'focalDepth' ].value = ldistance;
+      postprocessing.bokeh_uniforms[ 'focalDepth' ].value = ldistance;
 
-        effectController[ 'focalDepth' ] = ldistance;
+      effectController[ 'focalDepth' ] = ldistance;
 
     }
 
     for ( let i = 0; i < leaves; i ++ ) {
 
-        const plane = planes[ i ];
-        plane.rotation.x += plane.rotation.dx;
-        plane.rotation.y += plane.rotation.dy;
-        plane.rotation.z += plane.rotation.dz;
-        plane.position.y -= 2;
-        plane.position.x += plane.position.dx;
-        plane.position.z += plane.position.dz;
+      const plane = planes[ i ];
+      plane.rotation.x += plane.rotation.dx;
+      plane.rotation.y += plane.rotation.dy;
+      plane.rotation.z += plane.rotation.dz;
+      plane.position.y -= 2;
+      plane.position.x += plane.position.dx;
+      plane.position.z += plane.position.dz;
 
-        if ( plane.position.y < 0 ) plane.position.y += 300;
+      if ( plane.position.y < 0 ) plane.position.y += 300;
 
     }
 
 
     if ( postprocessing.enabled ) {
 
-        renderer.clear();
+      renderer.clear();
 
-        // render scene into texture
+      // render scene into texture
 
-        renderer.setRenderTarget( postprocessing.rtTextureColor );
-        renderer.clear();
-        renderer.render( scene, camera );
+      renderer.setRenderTarget( postprocessing.rtTextureColor );
+      renderer.clear();
+      renderer.render( scene, camera );
 
-        // render depth into texture
+      // render depth into texture
 
-        scene.overrideMaterial = materialDepth;
-        renderer.setRenderTarget( postprocessing.rtTextureDepth );
-        renderer.clear();
-        renderer.render( scene, camera );
-        scene.overrideMaterial = null;
+      scene.overrideMaterial = materialDepth;
+      renderer.setRenderTarget( postprocessing.rtTextureDepth );
+      renderer.clear();
+      renderer.render( scene, camera );
+      scene.overrideMaterial = null;
 
-        // render bokeh composite
+      // render bokeh composite
 
-        renderer.setRenderTarget( null );
-        renderer.render( postprocessing.scene, postprocessing.camera );
+      renderer.setRenderTarget( null );
+      renderer.render( postprocessing.scene, postprocessing.camera );
 
 
     } else {
 
-        scene.overrideMaterial = null;
+      scene.overrideMaterial = null;
 
-        renderer.setRenderTarget( null );
-        renderer.clear();
-        renderer.render( scene, camera );
+      renderer.setRenderTarget( null );
+      renderer.clear();
+      renderer.render( scene, camera );
 
     }
 
-}
-}
+  }
+  }
 })

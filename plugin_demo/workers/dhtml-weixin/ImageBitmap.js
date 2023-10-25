@@ -1,6 +1,6 @@
 export default class ImageBitmap {
   constructor(image) {
-    this.image = wx_element;
+    this.image = mini_element;
   }
   get width() {
     return this.image.width;

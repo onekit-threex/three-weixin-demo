@@ -1,12 +1,26 @@
-// webgl/webgl_panorama_equirectangular.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -16,189 +30,188 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        
-			let camera, scene, renderer;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-			let isUserInteracting = false,
-				onPointerDownMouseX = 0, onPointerDownMouseY = 0,
-				lon = 0, onPointerDownLon = 0,
-				lat = 0, onPointerDownLat = 0,
-				phi = 0, theta = 0;
+    let camera, scene, renderer;
 
-			init();
-			animate();
+    let isUserInteracting = false,
+      onPointerDownMouseX = 0, onPointerDownMouseY = 0,
+      lon = 0, onPointerDownLon = 0,
+      lat = 0, onPointerDownLat = 0,
+      phi = 0, theta = 0;
 
-			function init() {
+    init();
+    animate();
 
-				const container = document.getElementById( 'container' );
+    function init() {
 
-				camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1100 );
+      const container = document.getElementById( 'container' );
 
-				scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1100 );
 
-				const geometry = new THREE.SphereGeometry( 500, 60, 40 );
-				// invert the geometry on the x-axis so that all of the faces point inward
-				geometry.scale( - 1, 1, 1 );
+      scene = new THREE.Scene();
 
-				const texture = new THREE.TextureLoader( ).load( 'textures/2294472375_24a3b8ef46_o.jpg' );
-				const material = new THREE.MeshBasicMaterial( { map: texture } );
+      const geometry = new THREE.SphereGeometry( 500, 60, 40 );
+      // invert the geometry on the x-axis so that all of the faces point inward
+      geometry.scale( - 1, 1, 1 );
 
-				const mesh = new THREE.Mesh( geometry, material );
+      const texture = new THREE.TextureLoader().load( 'textures/2294472375_24a3b8ef46_o.jpg' );
+      texture.colorSpace = THREE.SRGBColorSpace;
+      const material = new THREE.MeshBasicMaterial( { map: texture } );
 
-				scene.add( mesh );
+      const mesh = new THREE.Mesh( geometry, material );
 
-				renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				container.appendChild( renderer.domElement );
+      scene.add( mesh );
 
-				container.style.touchAction = 'none';
-				container.addEventListener( 'pointerdown', onPointerDown );
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      container.appendChild( renderer.domElement );
 
-				document.addEventListener( 'wheel', onDocumentMouseWheel );
+      container.style.touchAction = 'none';
+      container.addEventListener( 'pointerdown', onPointerDown );
 
-				//
+      document.addEventListener( 'wheel', onDocumentMouseWheel );
 
-				document.addEventListener( 'dragover', function ( event ) {
+      //
 
-					event.preventDefault();
-					event.dataTransfer.dropEffect = 'copy';
+      document.addEventListener( 'dragover', function ( event ) {
 
-				} );
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
 
-				document.addEventListener( 'dragenter', function () {
+      } );
 
-					document.body.style.opacity = 0.5;
+      document.addEventListener( 'dragenter', function () {
 
-				} );
+        document.body.style.opacity = 0.5;
 
-				document.addEventListener( 'dragleave', function () {
+      } );
 
-					document.body.style.opacity = 1;
+      document.addEventListener( 'dragleave', function () {
 
-				} );
+        document.body.style.opacity = 1;
 
-				document.addEventListener( 'drop', function ( event ) {
+      } );
 
-					event.preventDefault();
+      document.addEventListener( 'drop', function ( event ) {
 
-					const reader = new FileReader();
-					reader.addEventListener( 'load', function ( event ) {
+        event.preventDefault();
 
-						material.map.image.src = event.target.result;
-						material.map.needsUpdate = true;
+        const reader = new FileReader();
+        reader.addEventListener( 'load', function ( event ) {
 
-					} );
-					reader.readAsDataURL( event.dataTransfer.files[ 0 ] );
+          material.map.image.src = event.target.result;
+          material.map.needsUpdate = true;
 
-					document.body.style.opacity = 1;
+        } );
+        reader.readAsDataURL( event.dataTransfer.files[ 0 ] );
 
-				} );
+        document.body.style.opacity = 1;
 
-				//
+      } );
 
-				window.addEventListener( 'resize', onWindowResize );
+      //
 
-			}
-
-			function onWindowResize() {
-
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-			}
-
-			function onPointerDown( event ) {
-
-				if ( event.isPrimary === false ) return;
-
-				isUserInteracting = true;
-
-				onPointerDownMouseX = event.clientX;
-				onPointerDownMouseY = event.clientY;
-
-				onPointerDownLon = lon;
-				onPointerDownLat = lat;
-
-				document.addEventListener( 'pointermove', onPointerMove );
-				document.addEventListener( 'pointerup', onPointerUp );
-
-			}
-
-			function onPointerMove( event ) {
-
-				if ( event.isPrimary === false ) return;
-
-				lon = ( onPointerDownMouseX - event.clientX ) * 0.1 + onPointerDownLon;
-				lat = ( event.clientY - onPointerDownMouseY ) * 0.1 + onPointerDownLat;
-
-			}
-
-			function onPointerUp() {
-
-				if ( event.isPrimary === false ) return;
-
-				isUserInteracting = false;
-
-				document.removeEventListener( 'pointermove', onPointerMove );
-				document.removeEventListener( 'pointerup', onPointerUp );
-
-			}
-
-			function onDocumentMouseWheel( event ) {
-
-				const fov = camera.fov + event.deltaY * 0.05;
-
-				camera.fov = THREE.MathUtils.clamp( fov, 10, 75 );
-
-				camera.updateProjectionMatrix();
-
-			}
-
-			function animate() {
-
-				requestId = requestAnimationFrame(animate);
-				update();
-
-			}
-
-			function update() {
-
-				if ( isUserInteracting === false ) {
-
-					lon += 0.1;
-
-				}
-
-				lat = Math.max( - 85, Math.min( 85, lat ) );
-				phi = THREE.MathUtils.degToRad( 90 - lat );
-				theta = THREE.MathUtils.degToRad( lon );
-
-				const x = 500 * Math.sin( phi ) * Math.cos( theta );
-				const y = 500 * Math.cos( phi );
-				const z = 500 * Math.sin( phi ) * Math.sin( theta );
-
-				camera.lookAt( x, y, z );
-
-				renderer.render( scene, camera );
-
-			}
+      window.addEventListener( 'resize', onWindowResize );
 
     }
+
+    function onWindowResize() {
+
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize( window.innerWidth, window.innerHeight );
+
+    }
+
+    function onPointerDown( event ) {
+
+      if ( event.isPrimary === false ) return;
+
+      isUserInteracting = true;
+
+      onPointerDownMouseX = event.clientX;
+      onPointerDownMouseY = event.clientY;
+
+      onPointerDownLon = lon;
+      onPointerDownLat = lat;
+
+      document.addEventListener( 'pointermove', onPointerMove );
+      document.addEventListener( 'pointerup', onPointerUp );
+
+    }
+
+    function onPointerMove( event ) {
+
+      if ( event.isPrimary === false ) return;
+
+      lon = ( onPointerDownMouseX - event.clientX ) * 0.1 + onPointerDownLon;
+      lat = ( event.clientY - onPointerDownMouseY ) * 0.1 + onPointerDownLat;
+
+    }
+
+    function onPointerUp() {
+
+      if ( event.isPrimary === false ) return;
+
+      isUserInteracting = false;
+
+      document.removeEventListener( 'pointermove', onPointerMove );
+      document.removeEventListener( 'pointerup', onPointerUp );
+
+    }
+
+    function onDocumentMouseWheel( event ) {
+
+      const fov = camera.fov + event.deltaY * 0.05;
+
+      camera.fov = THREE.MathUtils.clamp( fov, 10, 75 );
+
+      camera.updateProjectionMatrix();
+
+    }
+
+    function animate() {
+
+      requestId = requestAnimationFrame( animate );
+      update();
+
+    }
+
+    function update() {
+
+      if ( isUserInteracting === false ) {
+
+        lon += 0.1;
+
+      }
+
+      lat = Math.max( - 85, Math.min( 85, lat ) );
+      phi = THREE.MathUtils.degToRad( 90 - lat );
+      theta = THREE.MathUtils.degToRad( lon );
+
+      const x = 500 * Math.sin( phi ) * Math.cos( theta );
+      const y = 500 * Math.cos( phi );
+      const z = 500 * Math.sin( phi ) * Math.sin( theta );
+
+      camera.lookAt( x, y, z );
+
+      renderer.render( scene, camera );
+
+    }
+
+  }
 })

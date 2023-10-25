@@ -1,23 +1,37 @@
-// webgl_postprocessing/webgl_postprocessing_3dlut.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
-			import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
-			import { RGBELoader } from './jsm/loaders/RGBELoader.js';
-			import { EffectComposer } from './jsm/postprocessing/EffectComposer.js';
-			import { RenderPass } from './jsm/postprocessing/RenderPass.js';
-			import { ShaderPass } from './jsm/postprocessing/ShaderPass.js';
-			import { LUTPass } from './jsm/postprocessing/LUTPass.js';
-			import { LUTCubeLoader } from './jsm/loaders/LUTCubeLoader.js';
-			import { LUT3dlLoader } from './jsm/loaders/LUT3dlLoader.js';
-			import { GammaCorrectionShader } from './jsm/shaders/GammaCorrectionShader.js';
-			import { GUI } from './jsm/libs/lil-gui.module.min.js';
-
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { LUTPass } from 'three/addons/postprocessing/LUTPass.js';
+import { LUTCubeLoader } from 'three/addons/loaders/LUTCubeLoader.js';
+import { LUT3dlLoader } from 'three/addons/loaders/LUT3dlLoader.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -28,172 +42,164 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+    const params = {
+      enabled: true,
+      lut: 'Bourbon 64.CUBE',
+      intensity: 1,
+      use2DLut: false,
+    };
 
-const params = {
-    enabled: true,
-    lut: 'Bourbon 64.CUBE',
-    intensity: 1,
-    use2DLut: false,
-};
+    const lutMap = {
+      'Bourbon 64.CUBE': null,
+      'Chemical 168.CUBE': null,
+      'Clayton 33.CUBE': null,
+      'Cubicle 99.CUBE': null,
+      'Remy 24.CUBE': null,
+      'Presetpro-Cinematic.3dl': null
+    };
 
-const lutMap = {
-    'Bourbon 64.CUBE': null,
-    'Chemical 168.CUBE': null,
-    'Clayton 33.CUBE': null,
-    'Cubicle 99.CUBE': null,
-    'Remy 24.CUBE': null,
-    'Presetpro-Cinematic.3dl': null
-};
+    let gui;
+    let camera, scene, renderer;
+    let composer, lutPass;
 
-let gui;
-let camera, scene, renderer;
-let composer, lutPass;
+    init();
+    render();
 
-init();
-render();
+    function init() {
 
-function init() {
+      const container = document.createElement( 'div' );
+      document.body.appendChild( container );
 
-    const container = document.createElement( 'div' );
-    document.body.appendChild( container );
+      camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.25, 20 );
+      camera.position.set( - 1.8, 0.6, 2.7 );
 
-    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.25, 20 );
-    camera.position.set( - 1.8, 0.6, 2.7 );
+      scene = new THREE.Scene();
 
-    scene = new THREE.Scene();
-
-    new RGBELoader()
+      new RGBELoader()
         .setPath( 'textures/equirectangular/' )
         .load( 'royal_esplanade_1k.hdr', function ( texture ) {
 
-            texture.mapping = THREE.EquirectangularReflectionMapping;
+          texture.mapping = THREE.EquirectangularReflectionMapping;
 
-            scene.background = texture;
-            scene.environment = texture;
+          scene.background = texture;
+          scene.environment = texture;
 
-            // model
+          // model
 
-            const loader = new GLTFLoader().setPath( 'models/gltf/DamagedHelmet/glTF/' );
-            loader.load( 'DamagedHelmet.gltf', function ( gltf ) {
+          const loader = new GLTFLoader().setPath( 'models/gltf/DamagedHelmet/glTF/' );
+          loader.load( 'DamagedHelmet.gltf', function ( gltf ) {
 
-                scene.add( gltf.scene );
+            scene.add( gltf.scene );
 
-            } );
+          } );
 
         } );
 
-    Object.keys( lutMap ).forEach( name => {
+      Object.keys( lutMap ).forEach( name => {
 
         if ( /\.CUBE$/i.test( name ) ) {
 
-            new LUTCubeLoader()
-                .load( 'luts/' + name, function ( result ) {
+          new LUTCubeLoader()
+            .load( 'luts/' + name, function ( result ) {
 
-                    lutMap[ name ] = result;
+              lutMap[ name ] = result;
 
-                } );
+            } );
 
         } else {
 
-            new LUT3dlLoader()
-                .load( 'luts/' + name, function ( result ) {
+          new LUT3dlLoader()
+            .load( 'luts/' + name, function ( result ) {
 
-                    lutMap[ name ] = result;
+              lutMap[ name ] = result;
 
-                } );
+            } );
 
         }
 
-    } );
+      } );
 
-    renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1;
-    container.appendChild( renderer.domElement );
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      container.appendChild( renderer.domElement );
 
-    const target = new THREE.WebGLRenderTarget( {
-        minFilter: THREE.LinearFilter,
-        magFilter: THREE.LinearFilter,
-        format: THREE.RGBAFormat,
-        encoding: THREE.sRGBEncoding
-    } );
+      composer = new EffectComposer( renderer );
+      composer.setPixelRatio( window.devicePixelRatio );
+      composer.setSize( window.innerWidth, window.innerHeight );
+      composer.addPass( new RenderPass( scene, camera ) );
+      composer.addPass( new OutputPass() );
 
-    composer = new EffectComposer( renderer, target );
-    composer.setPixelRatio( window.devicePixelRatio );
-    composer.setSize( window.innerWidth, window.innerHeight );
-    composer.addPass( new RenderPass( scene, camera ) );
-    composer.addPass( new ShaderPass( GammaCorrectionShader ) );
+      lutPass = new LUTPass();
+      composer.addPass( lutPass );
 
-    lutPass = new LUTPass();
-    composer.addPass( lutPass );
+      const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+      controls.minDistance = 2;
+      controls.maxDistance = 10;
+      controls.target.set( 0, 0, - 0.2 );
+      controls.update();
 
-    const controls = new OrbitControls( camera, renderer.domElement );
-    controls.minDistance = 2;
-    controls.maxDistance = 10;
-    controls.target.set( 0, 0, - 0.2 );
-    controls.update();
+      gui = new GUI();
+      gui.width = 350;
+      gui.add( params, 'enabled' );
+      gui.add( params, 'lut', Object.keys( lutMap ) );
+      gui.add( params, 'intensity' ).min( 0 ).max( 1 );
 
-    gui = new GUI();
-    gui.width = 350;
-    gui.add( params, 'enabled' );
-    gui.add( params, 'lut', Object.keys( lutMap ) );
-    gui.add( params, 'intensity' ).min( 0 ).max( 1 );
-
-    if ( renderer.capabilities.isWebGL2 ) {
+      if ( renderer.capabilities.isWebGL2 ) {
 
         gui.add( params, 'use2DLut' );
 
-    } else {
+      } else {
 
         params.use2DLut = true;
 
+      }
+
+      window.addEventListener( 'resize', onWindowResize );
+
     }
 
-    window.addEventListener( 'resize', onWindowResize );
+    function onWindowResize() {
 
-}
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
 
-function onWindowResize() {
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      composer.setSize( window.innerWidth, window.innerHeight );
 
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+      render();
 
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    composer.setSize( window.innerWidth, window.innerHeight );
+    }
 
-    render();
+    //
 
-}
+    function render() {
 
-//
+      requestAnimationFrame( render );
 
-function render() {
-
-    requestId = requestAnimationFrame( render );
-
-    lutPass.enabled = params.enabled && Boolean( lutMap[ params.lut ] );
-    lutPass.intensity = params.intensity;
-    if ( lutMap[ params.lut ] ) {
+      lutPass.enabled = params.enabled && Boolean( lutMap[ params.lut ] );
+      lutPass.intensity = params.intensity;
+      if ( lutMap[ params.lut ] ) {
 
         const lut = lutMap[ params.lut ];
         lutPass.lut = params.use2DLut ? lut.texture : lut.texture3D;
 
+      }
+
+      composer.render();
+
     }
-
-    composer.render();
-
-}
-
-}
+  }
 })

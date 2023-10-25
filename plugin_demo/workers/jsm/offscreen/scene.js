@@ -61,7 +61,7 @@ function animate() {
 
 	if ( self.requestAnimationFrame ) {
 
-		self.requestAnimationFrame( animate );
+		self.requestId = requestAnimationFrame( animate );
 
 	} else {
 

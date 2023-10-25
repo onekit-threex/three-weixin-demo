@@ -1,16 +1,33 @@
-// webgl/webgl_shadowmap_vsm.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  Stats from './jsm/libs/stats.module.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import { OrbitControls } from './jsm/controls/OrbitControls0.js';
+import Stats from 'three/addons/libs/stats.module.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -20,217 +37,215 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-        let camera, scene, renderer, clock, stats;
-        let dirLight, spotLight;
-        let torusKnot, dirGroup;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {	
+  let camera, scene, renderer, clock, stats;
+  let dirLight, spotLight;
+  let torusKnot, dirGroup;
 
-        init();
-        animate();
+  init();
+  animate();
 
-        function init() {
+  function init() {
 
-            initScene();
-            initMisc();
+    initScene();
+    initMisc();
 
-            // Init gui
-            const gui = new GUI();
+    // Init gui
+    const gui = new GUI();
 
-            const config = {
-                spotlightRadius: 4,
-                spotlightSamples: 8,
-                dirlightRadius: 4,
-                dirlightSamples: 8
-            };
+    const config = {
+      spotlightRadius: 4,
+      spotlightSamples: 8,
+      dirlightRadius: 4,
+      dirlightSamples: 8
+    };
 
-            const spotlightFolder = gui.addFolder( 'Spotlight' );
-            spotlightFolder.add( config, 'spotlightRadius' ).name( 'radius' ).min( 0 ).max( 25 ).onChange( function ( value ) {
+    const spotlightFolder = gui.addFolder( 'Spotlight' );
+    spotlightFolder.add( config, 'spotlightRadius' ).name( 'radius' ).min( 0 ).max( 25 ).onChange( function ( value ) {
 
-                spotLight.shadow.radius = value;
+      spotLight.shadow.radius = value;
 
-            } );
+    } );
 
-            spotlightFolder.add( config, 'spotlightSamples', 1, 25, 1 ).name( 'samples' ).onChange( function ( value ) {
+    spotlightFolder.add( config, 'spotlightSamples', 1, 25, 1 ).name( 'samples' ).onChange( function ( value ) {
 
-                spotLight.shadow.blurSamples = value;
+      spotLight.shadow.blurSamples = value;
 
-            } );
-            spotlightFolder.open();
+    } );
+    spotlightFolder.open();
 
-            const dirlightFolder = gui.addFolder( 'Directional Light' );
-            dirlightFolder.add( config, 'dirlightRadius' ).name( 'radius' ).min( 0 ).max( 25 ).onChange( function ( value ) {
+    const dirlightFolder = gui.addFolder( 'Directional Light' );
+    dirlightFolder.add( config, 'dirlightRadius' ).name( 'radius' ).min( 0 ).max( 25 ).onChange( function ( value ) {
 
-                dirLight.shadow.radius = value;
+      dirLight.shadow.radius = value;
 
-            } );
+    } );
 
-            dirlightFolder.add( config, 'dirlightSamples', 1, 25, 1 ).name( 'samples' ).onChange( function ( value ) {
+    dirlightFolder.add( config, 'dirlightSamples', 1, 25, 1 ).name( 'samples' ).onChange( function ( value ) {
 
-                dirLight.shadow.blurSamples = value;
+      dirLight.shadow.blurSamples = value;
 
-            } );
-            dirlightFolder.open();
+    } );
+    dirlightFolder.open();
 
-            document.body.appendChild( renderer.domElement );
-            window.addEventListener( 'resize', onWindowResize );
+    document.body.appendChild( renderer.domElement );
+    window.addEventListener( 'resize', onWindowResize );
 
-        }
+  }
 
-        function initScene() {
+  function initScene() {
 
-            camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
-            camera.position.set( 0, 10, 30 );
+    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
+    camera.position.set( 0, 10, 30 );
 
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color( 0x222244 );
-            scene.fog = new THREE.Fog( 0x222244, 50, 100 );
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color( 0x222244 );
+    scene.fog = new THREE.Fog( 0x222244, 50, 100 );
 
-            // Lights
+    // Lights
 
-            scene.add( new THREE.AmbientLight( 0x444444 ) );
+    scene.add( new THREE.AmbientLight( 0x444444 ) );
 
-            spotLight = new THREE.SpotLight( 0xff8888 );
-            spotLight.angle = Math.PI / 5;
-            spotLight.penumbra = 0.3;
-            spotLight.position.set( 8, 10, 5 );
-            spotLight.castShadow = true;
-            spotLight.shadow.camera.near = 8;
-            spotLight.shadow.camera.far = 200;
-            spotLight.shadow.mapSize.width = 256;
-            spotLight.shadow.mapSize.height = 256;
-            spotLight.shadow.bias = - 0.002;
-            spotLight.shadow.radius = 4;
-            scene.add( spotLight );
+    spotLight = new THREE.SpotLight( 0xff8888, 400 );
+    spotLight.angle = Math.PI / 5;
+    spotLight.penumbra = 0.3;
+    spotLight.position.set( 8, 10, 5 );
+    spotLight.castShadow = true;
+    spotLight.shadow.camera.near = 8;
+    spotLight.shadow.camera.far = 200;
+    spotLight.shadow.mapSize.width = 256;
+    spotLight.shadow.mapSize.height = 256;
+    spotLight.shadow.bias = - 0.002;
+    spotLight.shadow.radius = 4;
+    scene.add( spotLight );
 
 
-            dirLight = new THREE.DirectionalLight( 0x8888ff );
-            dirLight.position.set( 3, 12, 17 );
-            dirLight.castShadow = true;
-            dirLight.shadow.camera.near = 0.1;
-            dirLight.shadow.camera.far = 500;
-            dirLight.shadow.camera.right = 17;
-            dirLight.shadow.camera.left = - 17;
-            dirLight.shadow.camera.top	= 17;
-            dirLight.shadow.camera.bottom = - 17;
-            dirLight.shadow.mapSize.width = 512;
-            dirLight.shadow.mapSize.height = 512;
-            dirLight.shadow.radius = 4;
-            dirLight.shadow.bias = - 0.0005;
+    dirLight = new THREE.DirectionalLight( 0x8888ff, 3 );
+    dirLight.position.set( 3, 12, 17 );
+    dirLight.castShadow = true;
+    dirLight.shadow.camera.near = 0.1;
+    dirLight.shadow.camera.far = 500;
+    dirLight.shadow.camera.right = 17;
+    dirLight.shadow.camera.left = - 17;
+    dirLight.shadow.camera.top	= 17;
+    dirLight.shadow.camera.bottom = - 17;
+    dirLight.shadow.mapSize.width = 512;
+    dirLight.shadow.mapSize.height = 512;
+    dirLight.shadow.radius = 4;
+    dirLight.shadow.bias = - 0.0005;
 
-            dirGroup = new THREE.Group();
-            dirGroup.add( dirLight );
-            scene.add( dirGroup );
+    dirGroup = new THREE.Group();
+    dirGroup.add( dirLight );
+    scene.add( dirGroup );
 
-            // Geometry
+    // Geometry
 
-            const geometry = new THREE.TorusKnotGeometry( 25, 8, 75, 20 );
-            const material = new THREE.MeshPhongMaterial( {
-                color: 0x999999,
-                shininess: 0,
-                specular: 0x222222
-            } );
+    const geometry = new THREE.TorusKnotGeometry( 25, 8, 75, 20 );
+    const material = new THREE.MeshPhongMaterial( {
+      color: 0x999999,
+      shininess: 0,
+      specular: 0x222222
+    } );
 
-            torusKnot = new THREE.Mesh( geometry, material );
-            torusKnot.scale.multiplyScalar( 1 / 18 );
-            torusKnot.position.y = 3;
-            torusKnot.castShadow = true;
-            torusKnot.receiveShadow = true;
-            scene.add( torusKnot );
+    torusKnot = new THREE.Mesh( geometry, material );
+    torusKnot.scale.multiplyScalar( 1 / 18 );
+    torusKnot.position.y = 3;
+    torusKnot.castShadow = true;
+    torusKnot.receiveShadow = true;
+    scene.add( torusKnot );
 
-            const cylinderGeometry = new THREE.CylinderGeometry( 0.75, 0.75, 7, 32 );
+    const cylinderGeometry = new THREE.CylinderGeometry( 0.75, 0.75, 7, 32 );
 
-            const pillar1 = new THREE.Mesh( cylinderGeometry, material );
-            pillar1.position.set( 8, 3.5, 8 );
-            pillar1.castShadow = true;
-            pillar1.receiveShadow = true;
+    const pillar1 = new THREE.Mesh( cylinderGeometry, material );
+    pillar1.position.set( 8, 3.5, 8 );
+    pillar1.castShadow = true;
+    pillar1.receiveShadow = true;
 
-            const pillar2 = pillar1.clone();
-            pillar2.position.set( 8, 3.5, - 8 );
-            const pillar3 = pillar1.clone();
-            pillar3.position.set( - 8, 3.5, 8 );
-            const pillar4 = pillar1.clone();
-            pillar4.position.set( - 8, 3.5, - 8 );
+    const pillar2 = pillar1.clone();
+    pillar2.position.set( 8, 3.5, - 8 );
+    const pillar3 = pillar1.clone();
+    pillar3.position.set( - 8, 3.5, 8 );
+    const pillar4 = pillar1.clone();
+    pillar4.position.set( - 8, 3.5, - 8 );
 
-            scene.add( pillar1 );
-            scene.add( pillar2 );
-            scene.add( pillar3 );
-            scene.add( pillar4 );
+    scene.add( pillar1 );
+    scene.add( pillar2 );
+    scene.add( pillar3 );
+    scene.add( pillar4 );
 
-            const planeGeometry = new THREE.PlaneGeometry( 200, 200 );
-            const planeMaterial = new THREE.MeshPhongMaterial( {
-                color: 0x999999,
-                shininess: 0,
-                specular: 0x111111
-            } );
+    const planeGeometry = new THREE.PlaneGeometry( 200, 200 );
+    const planeMaterial = new THREE.MeshPhongMaterial( {
+      color: 0x999999,
+      shininess: 0,
+      specular: 0x111111
+    } );
 
-            const ground = new THREE.Mesh( planeGeometry, planeMaterial );
-            ground.rotation.x = - Math.PI / 2;
-            ground.scale.multiplyScalar( 3 );
-            ground.castShadow = true;
-            ground.receiveShadow = true;
-            scene.add( ground );
+    const ground = new THREE.Mesh( planeGeometry, planeMaterial );
+    ground.rotation.x = - Math.PI / 2;
+    ground.scale.multiplyScalar( 3 );
+    ground.castShadow = true;
+    ground.receiveShadow = true;
+    scene.add( ground );
 
-        }
+  }
 
-        function initMisc() {
+  function initMisc() {
 
-            renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-            renderer.setPixelRatio( window.devicePixelRatio );
-            renderer.setSize( window.innerWidth, window.innerHeight );
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.VSMShadowMap;
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.VSMShadowMap;
 
-            // Mouse control
-            const controls = new OrbitControls( camera, renderer.domElement );
-            controls.target.set( 0, 2, 0 );
-            controls.update();
+    // Mouse control
+    const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+    controls.target.set( 0, 2, 0 );
+    controls.update();
 
-            clock = new THREE.Clock();
+    clock = new THREE.Clock();
 
-            stats = new Stats();
-            document.body.appendChild( stats.dom );
+    stats = new Stats();
+    document.body.appendChild( stats.dom );
 
-        }
+  }
 
-        function onWindowResize() {
+  function onWindowResize() {
 
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
 
-            renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setSize( window.innerWidth, window.innerHeight );
 
-        }
+  }
 
-        function animate( time ) {
+  function animate( time ) {
 
-            requestId = requestAnimationFrame(animate);
+    requestId = requestAnimationFrame( animate );
 
-            const delta = clock.getDelta();
+    const delta = clock.getDelta();
 
-            torusKnot.rotation.x += 0.25 * delta;
-            torusKnot.rotation.y += 0.5 * delta;
-            torusKnot.rotation.z += 1 * delta;
+    torusKnot.rotation.x += 0.25 * delta;
+    torusKnot.rotation.y += 0.5 * delta;
+    torusKnot.rotation.z += 1 * delta;
 
-            dirGroup.rotation.y += 0.7 * delta;
-            dirLight.position.z = 17 + Math.sin( time * 0.001 ) * 5;
+    dirGroup.rotation.y += 0.7 * delta;
+    dirLight.position.z = 17 + Math.sin( time * 0.001 ) * 5;
 
-            renderer.render( scene, camera );
+    renderer.render( scene, camera );
 
-            stats.update();
+    stats.update();
 
-        }
-    }
+  }
+  }
 })

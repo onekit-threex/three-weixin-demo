@@ -1,15 +1,29 @@
-// webgl_advanced/webgl_buffergeometry_indexed.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
 
-import Stats from './jsm/libs/stats.module.js';
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-
+import Stats from 'three/addons/libs/stats.module.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -20,163 +34,171 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-let camera, scene, renderer, stats;
+    let camera, scene, renderer, stats;
 
-			let mesh;
+    let mesh;
 
-			init();
-			animate();
+    init();
+    animate();
 
-			function init() {
+    function init() {
 
-				//
+      //
 
-				camera = new THREE.PerspectiveCamera( 27, window.innerWidth / window.innerHeight, 1, 3500 );
-				camera.position.z = 64;
+      camera = new THREE.PerspectiveCamera( 27, window.innerWidth / window.innerHeight, 1, 3500 );
+      camera.position.z = 64;
 
-				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0x050505 );
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color( 0x050505 );
 
-				//
+      //
 
-				const light = new THREE.HemisphereLight();
-				scene.add( light );
+      const light = new THREE.HemisphereLight();
+      light.intensity = 3;
+      scene.add( light );
 
-				//
+      //
 
-				const geometry = new THREE.BufferGeometry();
+      const geometry = new THREE.BufferGeometry();
 
-				const indices = [];
+      const indices = [];
 
-				const vertices = [];
-				const normals = [];
-				const colors = [];
+      const vertices = [];
+      const normals = [];
+      const colors = [];
 
-				const size = 20;
-				const segments = 10;
+      const size = 20;
+      const segments = 10;
 
-				const halfSize = size / 2;
-				const segmentSize = size / segments;
+      const halfSize = size / 2;
+      const segmentSize = size / segments;
 
-				// generate vertices, normals and color data for a simple grid geometry
+      const _color = new THREE.Color();
 
-				for ( let i = 0; i <= segments; i ++ ) {
+      // generate vertices, normals and color data for a simple grid geometry
 
-					const y = ( i * segmentSize ) - halfSize;
+      for ( let i = 0; i <= segments; i ++ ) {
 
-					for ( let j = 0; j <= segments; j ++ ) {
+        const y = ( i * segmentSize ) - halfSize;
 
-						const x = ( j * segmentSize ) - halfSize;
+        for ( let j = 0; j <= segments; j ++ ) {
 
-						vertices.push( x, - y, 0 );
-						normals.push( 0, 0, 1 );
+          const x = ( j * segmentSize ) - halfSize;
 
-						const r = ( x / size ) + 0.5;
-						const g = ( y / size ) + 0.5;
+          vertices.push( x, - y, 0 );
+          normals.push( 0, 0, 1 );
 
-						colors.push( r, g, 1 );
+          const r = ( x / size ) + 0.5;
+          const g = ( y / size ) + 0.5;
 
-					}
+          _color.setRGB( r, g, 1, THREE.SRGBColorSpace );
 
-				}
+          colors.push( _color.r, _color.g, _color.b );
 
-				// generate indices (data for element array buffer)
+        }
 
-				for ( let i = 0; i < segments; i ++ ) {
+      }
 
-					for ( let j = 0; j < segments; j ++ ) {
+      // generate indices (data for element array buffer)
 
-						const a = i * ( segments + 1 ) + ( j + 1 );
-						const b = i * ( segments + 1 ) + j;
-						const c = ( i + 1 ) * ( segments + 1 ) + j;
-						const d = ( i + 1 ) * ( segments + 1 ) + ( j + 1 );
+      for ( let i = 0; i < segments; i ++ ) {
 
-						// generate two faces (triangles) per iteration
+        for ( let j = 0; j < segments; j ++ ) {
 
-						indices.push( a, b, d ); // face one
-						indices.push( b, c, d ); // face two
+          const a = i * ( segments + 1 ) + ( j + 1 );
+          const b = i * ( segments + 1 ) + j;
+          const c = ( i + 1 ) * ( segments + 1 ) + j;
+          const d = ( i + 1 ) * ( segments + 1 ) + ( j + 1 );
 
-					}
+          // generate two faces (triangles) per iteration
 
-				}
+          indices.push( a, b, d ); // face one
+          indices.push( b, c, d ); // face two
 
-				//
+        }
 
-				geometry.setIndex( indices );
-				geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
-				geometry.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
-				geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
+      }
 
-				const material = new THREE.MeshPhongMaterial( {
-					side: THREE.DoubleSide,
-					vertexColors: true
-				} );
+      //
 
-				mesh = new THREE.Mesh( geometry, material );
-				scene.add( mesh );
+      geometry.setIndex( indices );
+      geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+      geometry.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+      geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
 
-				//
+      const material = new THREE.MeshPhongMaterial( {
+        side: THREE.DoubleSide,
+        vertexColors: true
+      } );
 
-				renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
+      mesh = new THREE.Mesh( geometry, material );
+      scene.add( mesh );
 
-				//
+      //
 
-				stats = new Stats();
-				document.body.appendChild( stats.dom );
+      renderer = new THREE.WebGLRenderer( { antialias: true } );
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      document.body.appendChild( renderer.domElement );
 
-				//
+      //
 
-				const gui = new GUI();
-				gui.add( material, 'wireframe' );
+      stats = new Stats();
+      document.body.appendChild( stats.dom );
 
-				//
+      //
 
-				window.addEventListener( 'resize', onWindowResize );
+      const gui = new GUI();
+      gui.add( material, 'wireframe' );
 
-			}
+      //
 
-			function onWindowResize() {
+      window.addEventListener( 'resize', onWindowResize );
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+    }
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+    function onWindowResize() {
 
-			}
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
 
-			//
+      renderer.setSize( window.innerWidth, window.innerHeight );
 
-			function animate() {
+    }
 
-				requestId = requestAnimationFrame(animate);
+    //
 
-				render();
-				stats.update();
+    function animate() {
 
-			}
+      requestId = requestAnimationFrame( animate );
 
-			function render() {
+      render();
+      stats.update();
 
-				const time = Date.now() * 0.001;
+    }
 
-				mesh.rotation.x = time * 0.25;
-				mesh.rotation.y = time * 0.5;
+    function render() {
 
-				renderer.render( scene, camera );
+      const time = Date.now() * 0.001;
 
-			}
-}
+      mesh.rotation.x = time * 0.25;
+      mesh.rotation.y = time * 0.5;
+
+      renderer.render( scene, camera );
+
+    }
+
+  }
 })

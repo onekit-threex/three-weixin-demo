@@ -1,187 +1,206 @@
-// webgl/webgl_geometry_extrude_shapes.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { TrackballControls } from './jsm/controls/TrackballControls.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+
+import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 var requestId
 Page({
-    onUnload(){
-        cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
-        this.renderer.dispose()
-        this.renderer.forceContextLoss()
-        this.renderer.context = null
-        this.renderer.domElement = null
-        this.renderer = null
-       }, 
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        window.dispatchEvent(web_e)
-        document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
-
-        let camera, scene, renderer, controls;
-
-			init();
-			animate();
-
-			function init() {
-
-				const info = document.createElement( 'div' );
-				info.style.position = 'absolute';
-				info.style.top = '10px';
-				info.style.width = '100%';
-				info.style.textAlign = 'center';
-				info.style.color = '#fff';
-				info.style.link = '#f80';
-				info.innerHTML = '<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> webgl - geometry extrude shapes';
-				document.body.appendChild( info );
-
-				renderer = that.renderer = new THREE.WebGLRenderer({canvas:canvas3d});
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
-
-				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0x222222 );
-
-				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
-				camera.position.set( 0, 0, 500 );
-
-				controls = new TrackballControls( camera, renderer.domElement );
-				controls.minDistance = 200;
-				controls.maxDistance = 500;
-
-				scene.add( new THREE.AmbientLight( 0x222222 ) );
-
-				const light = new THREE.PointLight( 0xffffff );
-				light.position.copy( camera.position );
-				scene.add( light );
-
-				//
-
-				const closedSpline = new THREE.CatmullRomCurve3( [
-					new THREE.Vector3( - 60, - 100, 60 ),
-					new THREE.Vector3( - 60, 20, 60 ),
-					new THREE.Vector3( - 60, 120, 60 ),
-					new THREE.Vector3( 60, 20, - 60 ),
-					new THREE.Vector3( 60, - 100, - 60 )
-				] );
-
-				closedSpline.curveType = 'catmullrom';
-				closedSpline.closed = true;
-
-				const extrudeSettings1 = {
-					steps: 100,
-					bevelEnabled: false,
-					extrudePath: closedSpline
-				};
-
-
-				const pts1 = [], count = 3;
-
-				for ( let i = 0; i < count; i ++ ) {
-
-					const l = 20;
-
-					const a = 2 * i / count * Math.PI;
-
-					pts1.push( new THREE.Vector2( Math.cos( a ) * l, Math.sin( a ) * l ) );
-
-				}
-
-				const shape1 = new THREE.Shape( pts1 );
-
-				const geometry1 = new THREE.ExtrudeGeometry( shape1, extrudeSettings1 );
-
-				const material1 = new THREE.MeshLambertMaterial( { color: 0xb00000, wireframe: false } );
-
-				const mesh1 = new THREE.Mesh( geometry1, material1 );
-
-				scene.add( mesh1 );
-
-
-				//
-
-
-				const randomPoints = [];
-
-				for ( let i = 0; i < 10; i ++ ) {
-
-					randomPoints.push( new THREE.Vector3( ( i - 4.5 ) * 50, THREE.MathUtils.randFloat( - 50, 50 ), THREE.MathUtils.randFloat( - 50, 50 ) ) );
-
-				}
-
-				const randomSpline = new THREE.CatmullRomCurve3( randomPoints );
-
-				//
-
-				const extrudeSettings2 = {
-					steps: 200,
-					bevelEnabled: false,
-					extrudePath: randomSpline
-				};
-
-
-				const pts2 = [], numPts = 5;
-
-				for ( let i = 0; i < numPts * 2; i ++ ) {
-
-					const l = i % 2 == 1 ? 10 : 20;
-
-					const a = i / numPts * Math.PI;
-
-					pts2.push( new THREE.Vector2( Math.cos( a ) * l, Math.sin( a ) * l ) );
-
-				}
-
-				const shape2 = new THREE.Shape( pts2 );
-
-				const geometry2 = new THREE.ExtrudeGeometry( shape2, extrudeSettings2 );
-
-				const material2 = new THREE.MeshLambertMaterial( { color: 0xff8000, wireframe: false } );
-
-				const mesh2 = new THREE.Mesh( geometry2, material2 );
-
-				scene.add( mesh2 );
-
-
-				//
-
-				const materials = [ material1, material2 ];
-
-				const extrudeSettings3 = {
-					depth: 20,
-					steps: 1,
-					bevelEnabled: true,
-					bevelThickness: 2,
-					bevelSize: 4,
-					bevelSegments: 1
-				};
-
-				const geometry3 = new THREE.ExtrudeGeometry( shape2, extrudeSettings3 );
-
-				const mesh3 = new THREE.Mesh( geometry3, materials );
-
-				mesh3.position.set( 50, 100, 50 );
-
-				scene.add( mesh3 );
-
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
+		setTimeout(() => {
+			if (this.renderer instanceof THREE.WebGLRenderer) {
+				this.renderer.dispose()
+				this.renderer.forceContextLoss()
+				this.renderer.context = null
+				this.renderer.domElement = null
+				this.renderer = null
 			}
+		}, 0)
+	},
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
 
-			function animate() {
+  let camera, scene, renderer, controls;
 
-				requestId = requestAnimationFrame(animate);
+  init();
+  animate();
 
-				controls.update();
-				renderer.render( scene, camera );
+  function init() {
 
-			}
+    const info = document.createElement( 'div' );
+    info.style.position = 'absolute';
+    info.style.top = '10px';
+    info.style.width = '100%';
+    info.style.textAlign = 'center';
+    info.style.color = '#fff';
+    info.style.link = '#f80';
+    info.innerHTML = '<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> webgl - geometry extrude shapes';
+    document.body.appendChild( info );
+
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color( 0x222222 );
+
+    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
+    camera.position.set( 0, 0, 500 );
+
+    controls = new TrackballControls( camera, renderer.domElement );
+    controls.minDistance = 200;
+    controls.maxDistance = 500;
+
+    scene.add( new THREE.AmbientLight( 0x666666 ) );
+
+    const light = new THREE.PointLight( 0xffffff, 3, 0, 0 );
+    light.position.copy( camera.position );
+    scene.add( light );
+
+    //
+
+    const closedSpline = new THREE.CatmullRomCurve3( [
+      new THREE.Vector3( - 60, - 100, 60 ),
+      new THREE.Vector3( - 60, 20, 60 ),
+      new THREE.Vector3( - 60, 120, 60 ),
+      new THREE.Vector3( 60, 20, - 60 ),
+      new THREE.Vector3( 60, - 100, - 60 )
+    ] );
+
+    closedSpline.curveType = 'catmullrom';
+    closedSpline.closed = true;
+
+    const extrudeSettings1 = {
+      steps: 100,
+      bevelEnabled: false,
+      extrudePath: closedSpline
+    };
+
+
+    const pts1 = [], count = 3;
+
+    for ( let i = 0; i < count; i ++ ) {
+
+      const l = 20;
+
+      const a = 2 * i / count * Math.PI;
+
+      pts1.push( new THREE.Vector2( Math.cos( a ) * l, Math.sin( a ) * l ) );
+
     }
+
+    const shape1 = new THREE.Shape( pts1 );
+
+    const geometry1 = new THREE.ExtrudeGeometry( shape1, extrudeSettings1 );
+
+    const material1 = new THREE.MeshLambertMaterial( { color: 0xb00000, wireframe: false } );
+
+    const mesh1 = new THREE.Mesh( geometry1, material1 );
+
+    scene.add( mesh1 );
+
+
+    //
+
+
+    const randomPoints = [];
+
+    for ( let i = 0; i < 10; i ++ ) {
+
+      randomPoints.push( new THREE.Vector3( ( i - 4.5 ) * 50, THREE.MathUtils.randFloat( - 50, 50 ), THREE.MathUtils.randFloat( - 50, 50 ) ) );
+
+    }
+
+    const randomSpline = new THREE.CatmullRomCurve3( randomPoints );
+
+    //
+
+    const extrudeSettings2 = {
+      steps: 200,
+      bevelEnabled: false,
+      extrudePath: randomSpline
+    };
+
+
+    const pts2 = [], numPts = 5;
+
+    for ( let i = 0; i < numPts * 2; i ++ ) {
+
+      const l = i % 2 == 1 ? 10 : 20;
+
+      const a = i / numPts * Math.PI;
+
+      pts2.push( new THREE.Vector2( Math.cos( a ) * l, Math.sin( a ) * l ) );
+
+    }
+
+    const shape2 = new THREE.Shape( pts2 );
+
+    const geometry2 = new THREE.ExtrudeGeometry( shape2, extrudeSettings2 );
+
+    const material2 = new THREE.MeshLambertMaterial( { color: 0xff8000, wireframe: false } );
+
+    const mesh2 = new THREE.Mesh( geometry2, material2 );
+
+    scene.add( mesh2 );
+
+
+    //
+
+    const materials = [ material1, material2 ];
+
+    const extrudeSettings3 = {
+      depth: 20,
+      steps: 1,
+      bevelEnabled: true,
+      bevelThickness: 2,
+      bevelSize: 4,
+      bevelSegments: 1
+    };
+
+    const geometry3 = new THREE.ExtrudeGeometry( shape2, extrudeSettings3 );
+
+    const mesh3 = new THREE.Mesh( geometry3, materials );
+
+    mesh3.position.set( 50, 100, 50 );
+
+    scene.add( mesh3 );
+
+  }
+
+  function animate() {
+
+    requestId = requestAnimationFrame( animate );
+
+    controls.update();
+    renderer.render( scene, camera );
+
+  }
+  }
 })

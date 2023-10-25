@@ -1,0 +1,9 @@
+.lil-gui .title:before {
+    content: "▾";
+    display: inline-block;
+    font-family: lil-gui;
+    padding-right: 2px;
+}
+.lil-gui.closed>.title:before {
+    content: "▸";
+}

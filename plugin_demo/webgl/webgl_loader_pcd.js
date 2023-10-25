@@ -1,15 +1,32 @@
-// webgl/webgl_loader_pcd.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core,performance} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import  { OrbitControls } from './jsm/controls/OrbitControls0.js';
-import { PCDLoader } from './jsm/loaders/PCDLoader.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls0 } from 'three/addons/controls/OrbitControls0.js';
+import { PCDLoader } from './three/addons/loaders/PCDLoader.js';
+import { GUI } from './three/addons/libs/lil-gui.module.min.js';
 
 var requestId
 Page({
-	   
-         onUnload() {
-	   		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
+	onUnload() {
+		cancelAnimationFrame(requestId, this.canvas)
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -19,102 +36,85 @@ this.worker && this.worker.terminate()
 				this.renderer = null
 			}
 		}, 0)
-        
 	},
-         webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-onLoad() {
-    document.createElementAsync("canvas", "webgl").then(canvas=>this.run(canvas).then())
-},
-async run(canvas3d){
-this.canvas = canvas3d
-var that = this
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+  let camera, scene, renderer;
 
-        let camera, scene, renderer;
+  init();
+  render();
 
-        init();
-        render();
+  function init() {
 
-        function init() {
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
 
-            renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
-            renderer.setPixelRatio( window.devicePixelRatio );
-            renderer.setSize( window.innerWidth, window.innerHeight );
-            document.body.appendChild( renderer.domElement );
+    scene = new THREE.Scene();
 
-            scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 0.01, 40 );
+    camera.position.set( 0, 0, 1 );
+    scene.add( camera );
 
-            camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 0.01, 40 );
-            camera.position.set( 0, 0, 1 );
-            scene.add( camera );
+    const controls = new (window.platform=="devtools"?OrbitControls:OrbitControls0)( camera, renderer.domElement );
+    controls.addEventListener( 'change', render ); // use if there is no animation loop
+    controls.minDistance = 0.5;
+    controls.maxDistance = 10;
 
-            const controls = new OrbitControls( camera, renderer.domElement );
-            controls.addEventListener( 'change', render ); // use if there is no animation loop
-            controls.minDistance = 0.5;
-            controls.maxDistance = 10;
+    //scene.add( new THREE.AxesHelper( 1 ) );
 
-            //scene.add( new THREE.AxesHelper( 1 ) );
+    const loader = new PCDLoader();
+    loader.load( './models/pcd/binary/Zaghetto.pcd', function ( points ) {
 
-            const loader = new PCDLoader();
-            loader.load( 'models/pcd/binary/Zaghetto.pcd', function ( points ) {
+      points.geometry.center();
+      points.geometry.rotateX( Math.PI );
+      points.name = 'Zaghetto.pcd';
+      scene.add( points );
 
-                points.geometry.center();
-                points.geometry.rotateX( Math.PI );
-                points.name = 'Zaghetto.pcd';
-                scene.add( points );
+      //
 
-                render();
+      const gui = new GUI();
 
-            } );
+      gui.add( points.material, 'size', 0.001, 0.01 ).onChange( render );
+      gui.addColor( points.material, 'color' ).onChange( render );
+      gui.open();
 
-            window.addEventListener( 'resize', onWindowResize );
+      //
 
-            window.addEventListener( 'keypress', keyboard );
+      render();
 
-        }
+    } );
 
-        function onWindowResize() {
+    window.addEventListener( 'resize', onWindowResize );
 
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+  }
 
-            renderer.setSize( window.innerWidth, window.innerHeight );
+  function onWindowResize() {
 
-        }
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
 
-        function keyboard( ev ) {
+    renderer.setSize( window.innerWidth, window.innerHeight );
 
-            const points = scene.getObjectByName( 'Zaghetto.pcd' );
+    render();
 
-            switch ( ev.key || String.fromCharCode( ev.keyCode || ev.charCode ) ) {
+  }
 
-                case '+':
-                    points.material.size *= 1.2;
-                    break;
+  function render() {
 
-                case '-':
-                    points.material.size /= 1.2;
-                    break;
+    renderer.render( scene, camera );
 
-                case 'c':
-                    points.material.color.setHex( Math.random() * 0xffffff );
-                    break;
+  }
 
-            }
-
-            render();
-
-        }
-
-        function render() {
-
-            renderer.render( scene, camera );
-
-        }
-
-    }
+  }
 })

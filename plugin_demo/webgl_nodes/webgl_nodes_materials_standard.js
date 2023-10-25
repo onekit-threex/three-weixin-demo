@@ -1,22 +1,37 @@
-// webgl_nodes/webgl_nodes_materials_standard.js
-import {document,window,requestAnimationFrame,cancelAnimationFrame,Event0,core} from 'dhtml-weixin';
-import * as THREE from '../three/Three.js';
-import * as Nodes from './jsm/nodes/Nodes.js';
+import {
+  document,
+	window,
+	HTMLCanvasElement,
+	requestAnimationFrame,
+	cancelAnimationFrame,
+core,
+	Event,
+  Event0
+} from "dhtml-weixin"
+import * as THREE from './three/Three';
+import { texture, uniform, normalMap, MeshStandardNodeMaterial, NodeObjectLoader } from './three/addons/nodes/Nodes.js';
 
-import Stats from './jsm/libs/stats.module.js';
+import Stats from 'three/addons/libs/stats.module.js';
 
-import { GUI } from './jsm/libs/lil-gui.module.min.js';
-import { TrackballControls } from './jsm/controls/TrackballControls.js';
-import { OBJLoader } from './jsm/loaders/OBJLoader.js';
-import { RGBELoader } from './jsm/loaders/RGBELoader.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
-import { nodeFrame } from './jsm/renderers/webgl/nodes/WebGLNodes.js';
+import { nodeFrame } from 'three/addons/renderers/webgl-legacy/nodes/WebGLNodes.js';
 
 var requestId
 Page({
+  onShareAppMessage(){
+    return getApp().onShare()
+  },
+  onShareTimeline(){
+     return {title:"ThreeX 2.0"}
+  },
 	onUnload() {
 		cancelAnimationFrame(requestId, this.canvas)
-this.worker && this.worker.terminate()
+		this.worker && this.worker.terminate()
+if(this.canvas) this.canvas = null
 		setTimeout(() => {
 			if (this.renderer instanceof THREE.WebGLRenderer) {
 				this.renderer.dispose()
@@ -27,33 +42,34 @@ this.worker && this.worker.terminate()
 			}
 		}, 0)
 	},
-	    webgl_touch(e) {
-        const web_e = Event0.fix(e)
-        //window.dispatchEvent(web_e)
-        //document.dispatchEvent(web_e)
-        this.canvas.dispatchEvent(web_e)
-    },
-  async onLoad(){
-const canvas3d = this.canvas =await document.createElementAsync("canvas","webgl")
-var that = this
-let container, stats;
+  webgl_touch(e){
+		const web_e = (window.platform=="devtools"?Event:Event0).fix(e)
+		this.canvas.dispatchEvent(web_e)
+  },
+  onLoad() {
+		document.createElementAsync("canvas", "webgl2").then(canvas => {
+      this.canvas = canvas
+      this.body_load(canvas).then()
+    })
+  },
+  async body_load(canvas3d) {
+  let container, stats;
 
-let camera, scene, renderer, controls;
+  let camera, scene, renderer, controls;
 
-init();
-animate();
+  init();
+  animate();
 
-function init() {
+  function init() {
 
     container = document.createElement( 'div' );
     document.body.appendChild( container );
 
-    renderer = that.renderer = new THREE.WebGLRenderer( { canvas:canvas3d,antialias: true } );
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
     container.appendChild( renderer.domElement );
 
-    renderer.outputEncoding = THREE.sRGBEncoding;
     renderer.toneMapping = THREE.ReinhardToneMapping;
     renderer.toneMappingExposure = 3;
 
@@ -66,115 +82,145 @@ function init() {
 
     controls = new TrackballControls( camera, renderer.domElement );
 
+    // Test Extended Material
+
+    class MeshCustomNodeMaterial extends MeshStandardNodeMaterial {
+
+      constructor() {
+
+        super();
+
+      }
+
+    }
+
+    // Extends Serialization Material
+
+    const superCreateMaterialFromType = THREE.MaterialLoader.createMaterialFromType;
+
+    THREE.MaterialLoader.createMaterialFromType = function ( type ) {
+
+      const materialLib = {
+        MeshCustomNodeMaterial
+      };
+
+      if ( materialLib[ type ] !== undefined ) {
+
+        return new materialLib[ type ]();
+
+      }
+
+      return superCreateMaterialFromType.call( this, type );
+
+    };
+
     //
 
-    scene.add( new THREE.HemisphereLight( 0x443333, 0x222233, 4 ) );
-
-    //
-
-    const material = new Nodes.MeshStandardNodeMaterial();
+    const material = new MeshCustomNodeMaterial();
 
     new OBJLoader()
-        .setPath( 'models/obj/cerberus/' )
-        .load( 'Cerberus.obj', function ( group ) { 
-            const loaderManager = new THREE.LoadingManager();
+      .setPath( 'models/obj/cerberus/' )
+      .load( 'Cerberus.obj', function ( group ) {
 
-            const loader = new THREE.TextureLoader( loaderManager )
-                .setPath( 'models/obj/cerberus/' );
+        const loaderManager = new THREE.LoadingManager();
 
-            const diffuseMap = loader.load( 'Cerberus_A.jpg' );
-            diffuseMap.wrapS = THREE.RepeatWrapping;
-            diffuseMap.encoding = THREE.sRGBEncoding;
+        const loader = new THREE.TextureLoader( loaderManager )
+          .setPath( 'models/obj/cerberus/' );
 
-            const rmMap = loader.load( 'Cerberus_RM.jpg' );
-            rmMap.wrapS = THREE.RepeatWrapping;
+        const diffuseMap = loader.load( 'Cerberus_A.jpg' );
+        diffuseMap.wrapS = THREE.RepeatWrapping;
+        diffuseMap.colorSpace = THREE.SRGBColorSpace;
 
-            const normalMap = loader.load( 'Cerberus_N.jpg' );
-            normalMap.wrapS = THREE.RepeatWrapping;
+        const rmMap = loader.load( 'Cerberus_RM.jpg' );
+        rmMap.wrapS = THREE.RepeatWrapping;
 
-            const mpMapNode = new Nodes.TextureNode( rmMap );
+        const normalMapTexture = loader.load( 'Cerberus_N.jpg' );
+        normalMapTexture.wrapS = THREE.RepeatWrapping;
 
-            material.colorNode = new Nodes.OperatorNode( '*', new Nodes.TextureNode( diffuseMap ), new Nodes.UniformNode( material.color ) );
+        const mgMapNode = texture( rmMap );
 
-            // roughness is in G channel, metalness is in B channel
-            material.roughnessNode = new Nodes.SplitNode( mpMapNode, 'g' );
-            material.metalnessNode = new Nodes.SplitNode( mpMapNode, 'b' );
+        material.colorNode = texture( diffuseMap ).mul( uniform( material.color ) );
 
-            material.normalNode = new Nodes.NormalMapNode( new Nodes.TextureNode( normalMap ) );
-            group.traverse( function ( child ) {
+        // roughness is in G channel, metalness is in B channel
+        material.roughnessNode = mgMapNode.g;
+        material.metalnessNode = mgMapNode.b;
 
-                if ( child.isMesh ) {
+        material.normalNode = normalMap( texture( normalMapTexture ) );
 
-                    child.material = material;
+        group.traverse( function ( child ) {
 
-                }
+          if ( child.isMesh ) {
 
-            } );
-            group.position.x = - 0.45;
-            group.rotation.y = - Math.PI / 2;
-            //scene.add( group );
+            child.material = material;
 
-            // TODO: Serialization test
-
-            loaderManager.onLoad = () => {	
-                const groupJSON = JSON.stringify( group.toJSON() );
-          
-
-
-                const objectLoader = new Nodes.NodeObjectLoader();
-                objectLoader.parse( JSON.parse( groupJSON ), ( newGroup ) => {
-
-                    //scene.remove( group );
-
-                    newGroup.position.copy( group.position );
-                    newGroup.rotation.copy( group.rotation );
-
-                    scene.add( newGroup );
-
-                    console.log( 'Serialized!' );
-
-                } );
-
-            };
+          }
 
         } );
 
+        group.position.x = - 0.45;
+        group.rotation.y = - Math.PI / 2;
+        //scene.add( group );
+
+        // TODO: Serialization test
+
+        loaderManager.onLoad = () => {
+
+          const groupJSON = JSON.stringify( group.toJSON() );
+
+          const objectLoader = new NodeObjectLoader();
+          objectLoader.parse( JSON.parse( groupJSON ), ( newGroup ) => {
+
+            //scene.remove( group );
+
+            newGroup.position.copy( group.position );
+            newGroup.rotation.copy( group.rotation );
+
+            scene.add( newGroup );
+
+            console.log( 'Serialized!' );
+
+          } );
+
+        };
+
+      } );
+
     const environments = {
 
-        'Venice Sunset': { filename: 'venice_sunset_1k.hdr' },
-        'Overpass': { filename: 'pedestrian_overpass_1k.hdr' }
+      'Venice Sunset': { filename: 'venice_sunset_1k.hdr' },
+      'Overpass': { filename: 'pedestrian_overpass_1k.hdr' }
 
     };
 
     function loadEnvironment( name ) {
 
-        if ( environments[ name ].texture !== undefined ) {
+      if ( environments[ name ].texture !== undefined ) {
 
-            scene.background = environments[ name ].texture;
-            scene.environment = environments[ name ].texture;
-            return;
+        scene.background = environments[ name ].texture;
+        scene.environment = environments[ name ].texture;
+        return;
 
-        }
+      }
 
-        const filename = environments[ name ].filename;
-        new RGBELoader()
-            .setPath( 'textures/equirectangular/' )
-            .load( filename, function ( hdrEquirect ) {
+      const filename = environments[ name ].filename;
+      new RGBELoader()
+        .setPath( 'textures/equirectangular/' )
+        .load( filename, function ( hdrEquirect ) {
 
-                const hdrCubeRenderTarget = pmremGenerator.fromEquirectangular( hdrEquirect );
-                hdrEquirect.dispose();
+          const hdrCubeRenderTarget = pmremGenerator.fromEquirectangular( hdrEquirect );
+          hdrEquirect.dispose();
 
-                scene.background = hdrCubeRenderTarget.texture;
-                scene.environment = hdrCubeRenderTarget.texture;
-                environments[ name ].texture = hdrCubeRenderTarget.texture;
+          scene.background = hdrCubeRenderTarget.texture;
+          scene.environment = hdrCubeRenderTarget.texture;
+          environments[ name ].texture = hdrCubeRenderTarget.texture;
 
-            } );
+        } );
 
     }
 
     const params = {
 
-        environment: Object.keys( environments )[ 0 ]
+      environment: Object.keys( environments )[ 0 ]
 
     };
     loadEnvironment( params.environment );
@@ -182,7 +228,7 @@ function init() {
     const gui = new GUI();
     gui.add( params, 'environment', Object.keys( environments ) ).onChange( function ( value ) {
 
-        loadEnvironment( value );
+      loadEnvironment( value );
 
     } );
     gui.open();
@@ -197,24 +243,24 @@ function init() {
 
     window.addEventListener( 'resize', onWindowResize );
 
-}
+  }
 
-//
+  //
 
-function onWindowResize() {
+  function onWindowResize() {
 
     renderer.setSize( window.innerWidth, window.innerHeight );
 
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 
-}
+  }
 
-//
+  //
 
-function animate() {
+  function animate() {
 
-    requestId = requestAnimationFrame(animate);
+    requestId = requestAnimationFrame( animate );
 
     nodeFrame.update();
 
@@ -223,7 +269,6 @@ function animate() {
 
     stats.update();
 
-}
-
-}
+  }
+  }
 })
