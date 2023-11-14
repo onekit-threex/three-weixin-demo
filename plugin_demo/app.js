@@ -1,6 +1,6 @@
 App({
-  onekit_path :"https://three-x.cn/examples/",
-  //onekit_path: "http://localhost:20000/examples/",
+  //onekit_path :"https://three-x.cn/examples/",
+  onekit_path: "http://localhost:20000/examples/",
   onShare(){
     const promise = new Promise(resolve => {
       setTimeout(() => {

@@ -95,7 +95,7 @@
       ]
     }
   },
-  "projectname": "plugin_demo_v2",
+  "projectname": "plugin_demo",
   "setting": {
     "compileHotReLoad": true
   }

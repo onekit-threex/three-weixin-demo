@@ -14,6 +14,11 @@ Page({
     return getApp().onShare()
   },
   onLoad() {
+    /*
+    wx.navigateTo({
+      url: 'webgl_gltf/webgl_loader_gltf_transmission',
+    })
+    return*/
     const sections = []
     const platform = wx.getSystemInfoSync().platform
     for (const sectionName of Object.keys(files)) {

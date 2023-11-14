@@ -7,8 +7,8 @@
     "test": "tests"
   },
   "dependencies": {
-    "dhtml-weixin": "^10.10.2",
-    "three-weixin": "^10.10.3",
+    "dhtml-weixin": "^11.3.1",
+    "three-weixin": "^11.3.1",
     "weixin-color-picker": "^1.2.0"
   },
   "scripts": {
