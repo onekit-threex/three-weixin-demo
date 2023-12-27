@@ -8,7 +8,7 @@
   },
   "plugins": {
     "ThreeX": {
-        "version": "2.0.0",
+        "version": "2.1.1",
         "provider": "wx5d6376b4fc730db9",
         "export": "threex.js"
     }

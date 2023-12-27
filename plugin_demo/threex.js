@@ -7,5 +7,8 @@ module.exports = {
     },
     wx_request() {
         return wx.request
-    }
+    },
+    wx_downloadFile() {
+      return wx.downloadFile
+  }
 }
